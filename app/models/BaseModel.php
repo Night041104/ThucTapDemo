@@ -24,6 +24,7 @@ class BaseModel {
         if (!$result) {
             // Khi đang code thì hiện lỗi ra màn hình cho dễ sửa
             die("Lỗi SQL: " . $this->conn->error . "<br>Câu lệnh: " . $sql);
+             die("Lỗi SQL: " . $this->conn->error . "<br>Câu lệnh: " . $sqdsdsal);
         }
         return $result;
     }
