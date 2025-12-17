@@ -1,7 +1,7 @@
 <?php
 // Đứng ở app/controllers -> lùi ra app -> vào models
-require_once __DIR__ . '/../models/CategoryModel.php';
-require_once __DIR__ . '/../models/AttributeModel.php'; 
+require_once __DIR__ . '/../../models/CategoryModel.php';
+require_once __DIR__ . '/../../models/AttributeModel.php'; 
 
 class CategoryController {
     private $cateModel;
@@ -46,7 +46,7 @@ class CategoryController {
         } else {
             // Redirect ra ngoài root index.php
             // Vì file index.php nằm ở root, nên đường dẫn là /THUCTAPDEMO/index.php hoặc đơn giản là index.php nếu base đúng
-            header("Location: ../../index.php?controller=category&action=index");
+            header("Location: ../../index.php?module=admin&controller=category&action=index");
             exit;
         }
     }
@@ -82,14 +82,14 @@ class CategoryController {
             else $this->cateModel->create($name, $jsonTemplate);
 
             // Redirect: Lùi 2 cấp để ra root
-            header("Location: ../../index.php?controller=category&action=index");
+            header("Location: ../../index.php?module=admin&controller=category&action=index");
             exit;
         }
     }
 
     public function delete() {
         if (isset($_GET['id'])) $this->cateModel->delete($_GET['id']);
-        header("Location: ../../index.php?controller=category&action=index");
+        header("Location: ../../index.php?module=admin&controller=category&action=index");
         exit;
     }
 }

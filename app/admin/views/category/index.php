@@ -7,7 +7,7 @@
 </head>
 <body>
     <h2>Danh sách Danh mục</h2>
-    <a href="index.php?controller=category&action=create" style="background:green;color:white;padding:5px 10px;text-decoration:none">Thêm Danh mục</a>
+    <a href="index.php?module=admin&controller=category&action=create" style="background:green;color:white;padding:5px 10px;text-decoration:none">Thêm Danh mục</a>
     
     <table>
         <thead><tr><th>ID</th><th>Tên</th><th>Slug</th><th>Template</th><th>Hành động</th></tr></thead>
@@ -24,8 +24,8 @@
                 <td><?= $c['slug'] ?></td>
                 <td><?= count($tpl ?? []) ?> nhóm</td>
                 <td>
-                    <a href="index.php?controller=category&action=edit&id=<?= $c['id'] ?>">Sửa</a> |
-                    <a href="index.php?controller=category&action=delete&id=<?= $c['id'] ?>" onclick="return confirm('Xóa?')">Xóa</a>
+                    <a href="index.php?module=admin&controller=category&action=edit&id=<?= $c['id'] ?>">Sửa</a> |
+                    <a href="index.php?module=admin&controller=category&action=delete&id=<?= $c['id'] ?>" onclick="return confirm('Xóa?')">Xóa</a>
                 </td>
             </tr>
             <?php endforeach; ?>

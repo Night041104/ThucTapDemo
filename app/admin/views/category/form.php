@@ -33,7 +33,7 @@
 <div class="form-container">
     <h2><?= $currentData['id'] ? "Chỉnh sửa: " . htmlspecialchars($currentData['name']) : "Tạo Danh mục Mới" ?></h2>
 
-    <form method="POST" action="index.php?controller=category&action=save">
+    <form method="POST" action="index.php?module=admin&controller=category&action=save">
         
         <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
         
@@ -114,7 +114,7 @@
             <button type="submit" class="btn-save">
                 <?= $currentData['id'] ? "LƯU CẬP NHẬT" : "TẠO DANH MỤC" ?>
             </button>
-            <a href="index.php?controller=category&action=index" class="btn-cancel">Hủy bỏ</a>
+            <a href="index.php?module=admin&controller=category&action=index" class="btn-cancel">Hủy bỏ</a>
         </div>
     </form>
 </div>
