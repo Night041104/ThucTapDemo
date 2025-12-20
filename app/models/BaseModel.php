@@ -28,23 +28,20 @@ class BaseModel {
         }
         return $result;
     }
-    public function createSlug($str){
+    // Trong app/models/BaseModel.php
+    public function createSlug($str) {
         if (!$str) return '';
-        //Chuyển sang chữ thường
-        $str = mb_strtolower($str);
-        //Xử lý riêng chữ đ/Đ vì iconv thường bỏ sót nó
-        $str = preg_replace('/(đ|đ)/u', 'd', $str);
-        //Dùng hàm iconv để lột bỏ dấu tiếng việt 
-        //ASCII//TRANSLIT để cố gắng chuyển kí tự lạ sang kí tự tương đương trong bảng ACSCII
-        $str = iconv('UTF-8', 'ASCII//TRANSLIT',$str);
-        //Xóa các kí tự ko phải chử cái hoặc số
-        $str = preg_replace('/[^a-z0-9\- ]/', '', $str);
-        //Thay khoảng trắng bằng dấu gạch ngang
-        $str = str_replace(' ','-',$str);
-        //Xóa các dấu gạch ngang dư thừa
-        $str = preg_replace('/-+/','-',$str);
-        //Cắt gạch ngang ở đầu và cuối chuỗi
-        return trim($str, '-');
+        $str = trim(mb_strtolower($str));
+        $str = preg_replace('/(à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ)/', 'a', $str);
+        $str = preg_replace('/(è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ)/', 'e', $str);
+        $str = preg_replace('/(ì|í|ị|ỉ|ĩ)/', 'i', $str);
+        $str = preg_replace('/(ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ)/', 'o', $str);
+        $str = preg_replace('/(ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ)/', 'u', $str);
+        $str = preg_replace('/(ỳ|ý|ỵ|ỷ|ỹ)/', 'y', $str);
+        $str = preg_replace('/(đ)/', 'd', $str);
+        $str = preg_replace('/[^a-z0-9-\s]/', '', $str);
+        $str = preg_replace('/([\s]+)/', '-', $str);
+        return $str;
     }
 }
 ?>

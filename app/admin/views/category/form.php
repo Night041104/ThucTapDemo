@@ -7,31 +7,26 @@
         body { font-family: sans-serif; padding: 20px; background-color: #f4f6f8; max-width: 1000px; margin: 0 auto; }
         .form-container { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h2 { margin-top: 0; color: #333; }
-        
-        /* Input Styles */
         input[type=text], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        input[type=text]:focus { border-color: #1976d2; outline: none; }
-        
-        /* Template Builder Styles */
         .group-box { background: #e3f2fd; padding: 15px; margin-bottom: 15px; border: 1px solid #90caf9; border-radius: 5px; position: relative; }
         .item-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
-        
-        /* Buttons */
         .btn-save { background: #1976d2; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .btn-save:hover { background: #1565c0; }
-        
         .btn-cancel { color: #d32f2f; text-decoration: none; margin-left: 15px; font-weight: bold; }
-        
         .btn-add-group { background: #4caf50; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 4px; margin-bottom: 20px; font-weight: bold;}
         .btn-add-item { background: #ff9800; color: white; padding: 5px 10px; border: none; cursor: pointer; border-radius: 4px; font-size: 12px; }
         .btn-del { color: #d32f2f; background: none; border: none; cursor: pointer; font-weight: bold; }
-        .btn-del:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="form-container">
     <h2><?= $currentData['id'] ? "Chỉnh sửa: " . htmlspecialchars($currentData['name']) : "Tạo Danh mục Mới" ?></h2>
+
+    <?php if(isset($msg)): ?>
+        <div style="padding:15px; background:#ffebee; color:#c62828; border:1px solid #ef9a9a; margin-bottom:20px; border-radius:4px;">
+            <?= $msg ?>
+        </div>
+    <?php endif; ?>
 
     <form method="POST" action="index.php?module=admin&controller=category&action=save">
         
@@ -50,15 +45,15 @@
 
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-        <h3>⚙️ Cấu hình Thông số kỹ thuật</h3>
-        <p style="color:#666; font-size: 0.9em; margin-bottom: 15px;">Xây dựng các nhóm thông số cho sản phẩm (VD: Màn hình, Camera...).</p>
+        <h3>⚙️ Cấu hình Thông số kỹ thuật (Template)</h3>
+        <p style="color:#666; font-size: 0.9em; margin-bottom: 15px;">
+            Cấu hình này sẽ tự động hiển thị khi bạn tạo sản phẩm thuộc danh mục này.<br>
+            <i>Ví dụ: Nhóm "Màn hình" gồm: Kích thước, Độ phân giải...</i>
+        </p>
         
         <div id="template-container">
             <?php 
-            // Biến đếm để JS tiếp tục đánh số thứ tự, tránh trùng ID
             $jsGroupCount = 0; 
-            
-            // Nếu đang Sửa (có dữ liệu cũ), loop ra để hiển thị
             if (!empty($currentData['template'])): 
                 foreach ($currentData['template'] as $gIndex => $group): 
                     $jsGroupCount = max($jsGroupCount, $gIndex + 1);
@@ -88,8 +83,12 @@
                                     <select name="items[<?= $gIndex ?>][attr_id][]" style="display: <?= $item['type']=='attribute'?'inline-block':'none' ?>;">
                                         <option value="">-- Chọn Attribute --</option>
                                         <?php foreach($attrs as $a): ?>
+                                            <?php 
+                                                $isVar = isset($a['is_variant']) ? $a['is_variant'] : ($a['is_customizable'] ?? 0);
+                                                $label = $a['name'] . ($isVar ? ' (Variant)' : '');
+                                            ?>
                                             <option value="<?= $a['id'] ?>" <?= (isset($item['attribute_id']) && $item['attribute_id'] == $a['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($a['name']) ?>
+                                                <?= htmlspecialchars($label) ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -120,13 +119,10 @@
 </div>
 
 <script>
-    // 1. Nhận dữ liệu attributes từ PHP controller để dùng cho nút "Thêm dòng"
+    // 1. Nhận dữ liệu attributes từ PHP
     const attributesList = <?php echo json_encode($attrs); ?>;
-    
-    // 2. Tiếp tục đếm từ số lượng group đã có
     let groupCounter = <?= isset($jsGroupCount) ? $jsGroupCount : 0 ?>;
 
-    // Hàm thêm Nhóm (Group)
     function addGroup() {
         const container = document.getElementById('template-container');
         const idx = groupCounter++;
@@ -145,17 +141,17 @@
                     <button type="button" class="btn-add-item" onclick="addItem(${idx}, this)">+ Thêm dòng thông số</button>
                 </div>
             </div>`;
-        
         container.insertAdjacentHTML('beforeend', html);
     }
 
-    // Hàm thêm Dòng (Item) vào trong Nhóm
     function addItem(groupIdx, btn) {
-        // Tạo options cho select attribute từ biến attributesList
         let attrOptions = '<option value="">-- Chọn Attribute --</option>';
         if (attributesList && attributesList.length > 0) {
             attributesList.forEach(attr => {
-                attrOptions += `<option value="${attr.id}">${attr.name}</option>`;
+                // Logic check variant trong JS để hiển thị
+                let isVar = attr.is_variant == 1 || attr.is_customizable == 1;
+                let label = isVar ? `${attr.name} (Variant)` : attr.name;
+                attrOptions += `<option value="${attr.id}">${label}</option>`;
             });
         }
 
@@ -163,32 +159,26 @@
             <div class="item-row">
                 <span>Tên:</span> 
                 <input type="text" name="items[${groupIdx}][name][]" placeholder="VD: Độ phân giải" required>
-                
                 <span>Loại:</span>
                 <select name="items[${groupIdx}][type][]" onchange="toggleAttr(this)">
                     <option value="text">Text thường</option>
                     <option value="attribute">🔗 Liên kết Attribute</option>
                 </select>
-                
                 <select name="items[${groupIdx}][attr_id][]" style="display:none">
                     ${attrOptions}
                 </select>
-                
                 <button type="button" class="btn-del" onclick="this.parentElement.remove()">✕</button>
             </div>`;
         
-        // Tìm div chứa list (nằm trước cái div chứa nút bấm)
         const itemsListDiv = btn.parentElement.previousElementSibling;
         itemsListDiv.insertAdjacentHTML('beforeend', html);
     }
 
-    // Hàm ẩn/hiện dropdown Attribute
     function toggleAttr(select) {
         const attrSelect = select.nextElementSibling;
         attrSelect.style.display = (select.value === 'attribute') ? 'inline-block' : 'none';
     }
 
-    // Hàm xóa phần tử
     function removeElement(id) {
         if(confirm('Bạn có chắc muốn xóa nhóm này?')) {
             document.getElementById(id).remove();
