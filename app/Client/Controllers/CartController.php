@@ -11,35 +11,56 @@ class CartController {
 
     // 1. HIỂN THỊ GIỎ HÀNG
     public function index() {
-        // Lấy giỏ hàng từ Session (nếu chưa có thì là mảng rỗng)
-        $cart = isset($_SESSION['cart']) ? $_SESSION['cart'] : [];
+        $cart = $_SESSION['cart'] ?? [];
         $products = [];
         $totalMoney = 0;
 
         if (!empty($cart)) {
-            // Lấy danh sách ID sản phẩm: [105, 107, ...]
             $ids = array_keys($cart);
-            
-            // Gọi hàm getProductsByIds bạn vừa thêm vào ProductModel
-            $productsRaw = $this->productModel->getProductsByIds($ids);
+            $products = $this->productModel->getProductsByIds($ids);
 
-            // Duyệt qua để tính toán thành tiền
-            foreach ($productsRaw as $p) {
-                $id = $p['id'];
-                // Lấy số lượng khách đang chọn mua
-                $qty = $cart[$id]; 
-                
-                // Tính thành tiền (Giá x Số lượng)
-                $p['buy_qty'] = $qty;
-                $p['subtotal'] = $p['price'] * $qty;
-                
-                $totalMoney += $p['subtotal'];
-                $products[] = $p;
+            foreach ($products as $p) {
+                $totalMoney += $p['price'] * $cart[$p['id']];
             }
         }
 
-        // Gọi View hiển thị
-        require_once __DIR__ . '/../views/cart/index.php';
+        // [MỚI] Xử lý hiển thị Coupon
+        $discountAmount = 0;
+        $finalTotal = $totalMoney;
+
+        // Nếu trong Session có mã giảm giá -> Tính lại
+        if (isset($_SESSION['coupon'])) {
+            $coupon = $_SESSION['coupon'];
+            
+            // Kiểm tra lại lần nữa xem mã còn hợp lệ với tổng tiền mới không
+            // (Phòng trường hợp khách xóa bớt hàng làm tổng tiền giảm xuống dưới mức tối thiểu)
+            require_once __DIR__ . '/../../models/CouponModel.php';
+            $couponModel = new CouponModel();
+            $check = $couponModel->checkCoupon($coupon['code'], $totalMoney);
+            
+            if ($check['valid']) {
+                // Tính lại tiền giảm (cập nhật nếu tổng tiền thay đổi)
+                if ($coupon['type'] == 'fixed') {
+                    $discountAmount = $coupon['value'];
+                } else {
+                    $discountAmount = ($totalMoney * $coupon['value']) / 100;
+                }
+                
+                // Cập nhật lại session số tiền giảm mới nhất
+                $_SESSION['coupon']['discount_amount'] = $discountAmount;
+            } else {
+                // Nếu không còn hợp lệ (do xóa bớt hàng) -> Tự động hủy mã
+                unset($_SESSION['coupon']);
+                $discountAmount = 0;
+                $_SESSION['error'] = "Mã giảm giá đã bị hủy do đơn hàng không đủ điều kiện!";
+            }
+        }
+
+        $finalTotal = $totalMoney - $discountAmount;
+        if ($finalTotal < 0) $finalTotal = 0;
+
+        // Truyền các biến mới sang View
+        require_once __DIR__ . '/../Views/cart/index.php';
     }
 
     // 2. THÊM VÀO GIỎ (Xử lý khi bấm nút MUA NGAY)
@@ -90,6 +111,88 @@ class CartController {
         }
         header("Location: index.php?controller=cart&action=index");
         exit;
+    }
+    // [MỚI] 1. Xử lý áp dụng mã giảm giá
+    public function applyCoupon() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $code = trim($_POST['code'] ?? '');
+            
+            if (empty($code)) {
+                $_SESSION['error'] = "Vui lòng nhập mã giảm giá!";
+                header("Location: index.php?controller=cart");
+                exit;
+            }
+
+            // Tính tổng tiền hiện tại của giỏ hàng
+            $currentTotal = $this->calculateCartTotal();
+
+            // Gọi Model kiểm tra mã
+            require_once __DIR__ . '/../../models/CouponModel.php';
+            $couponModel = new CouponModel();
+            $check = $couponModel->checkCoupon($code, $currentTotal);
+
+            if ($check['valid'] == false) {
+                // Mã sai hoặc không đủ điều kiện
+                $_SESSION['error'] = $check['msg'];
+                // Xóa mã cũ nếu có để tránh hiểu lầm
+                unset($_SESSION['coupon']); 
+            } else {
+                // Mã đúng -> Tính toán số tiền được giảm
+                $couponData = $check['data'];
+                $discountAmount = 0;
+
+                if ($couponData['type'] == 'fixed') {
+                    // Giảm tiền mặt (VD: 50k)
+                    $discountAmount = $couponData['value'];
+                } else {
+                    // Giảm phần trăm (VD: 10%)
+                    $discountAmount = ($currentTotal * $couponData['value']) / 100;
+                }
+
+                // Đảm bảo tiền giảm không lớn hơn tổng đơn (không để âm tiền)
+                if ($discountAmount > $currentTotal) {
+                    $discountAmount = $currentTotal;
+                }
+
+                // Lưu thông tin vào Session để dùng cho trang Thanh toán
+                $_SESSION['coupon'] = [
+                    'code' => $couponData['code'],
+                    'type' => $couponData['type'],
+                    'value' => $couponData['value'],
+                    'discount_amount' => $discountAmount
+                ];
+
+                $_SESSION['success'] = "Đã áp dụng mã '{$code}' thành công!";
+            }
+
+            header("Location: index.php?controller=cart");
+            exit;
+        }
+    }
+
+    // [MỚI] 2. Hủy mã giảm giá
+    public function removeCoupon() {
+        if (isset($_SESSION['coupon'])) {
+            unset($_SESSION['coupon']);
+            $_SESSION['success'] = "Đã hủy mã giảm giá!";
+        }
+        header("Location: index.php?controller=cart");
+        exit;
+    }
+
+    // [MỚI] 3. Hàm tính tổng tiền giỏ hàng (Helper)
+    private function calculateCartTotal() {
+        if (empty($_SESSION['cart'])) return 0;
+
+        $cartIds = array_keys($_SESSION['cart']);
+        $products = $this->productModel->getProductsByIds($cartIds);
+        
+        $total = 0;
+        foreach ($products as $p) {
+            $qty = $_SESSION['cart'][$p['id']];
+            $total += $p['price'] * $qty;
+        }
+        return $total;
     }
 }
 ?>

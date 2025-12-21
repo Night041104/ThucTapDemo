@@ -33,7 +33,7 @@
                     <th>Khách hàng</th>
                     <th>Ngày đặt</th>
                     <th>Tổng tiền</th>
-                    <th>Trạng thái</th>
+                    <th>Thanh toán</th> <th>Trạng thái</th>
                     <th>Hành động</th>
                 </tr>
             </thead>
@@ -49,24 +49,53 @@
                         <td style="color:#d32f2f; font-weight:bold;">
                             <?= number_format($row['total_money'], 0, ',', '.') ?>₫
                         </td>
+                        
+                        <td>
+                            <?php if ($row['payment_method'] == 'VNPAY'): ?>
+                                <span style="color: #6610f2; font-weight: bold;">💳 VNPAY</span>
+                            <?php else: ?>
+                                <span style="color: #333;">💵 COD</span>
+                            <?php endif; ?>
+                        </td>
+
                         <td>
                             <?php
                                 $s = $row['status'];
+                                // Logic hiển thị trạng thái
                                 $label = '';
+                                $class = '';
+                                
                                 switch($s) {
-                                    case 1: $label = 'Chờ xác nhận'; break;
-                                    case 2: $label = 'Đã xác nhận'; break;
-                                    case 3: $label = 'Đang giao'; break;
-                                    case 4: $label = 'Hoàn thành'; break;
-                                    case 5: $label = 'Đã hủy'; break;
-                                    default: $label = 'Không rõ';
+                                    case 1: 
+                                        $label = 'Chờ xác nhận'; 
+                                        $class = 'st-1'; 
+                                        break;
+                                    case 2: 
+                                        // Nếu là VNPAY mà status=2 thì là Đã thanh toán
+                                        $label = ($row['payment_method'] == 'VNPAY') ? 'Đã thanh toán' : 'Đã xác nhận'; 
+                                        $class = 'st-2'; 
+                                        break;
+                                    case 3: 
+                                        $label = 'Đang giao'; 
+                                        $class = 'st-3'; 
+                                        break;
+                                    case 4: 
+                                        $label = 'Hoàn thành'; 
+                                        $class = 'st-4'; 
+                                        break;
+                                    case 5: 
+                                        $label = 'Đã hủy'; 
+                                        $class = 'st-5'; 
+                                        break;
+                                    default: 
+                                        $label = 'Không rõ';
                                 }
                             ?>
-                            <span class="badge st-<?= $s ?>"><?= $label ?></span>
+                            <span class="badge <?= $class ?>"><?= $label ?></span>
                         </td>
                         <td>
                             <a href="index.php?module=admin&controller=order&action=detail&id=<?= $row['id'] ?>" class="btn-view">
-                                Xem chi tiết ➝
+                                Xem ➝
                             </a>
                         </td>
                     </tr>
