@@ -19,7 +19,7 @@ if ($module === 'admin') {
     $path = __DIR__ . "/app/admin/controllers/{$className}.php";
 } else {
     // Client: Chữ 'Client' viết hoa, còn 'controllers' viết thường
-    $path = __DIR__ . "/app/Client/controllers/{$className}.php";
+    $path = __DIR__ . "/app/Client/Controllers/{$className}.php";
 }
 
 // 4. Kiểm tra và chạy
