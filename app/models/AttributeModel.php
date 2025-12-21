@@ -109,5 +109,53 @@ class AttributeModel extends BaseModel {
         $this->_query("DELETE FROM attribute_options WHERE attribute_id='$id'");
         return $this->_query("DELETE FROM attributes WHERE id='$id'");
     }
+    // [CLIENT] Lấy các thuộc tính dùng để lọc (Sidebar)
+    // [CLIENT] Lấy các thuộc tính dùng để lọc (Sidebar)
+    public function getFiltersByCateForClient($cateId) {
+        $cateId = $this->escape($cateId);
+
+        // A. Lấy danh sách tên thuộc tính (RAM, ROM...)
+        // (Phần này giữ nguyên vì tên cột bảng attributes và products đã đúng)
+        $sqlAttrs = "SELECT DISTINCT a.id, a.name, a.code 
+                     FROM attributes a
+                     JOIN product_attribute_values pav ON a.id = pav.attribute_id
+                     JOIN products p ON pav.product_id = p.id
+                     WHERE p.category_id = '$cateId' 
+                     AND p.status = 1 
+                     AND a.is_variant = 1 
+                     ORDER BY a.id ASC";
+        
+        $rsAttrs = $this->_query($sqlAttrs);
+        $attributes = $rsAttrs ? mysqli_fetch_all($rsAttrs, MYSQLI_ASSOC) : [];
+
+        // B. Lấy các giá trị (Options) thực tế
+        foreach ($attributes as &$attr) {
+            $attrId = $attr['id'];
+            
+            // [SỬA LẠI ĐOẠN NÀY]: Thay value_text -> value_custom, value_id -> option_id
+            $sqlOpts = "SELECT DISTINCT pav.value_custom, pav.option_id, ao.value as option_value
+                        FROM product_attribute_values pav
+                        JOIN products p ON pav.product_id = p.id
+                        LEFT JOIN attribute_options ao ON pav.option_id = ao.id
+                        WHERE p.category_id = '$cateId' 
+                        AND p.status = 1
+                        AND pav.attribute_id = '$attrId'
+                        ORDER BY ao.id ASC, pav.value_custom ASC";
+            
+            $rsOpts = $this->_query($sqlOpts);
+            $options = [];
+            while($row = mysqli_fetch_assoc($rsOpts)) {
+                // Logic: Nếu có option_value (từ bảng options) thì lấy, nếu không thì lấy value_custom (nhập tay)
+                $val = !empty($row['option_value']) ? $row['option_value'] : $row['value_custom'];
+                
+                if(!in_array($val, $options) && !empty($val)) {
+                    $options[] = $val;
+                }
+            }
+            $attr['filter_options'] = $options;
+        }
+
+        return $attributes;
+    }
 }
 ?>

@@ -205,6 +205,14 @@
                                             <?php 
                                                 $attrId = $item['attribute_id'] ?? $item['attr_id'] ?? 0;
                                                 $canCustom = isset($attrConfigs[$attrId]) && $attrConfigs[$attrId] == 1;
+                                                
+                                                // 1. Xác định Option ID đang được chọn (Lấy từ mảng $selectedOptions truyền từ Controller)
+                                                // Nếu đang tạo mới thì không có
+                                                $currentOptId = isset($selectedOptions[$attrId]) ? $selectedOptions[$attrId] : 0;
+
+                                                // 2. Xác định Text hiển thị (Lấy từ JSON cũ)
+                                                // Ví dụ: "Đỏ đô"
+                                                $currentText = $val; 
                                             ?>
                                             <input type="hidden" name="spec_item[<?= $gIndex ?>][attr_id][]" value="<?= $attrId ?>">
                                             <input type="hidden" name="spec_item[<?= $gIndex ?>][value_text][]" value="">
@@ -212,18 +220,21 @@
                                             <select name="spec_item[<?= $gIndex ?>][value_id][]" style="width:200px" <?= (!$canCustom) ? 'required' : '' ?>>
                                                 <option value="">-- Chọn --</option>
                                                 <?php
-                                                // [CHUẨN MVC] Dùng biến $allAttributeOptions truyền từ Controller
                                                 if($attrId && isset($allAttributeOptions[$attrId])){
                                                     foreach($allAttributeOptions[$attrId] as $opt) {
-                                                        $sel = ($val == $opt['value']) ? 'selected' : '';
-                                                        echo "<option value='{$opt['id']}' $sel>{$opt['value']}</option>";
+                                                        // So sánh theo ID -> Chính xác tuyệt đối
+                                                        $isSelected = ($currentOptId == $opt['id']);
+                                                        echo "<option value='{$opt['id']}' ".($isSelected ? 'selected' : '').">{$opt['value']}</option>";
                                                     }
                                                 }
                                                 ?>
                                             </select>
                                             
                                             <?php if($canCustom): ?>
-                                                <input type="text" name="spec_item[<?= $gIndex ?>][value_custom][]" value="<?= ($val) ?>" style="flex:1" placeholder="Hoặc nhập tùy chỉnh...">
+                                                <input type="text" name="spec_item[<?= $gIndex ?>][value_custom][]" 
+                                                       value="<?= htmlspecialchars($currentText) ?>" 
+                                                       style="flex:1; margin-left:10px;" 
+                                                       placeholder="Nhập chi tiết (VD: Đỏ đô)...">
                                             <?php else: ?>
                                                 <span class="badge-fixed">Fixed</span>
                                                 <input type="hidden" name="spec_item[<?= $gIndex ?>][value_custom][]" value="">

@@ -26,6 +26,18 @@
         .filter-box { background:#f1f8e9; padding:15px; border-radius:5px; display:flex; gap:10px; align-items:center; border:1px solid #c8e6c9; flex-wrap: wrap; }
         .input-search { padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px; }
         .input-select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px; }
+        /* ... CSS cũ ... */
+        .badge-variant { 
+            display: inline-block; 
+            background: #f3e5f5; 
+            color: #7b1fa2; 
+            border: 1px solid #e1bee7; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            font-size: 11px; 
+            margin-right: 4px; 
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body>
@@ -69,16 +81,16 @@
             <?php endif; ?>
         </form>
 
-        <table>
+<table>
             <thead>
                 <tr>
                     <th width="60">Ảnh</th>
-                    <th width="300">Tên Sản Phẩm</th>
-                    <th width="120">Thông tin</th>
+                    <th width="250">Tên Sản Phẩm</th>
+                    <th width="150">Biến thể</th> <th width="120">Thông tin</th>
                     <th width="100">Giá bán</th>
-                    <th width="80">Kho</th>
+                    <th width="60">Kho</th>
                     <th width="100">Trạng thái</th>
-                    <th width="220">Hành động</th>
+                    <th width="180">Hành động</th>
                 </tr>
             </thead>
             <tbody>
@@ -87,6 +99,25 @@
                         <?php 
                             $isChild = ($row['parent_id'] > 0); 
                             $roleClass = $isChild ? 'is-child' : '';
+                            
+                            // [LOGIC MỚI] Xử lý hiển thị biến thể từ JSON
+                            $specs = json_decode($row['specs_json'], true) ?? [];
+                            $variantHtml = '';
+                            
+                            // Duyệt qua JSON specs để tìm thuộc tính biến thể
+                            if (!empty($specs) && !empty($variantIds)) {
+                                foreach ($specs as $group) {
+                                    if(isset($group['items'])) {
+                                        foreach ($group['items'] as $item) {
+                                            // Kiểm tra nếu thuộc tính này là biến thể (nằm trong list variantIds)
+                                            // VÀ có giá trị
+                                            if (isset($item['attr_id']) && in_array($item['attr_id'], $variantIds) && !empty($item['value'])) {
+                                                $variantHtml .= '<span class="badge-variant">' . htmlspecialchars($item['name']) . ': ' . htmlspecialchars($item['value']) . '</span>';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         ?>
                         <tr class="<?= $roleClass ?>">
                             <td>
@@ -99,16 +130,18 @@
                                         <?= $row['name'] ?>
                                     </a>
                                 </div>
-                                
                                 <div style="font-size:11px; color:#999; margin-top:3px;">
                                     SKU: <?= $row['sku'] ?>
                                 </div>
-
                                 <div style="margin-top: 5px;">
                                     <?php if(!$isChild): ?>
                                         <span class="badge-master">Master / Gốc</span>
                                     <?php endif; ?>
                                 </div>
+                            </td>
+
+                            <td>
+                                <?= $variantHtml ? $variantHtml : '<span style="color:#ccc; font-size:11px;">--</span>' ?>
                             </td>
 
                             <td style="font-size: 13px; color: #555;">
