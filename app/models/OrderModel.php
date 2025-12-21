@@ -15,7 +15,7 @@ class OrderModel extends BaseModel {
         $this->conn->begin_transaction();
 
         try {
-            // A. Sinh mã đơn hàng (VD: FBT2512...)
+            // A. Sinh mã đơn hàng ngẫu nhiên (VD: FBT2512...)
             $orderCode = "FBT" . date("ymd") . "-" . strtoupper(substr(md5(uniqid()), 0, 4));
 
             // B. Chuẩn bị dữ liệu khách hàng
@@ -27,6 +27,7 @@ class OrderModel extends BaseModel {
             $phone   = $this->escape($customerData['phone']);
             $addr    = $this->escape($customerData['address']);
             $note    = $this->escape($customerData['note']);
+            // Mặc định là COD nếu không chọn
             $payment = isset($customerData['payment_method']) ? $this->escape($customerData['payment_method']) : 'COD';
 
             // Xử lý Coupon
@@ -41,7 +42,7 @@ class OrderModel extends BaseModel {
             $ids = implode(',', array_keys($cartItems));
             if(empty($ids)) throw new Exception("Giỏ hàng trống!");
 
-            // Query lấy giá và tồn kho thực tế từ DB
+            // [QUAN TRỌNG] Lấy giá và tồn kho thực tế từ DB (Tránh user sửa session)
             $sqlProd = "SELECT id, name, price, quantity FROM products WHERE id IN ($ids)";
             $resProd = $this->_query($sqlProd);
             
@@ -50,7 +51,7 @@ class OrderModel extends BaseModel {
                 
                 // Kiểm tra tồn kho
                 if ($prod['quantity'] < $buyQty) {
-                    throw new Exception("Sản phẩm '{$prod['name']}' vừa hết hàng (Còn: {$prod['quantity']}).");
+                    throw new Exception("Sản phẩm '{$prod['name']}' vừa hết hàng (Chỉ còn: {$prod['quantity']}).");
                 }
 
                 $prod['buy_qty'] = $buyQty;
@@ -63,7 +64,7 @@ class OrderModel extends BaseModel {
             if ($finalTotal < 0) $finalTotal = 0;
 
             // D. INSERT vào bảng ORDERS
-            // Lưu ý: Lưu finalTotal vào total_money (số tiền khách phải trả)
+            // Lưu ý: Lưu finalTotal vào total_money (số tiền khách thực trả)
             $sqlOrder = "INSERT INTO orders (order_code, user_id, fullname, email, phone, address, note, total_money, payment_method, coupon_code, discount_money, status) 
                          VALUES ('$orderCode', $uid, '$name', '$email', '$phone', '$addr', '$note', '$finalTotal', '$payment', $cpCode, '$dcMoney', 1)";
             
@@ -108,7 +109,7 @@ class OrderModel extends BaseModel {
         }
     }
 
-    // Lấy danh sách đơn hàng theo User ID (Lịch sử mua hàng)
+    // Lấy danh sách đơn hàng theo User ID (Cho trang Lịch sử mua hàng)
     public function getOrdersByUserId($userId) {
         $userId = $this->escape($userId);
         $sql = "SELECT * FROM orders WHERE user_id = '$userId' ORDER BY created_at DESC";
@@ -116,7 +117,7 @@ class OrderModel extends BaseModel {
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
 
-    // Lấy chi tiết đơn hàng bằng Mã đơn (Dùng cho VNPAY gửi mail)
+    // Lấy chi tiết đơn hàng bằng Mã đơn (Dùng cho VNPAY gửi mail & Trang Success)
     public function getOrderByCode($code) {
         $code = $this->escape($code);
         
@@ -133,7 +134,7 @@ class OrderModel extends BaseModel {
         return ['info' => $info, 'items' => $items];
     }
 
-    // Cập nhật trạng thái dựa trên Mã đơn hàng (Dùng cho VNPAY update status)
+    // Cập nhật trạng thái dựa trên Mã đơn hàng (Dùng cho VNPAY update sau khi thanh toán)
     public function updateStatusByCode($orderCode, $status) {
         $code = $this->escape($orderCode);
         $status = (int)$status;
@@ -142,7 +143,7 @@ class OrderModel extends BaseModel {
         return $this->conn->query($sql);
     }
 
-    // Kiểm tra quyền sở hữu đơn hàng
+    // Kiểm tra quyền sở hữu đơn hàng (Bảo mật cho trang chi tiết)
     public function isOrderOwner($orderId, $userId) {
         $orderId = (int)$orderId;
         $userId = $this->escape($userId);
@@ -206,7 +207,7 @@ class OrderModel extends BaseModel {
         return $this->conn->query($sql);
     }
 
-    // Helper điều chỉnh kho (Private)
+    // Helper điều chỉnh kho (Private - Chỉ dùng nội bộ class này)
     private function adjustStock($orderId, $operator) {
         $items = $this->_query("SELECT product_id, quantity FROM order_details WHERE order_id = '$orderId'");
         while ($row = mysqli_fetch_assoc($items)) {

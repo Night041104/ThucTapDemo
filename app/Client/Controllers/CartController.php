@@ -64,23 +64,57 @@ class CartController {
     }
 
     // 2. THÊM VÀO GIỎ (Xử lý khi bấm nút MUA NGAY)
+    // THÊM SẢN PHẨM VÀO GIỎ HÀNG
     public function add() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-            $qty = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
+            $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+            $quantity  = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
 
-            if ($id > 0 && $qty > 0) {
-                // Nếu sản phẩm đã có trong giỏ -> Cộng dồn số lượng
-                if (isset($_SESSION['cart'][$id])) {
-                    $_SESSION['cart'][$id] += $qty;
+            if ($productId > 0 && $quantity > 0) {
+                
+                // 1. Kiểm tra sản phẩm có tồn tại và còn hàng không
+                // (Dùng hàm getById của ProductModel mà bên Product đã cung cấp)
+                $product = $this->productModel->getById($productId);
+
+                if (!$product) {
+                    echo "<script>alert('Sản phẩm không tồn tại!'); window.history.back();</script>";
+                    exit;
+                }
+
+                if ($product['quantity'] < $quantity) {
+                    echo "<script>alert('Sản phẩm này chỉ còn {$product['quantity']} cái!'); window.history.back();</script>";
+                    exit;
+                }
+
+                // 2. Khởi tạo giỏ hàng nếu chưa có
+                if (!isset($_SESSION['cart'])) {
+                    $_SESSION['cart'] = [];
+                }
+
+                // 3. Logic thêm vào giỏ
+                if (isset($_SESSION['cart'][$productId])) {
+                    // Nếu đã có -> Cộng dồn số lượng
+                    $_SESSION['cart'][$productId] += $quantity;
                 } else {
                     // Nếu chưa có -> Thêm mới
-                    $_SESSION['cart'][$id] = $qty;
+                    $_SESSION['cart'][$productId] = $quantity;
                 }
+
+                // 4. Kiểm tra xem khách bấm nút nào?
+                if (isset($_POST['buy_now'])) {
+                    // A. Nếu bấm "MUA NGAY" -> Chuyển thẳng đến trang Thanh toán
+                    header("Location: index.php?controller=checkout");
+                } else {
+                    // B. Nếu bấm "THÊM GIỎ" -> Chuyển về trang Giỏ hàng (hoặc ở lại trang cũ tùy bạn)
+                    // Ở đây tôi cho về trang Giỏ hàng để khách nhìn thấy kết quả
+                    header("Location: index.php?controller=cart");
+                }
+                exit;
             }
         }
-        // Thêm xong thì chuyển hướng về trang giỏ hàng
-        header("Location: index.php?controller=cart&action=index");
+        
+        // Nếu truy cập trực tiếp link add mà không post gì cả -> Về trang chủ
+        header("Location: index.php");
         exit;
     }
 
@@ -193,6 +227,56 @@ class CartController {
             $total += $p['price'] * $qty;
         }
         return $total;
+    }
+    // [AJAX] Thêm vào giỏ hàng không load lại trang
+    public function addAjax() {
+        header('Content-Type: application/json'); // Báo trình duyệt đây là JSON
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+            $quantity  = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
+
+            if ($productId > 0 && $quantity > 0) {
+                
+                // 1. Kiểm tra sản phẩm
+                $product = $this->productModel->getById($productId);
+
+                if (!$product) {
+                    echo json_encode(['status' => 'error', 'message' => 'Sản phẩm không tồn tại!']);
+                    exit;
+                }
+
+                if ($product['quantity'] < $quantity) {
+                    echo json_encode(['status' => 'error', 'message' => "Chỉ còn {$product['quantity']} sản phẩm!"]);
+                    exit;
+                }
+
+                // 2. Thêm vào Session
+                if (!isset($_SESSION['cart'])) {
+                    $_SESSION['cart'] = [];
+                }
+
+                if (isset($_SESSION['cart'][$productId])) {
+                    $_SESSION['cart'][$productId] += $quantity;
+                } else {
+                    $_SESSION['cart'][$productId] = $quantity;
+                }
+
+                // 3. Tính tổng số lượng mới để cập nhật lên Header
+                $newTotalQty = array_sum($_SESSION['cart']);
+
+                // 4. Trả về thành công
+                echo json_encode([
+                    'status' => 'success', 
+                    'totalQty' => $newTotalQty,
+                    'message' => 'Đã thêm vào giỏ hàng thành công!'
+                ]);
+                exit;
+            }
+        }
+        
+        echo json_encode(['status' => 'error', 'message' => 'Yêu cầu không hợp lệ']);
+        exit;
     }
 }
 ?>

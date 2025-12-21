@@ -12,26 +12,10 @@
     .breadcrumb a:hover { color: #cd1818; }
 
     /* =========================================
-       2. ẢNH SẢN PHẨM & SLIDER
+       2. ẢNH SẢN PHẨM & THUMBNAILS
        ========================================= */
-    .main-image-box { 
-        border: 1px solid #eee; border-radius: 8px; padding: 20px; 
-        text-align: center; margin-bottom: 15px; background: white; 
-        position: relative; overflow: hidden; /* Để chứa nút mũi tên tuyệt đối */
-    }
+    .main-image-box { border: 1px solid #eee; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 15px; background: white; position: relative; overflow: hidden; }
     .main-image-box img { max-width: 100%; height: 400px; object-fit: contain; transition: 0.3s; }
-
-    /* Nút mũi tên Slider */
-    .slider-nav {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        width: 35px; height: 35px; border-radius: 50%;
-        background: rgba(0,0,0,0.1); color: #555;
-        border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        font-size: 18px; transition: 0.2s; z-index: 10;
-    }
-    .slider-nav:hover { background: rgba(205, 24, 24, 0.8); color: white; }
-    .prev-btn { left: 10px; }
-    .next-btn { right: 10px; }
     
     .thumb-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; justify-content: center; }
     .thumb-item { width: 60px; height: 60px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; object-fit: cover; opacity: 0.6; transition: 0.2s; }
@@ -44,58 +28,45 @@
     .prod-sku { font-size: 13px; color: #777; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;}
     .rating-box { color: #ff9f00; font-size: 13px; }
 
+    /* Giá bán */
     .price-box { display: flex; align-items: flex-end; gap: 15px; margin-bottom: 20px; }
     .current-price { font-size: 28px; font-weight: bold; color: #cd1818; line-height: 1; }
     .market-price { font-size: 16px; color: #666; text-decoration: line-through; }
 
     /* =========================================
-       4. BIẾN THỂ GOM NHÓM (CÓ ẢNH)
+       4. BIẾN THỂ GOM NHÓM (NEW STYLE)
        ========================================= */
     .variant-section { margin-bottom: 20px; }
     .variant-row { margin-bottom: 15px; }
-    .variant-name { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+    .variant-name { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+    
     .variant-options { display: flex; flex-wrap: wrap; gap: 10px; }
     
     .opt-btn {
         border: 1px solid #ddd; background: #fff; color: #333;
-        border-radius: 4px; cursor: pointer; text-decoration: none; 
-        font-size: 13px; min-width: 60px; text-align: center;
-        transition: 0.2s; position: relative; overflow: hidden;
-        display: flex; align-items: center; justify-content: center; padding: 8px 15px;
+        padding: 8px 15px; border-radius: 4px; cursor: pointer;
+        text-decoration: none; font-size: 13px; min-width: 80px; text-align: center;
+        transition: 0.2s; position: relative; display: inline-block;
     }
-    .opt-btn:hover { border-color: #cd1818; }
-    .opt-btn.active { border: 1px solid #cd1818; background: #fff; color: #cd1818; font-weight: 500;}
+    .opt-btn:hover { border-color: #cd1818; color: #cd1818; }
+    
+    .opt-btn.active {
+        border-color: #cd1818; color: #cd1818; background: #fff5f5; font-weight: bold;
+    }
+    /* Dấu tick nhỏ ở góc giống FPT */
     .opt-btn.active::after {
         content: ''; position: absolute; top: 0; right: 0;
-        border-style: solid; border-width: 0 16px 16px 0;
+        width: 0; height: 0;
+        border-style: solid; border-width: 0 12px 12px 0;
         border-color: transparent #cd1818 transparent transparent;
     }
     .opt-btn.active::before {
-        content: '✓'; position: absolute; top: 0px; right: 1px;
-        color: white; font-size: 8px; z-index: 1; font-weight: bold;
+        content: '✓'; position: absolute; top: -1px; right: 0px;
+        color: white; font-size: 7px; z-index: 1; font-weight: bold;
     }
-    .opt-btn.has-img { padding: 5px 10px 5px 5px; gap: 8px; }
-    .opt-btn img { width: 35px; height: 35px; object-fit: cover; border-radius: 2px; border: 1px solid #f0f0f0; }
-    .opt-btn span { font-weight: 500; }
 
     /* =========================================
-       5. CHÍNH SÁCH & MODAL BUTTON
-       ========================================= */
-    .btn-show-specs {
-        display: block; width: 100%; padding: 10px; margin-top: 0px; margin-bottom: 15px;
-        background: #fff; border: 1px solid #288ad6; border-radius: 4px;
-        color: #288ad6; font-weight: 500; cursor: pointer; font-size: 13px; text-align: center; transition: 0.2s;
-    }
-    .btn-show-specs:hover { background: #e3f2fd; }
-
-    .mini-specs { background: white; padding: 0; margin-top: 20px; } 
-
-    .policy-box { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-    .policy-item { display: flex; gap: 10px; margin-bottom: 12px; font-size: 13px; color: #333; align-items: flex-start; }
-    .policy-item i { color: #2e7d32; font-size: 16px; margin-top: 2px; min-width: 20px; text-align: center;}
-
-    /* =========================================
-       6. KHUYẾN MÃI & NÚT MUA
+       5. KHUYẾN MÃI & NÚT MUA
        ========================================= */
     .promo-box { border:1px solid #fee2e2; background:#fff1f2; padding:15px; border-radius:8px; margin-bottom:20px; }
     .promo-title { color:#be123c; font-weight:bold; font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
@@ -119,22 +90,59 @@
     .btn-add-cart:hover { background: #fff5f5; }
 
     /* =========================================
-       7. MODAL (SLIDING DRAWER)
+       6. MINI SPECS & MODAL (SLIDING DRAWER)
        ========================================= */
-    .specs-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s; }
+    .mini-specs { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 20px; }
+    .mini-specs ul { padding: 0; margin: 0; list-style: none; }
+    .mini-specs li { display: flex; margin-bottom: 8px; font-size: 13px; border-bottom: 1px solid #f1f1f1; padding-bottom: 8px; }
+    .mini-specs li:last-child { border-bottom: none; }
+    .mini-specs li strong { width: 130px; min-width: 130px; color: #555; font-weight: 500; }
+    .mini-specs li span { color: #333; }
+
+    .btn-show-specs {
+        display: block; width: 100%; padding: 10px; margin-top: 10px;
+        background: white; border: 1px solid #ddd; border-radius: 4px;
+        color: #333; font-weight: 500; cursor: pointer; transition: 0.2s;
+        text-align: center; font-size: 13px;
+    }
+    .btn-show-specs:hover { background: #f9f9f9; border-color: #999; color: #cd1818; }
+
+    /* Modal CSS */
+    .specs-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 9999;
+        opacity: 0; visibility: hidden; transition: 0.3s;
+    }
     .specs-overlay.active { opacity: 1; visibility: visible; }
-    .specs-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 600px; max-width: 90%; background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column; }
+
+    .specs-panel {
+        position: absolute; top: 0; right: 0; bottom: 0;
+        width: 600px; max-width: 90%;
+        background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex; flex-direction: column;
+    }
     .specs-overlay.active .specs-panel { transform: translateX(0); }
+
     .sp-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; background: #fff; }
     .sp-title { font-weight: bold; font-size: 18px; color: #333; }
     .btn-close-specs { background: none; border: none; font-size: 28px; color: #999; cursor: pointer; line-height: 1; }
-    .sp-tabs { display: flex; gap: 20px; overflow-x: auto; padding: 0 20px; border-bottom: 1px solid #eee; background: #fff; scroll-behavior: smooth; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    
+    .sp-tabs {
+        display: flex; gap: 20px; overflow-x: auto; padding: 0 20px;
+        border-bottom: 1px solid #eee; background: #fff; scroll-behavior: smooth;
+        white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
     .sp-tabs::-webkit-scrollbar { height: 0px; }
-    .sp-tab-item { font-size: 14px; color: #666; cursor: pointer; padding: 12px 0; border-bottom: 3px solid transparent; font-weight: 500; }
+    .sp-tab-item {
+        font-size: 14px; color: #666; cursor: pointer; padding: 12px 0; border-bottom: 3px solid transparent; font-weight: 500;
+    }
     .sp-tab-item.active { color: #cd1818; border-color: #cd1818; }
+
     .sp-body { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; background: #fff; }
     .sp-group { margin-bottom: 30px; scroll-margin-top: 10px; }
     .sp-group-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid #cd1818; }
+    
     .sp-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
     .sp-row:last-child { border-bottom: none; }
     .sp-label { width: 40%; color: #666; padding-right: 15px; }
@@ -150,42 +158,37 @@
 <div class="detail-container">
     <div class="col-left">
         <div class="main-image-box">
-            <button class="slider-nav prev-btn" onclick="prevImage()">&#10094;</button>
-            <button class="slider-nav next-btn" onclick="nextImage()">&#10095;</button>
-            
             <img id="main-img" src="<?= $product['thumbnail'] ?>" alt="<?= $product['name'] ?>">
         </div>
         
         <div class="thumb-list">
-            <img src="<?= $product['thumbnail'] ?>" class="thumb-item active" onclick="jumpToImage(0)">
-            
+            <img src="<?= $product['thumbnail'] ?>" class="thumb-item active" onclick="changeImage(this.src)">
             <?php if(!empty($gallery)): ?>
-                <?php $idx = 1; foreach($gallery as $img): ?>
-                    <img src="<?= $img['image_url'] ?>" class="thumb-item" onclick="jumpToImage(<?= $idx++ ?>)">
+                <?php foreach($gallery as $img): ?>
+                    <img src="<?= $img['image_url'] ?>" class="thumb-item" onclick="changeImage(this.src)">
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
 
         <?php if(!empty($specs)): ?>
         <div class="mini-specs">
+            <h4 style="margin: 0 0 15px 0; font-size: 16px;">Thông số kỹ thuật</h4>
+            <ul>
+                <?php 
+                $count = 0;
+                foreach($specs as $group) {
+                    if(isset($group['items'])) {
+                        foreach($group['items'] as $item) {
+                            if($count++ > 4) break 2; // Chỉ hiện 5 dòng đầu
+                            echo "<li><strong>{$item['name']}:</strong> <span>{$item['value']}</span></li>";
+                        }
+                    }
+                }
+                ?>
+            </ul>
             <button type="button" class="btn-show-specs" onclick="openSpecs()">
-                Xem chi tiết thông số kỹ thuật
+                Xem cấu hình chi tiết <i class="fa fa-chevron-right" style="font-size: 10px; margin-left: 5px;"></i>
             </button>
-        </div>
-        
-        <div class="policy-box">
-            <div class="policy-item">
-                <i class="fa fa-check-circle"></i>
-                <div>Hàng chính hãng - Bảo hành 12 Tháng</div>
-            </div>
-            <div class="policy-item">
-                <i class="fa fa-shipping-fast"></i>
-                <div>Giao hàng toàn quốc</div>
-            </div>
-            <div class="policy-item">
-                <i class="fa fa-undo"></i>
-                <div>Hư gì đổi nấy 12 tháng tại 3000 siêu thị</div>
-            </div>
         </div>
         <?php endif; ?>
     </div>
@@ -211,16 +214,9 @@
                         <span class="variant-name"><?= htmlspecialchars($groupName) ?></span>
                         <div class="variant-options">
                             <?php foreach($options as $valText => $info): ?>
-                                <?php 
-                                    $isColor = (stripos($groupName, 'màu') !== false || stripos($groupName, 'color') !== false);
-                                    $hasImg  = $isColor && !empty($info['thumbnail']);
-                                ?>
                                 <a href="index.php?module=client&controller=product&action=detail&id=<?= $info['product_id'] ?>" 
-                                   class="opt-btn <?= $info['active'] ? 'active' : '' ?> <?= $hasImg ? 'has-img' : '' ?>">
-                                    <?php if($hasImg): ?>
-                                        <img src="<?= $info['thumbnail'] ?>" alt="<?= htmlspecialchars($valText) ?>">
-                                    <?php endif; ?>
-                                    <span><?= htmlspecialchars($valText) ?></span>
+                                   class="opt-btn <?= $info['active'] ? 'active' : '' ?>">
+                                    <?= htmlspecialchars($valText) ?>
                                 </a>
                             <?php endforeach; ?>
                         </div>
@@ -242,11 +238,13 @@
         <form method="POST" action="index.php?module=client&controller=cart&action=add">
             <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
             <input type="hidden" name="quantity" value="1">
+            
             <div class="action-box">
                 <button type="submit" name="buy_now" value="1" class="btn-buy-now">
                     MUA NGAY
                     <span>(Giao tận nơi hoặc nhận tại cửa hàng)</span>
                 </button>
+
                 <button type="submit" name="add_to_cart" value="1" class="btn-add-cart" title="Thêm vào giỏ hàng">
                     <i class="fa fa-cart-plus"></i>
                     <span>Thêm giỏ</span>
@@ -258,6 +256,7 @@
 
 <div id="specs-modal" class="specs-overlay" onclick="closeSpecs(event)">
     <div class="specs-panel" onclick="event.stopPropagation()">
+        
         <div class="sp-header">
             <div style="display:flex; align-items:center; gap:15px;">
                 <img src="<?= $product['thumbnail'] ?>" style="width:40px; height:40px; object-fit:contain;">
@@ -265,6 +264,7 @@
             </div>
             <button class="btn-close-specs" onclick="closeSpecs()">×</button>
         </div>
+
         <div class="sp-tabs">
             <?php foreach($specs as $index => $group): ?>
                 <div class="sp-tab-item" onclick="scrollToGroup('group-<?= $index ?>', this)">
@@ -272,6 +272,7 @@
                 </div>
             <?php endforeach; ?>
         </div>
+
         <div class="sp-body" id="sp-body-container">
             <?php foreach($specs as $index => $group): ?>
                 <div id="group-<?= $index ?>" class="sp-group">
@@ -291,51 +292,12 @@
 </div>
 
 <script>
-    // --- JS XỬ LÝ SLIDER ẢNH ---
-    // 1. Tạo mảng chứa toàn bộ ảnh (Thumbnail + Gallery)
-    const images = [
-        "<?= $product['thumbnail'] ?>" 
-        <?php if(!empty($gallery)): ?>
-            <?php foreach($gallery as $img): echo ', "' . $img['image_url'] . '"'; endforeach; ?>
-        <?php endif; ?>
-    ];
-
-    let currentIndex = 0;
-
-    // Hàm cập nhật ảnh hiển thị
-    function updateMainImage() {
-        // Cập nhật src ảnh lớn
-        document.getElementById('main-img').src = images[currentIndex];
-        
-        // Cập nhật trạng thái active cho thumbnails
-        const thumbs = document.querySelectorAll('.thumb-item');
-        thumbs.forEach((el, idx) => {
-            if(idx === currentIndex) el.classList.add('active');
-            else el.classList.remove('active');
-        });
+    function changeImage(src) {
+        document.getElementById('main-img').src = src;
+        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
     }
 
-    // Nút Next
-    function nextImage() {
-        currentIndex++;
-        if(currentIndex >= images.length) currentIndex = 0; // Quay về đầu
-        updateMainImage();
-    }
-
-    // Nút Prev
-    function prevImage() {
-        currentIndex--;
-        if(currentIndex < 0) currentIndex = images.length - 1; // Quay về cuối
-        updateMainImage();
-    }
-
-    // Click vào thumbnail
-    function jumpToImage(index) {
-        currentIndex = index;
-        updateMainImage();
-    }
-
-    // --- JS XỬ LÝ MODAL (GIỮ NGUYÊN) ---
     function openSpecs() {
         document.getElementById('specs-modal').classList.add('active');
         document.body.style.overflow = 'hidden'; 
@@ -355,4 +317,70 @@
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script>
+    $(document).ready(function() {
+        // Bắt sự kiện click nút "Thêm giỏ" (Class .btn-add-cart)
+        $('.btn-add-cart').click(function(e) {
+            e.preventDefault(); // 1. Chặn việc load lại trang
+
+            // 2. Lấy dữ liệu từ form
+            var form = $(this).closest('form');
+            var productId = form.find('input[name="product_id"]').val();
+            var quantity = 1; // Mặc định là 1 (vì nút thêm giỏ ko có ô nhập số lượng riêng ở layout này)
+            
+            // Nếu muốn lấy số lượng chính xác thì dùng dòng dưới (nếu layout có ô input quantity)
+            // var quantity = form.find('input[name="quantity"]').val();
+
+            // 3. Gửi Ajax
+            $.ajax({
+                url: 'index.php?module=client&controller=cart&action=addAjax',
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    product_id: productId,
+                    quantity: quantity
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // A. Cập nhật số lượng trên Header
+                        var cartBadge = $('#cart-total-count');
+                        cartBadge.text(response.totalQty);
+                        cartBadge.show(); // Hiện lên nếu đang bị ẩn
+
+                        // B. Hiệu ứng bay hoặc thông báo nhỏ (Toast)
+                        showToast('✅ Đã thêm vào giỏ hàng thành công!');
+                        
+                        // C. Hiệu ứng rung nhẹ icon giỏ hàng cho đẹp
+                        $('.fa-shopping-cart').addClass('fa-bounce');
+                        setTimeout(function(){ 
+                            $('.fa-shopping-cart').removeClass('fa-bounce'); 
+                        }, 1000);
+
+                    } else {
+                        alert('❌ ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Lỗi hệ thống! Vui lòng thử lại.');
+                }
+            });
+        });
+
+        // Hàm hiển thị thông báo góc màn hình (Toast Message)
+        function showToast(message) {
+            // Tạo thẻ div thông báo
+            var toast = $('<div style="position:fixed; top:80px; right:20px; background:#28a745; color:white; padding:15px 25px; border-radius:5px; box-shadow:0 5px 15px rgba(0,0,0,0.2); z-index:9999; animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;">' + message + '</div>');
+            
+            $('body').append(toast);
+            
+            // Tự xóa sau 3 giây
+            setTimeout(function() {
+                toast.remove();
+            }, 3000);
+        }
+        
+        // CSS Animation cho Toast
+        $('<style>@keyframes fadeIn {from {opacity:0; transform:translateX(20px);} to {opacity:1; transform:translateX(0);}} @keyframes fadeOut {from {opacity:1;} to {opacity:0;}}</style>').appendTo('head');
+    });
 </script>

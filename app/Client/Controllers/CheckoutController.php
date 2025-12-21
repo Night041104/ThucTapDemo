@@ -14,6 +14,7 @@ class CheckoutController {
 
     // 1. HIỂN THỊ FORM THANH TOÁN
    // 1. HIỂN THỊ FORM THANH TOÁN (Đã sửa: Tính thêm mã giảm giá)
+    // 1. HIỂN THỊ FORM THANH TOÁN (ĐÃ FIX LỖI ARRAY KEY)
     public function index() {
         // Kiểm tra giỏ hàng
         if (empty($_SESSION['cart'])) {
@@ -26,12 +27,19 @@ class CheckoutController {
         $products = $this->productModel->getProductsByIds($cartIds);
         
         $totalMoney = 0;
-        foreach ($products as $id => $p) {
-            $qty = $_SESSION['cart'][$id];
-            $totalMoney += $p['price'] * $qty;
+        
+        // [ĐOẠN SỬA LỖI Ở ĐÂY]
+        // Không dùng $key => $p vì $key chỉ là số thứ tự 0,1,2...
+        foreach ($products as $p) {
+            $realId = $p['id']; // Lấy ID thật từ dữ liệu sản phẩm
+            
+            if (isset($_SESSION['cart'][$realId])) {
+                $qty = $_SESSION['cart'][$realId];
+                $totalMoney += $p['price'] * $qty;
+            }
         }
 
-        // [MỚI] Xử lý hiển thị giảm giá nếu có Coupon
+        // Xử lý hiển thị giảm giá nếu có Coupon
         $discountMoney = 0;
         if (isset($_SESSION['coupon'])) {
             $discountMoney = $_SESSION['coupon']['discount_amount'];
@@ -41,7 +49,7 @@ class CheckoutController {
         $finalTotal = $totalMoney - $discountMoney;
         if ($finalTotal < 0) $finalTotal = 0;
 
-        // Xử lý thông tin User (như cũ)
+        // Xử lý thông tin User
         $user = [];
         if (isset($_SESSION['user'])) {
             $u = $_SESSION['user'];

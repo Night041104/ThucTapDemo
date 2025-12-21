@@ -334,5 +334,26 @@ class ProductModel extends BaseModel {
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
+    // [QUAN TRỌNG] HÀM MỚI DÙNG CHO GIỎ HÀNG & THANH TOÁN
+    // Lấy thông tin nhiều sản phẩm theo danh sách ID
+    public function getProductsByIds($arrIds) {
+        if (empty($arrIds)) return [];
+        
+        // 1. Lọc dữ liệu ID cho an toàn (chỉ lấy số)
+        $ids = array_map('intval', $arrIds);
+        $ids = array_filter($ids); // Bỏ số 0
+        if(empty($ids)) return [];
+
+        $strIds = implode(',', $ids);
+        
+        // 2. Lấy các cột cần thiết cho giỏ hàng
+        // Lưu ý: Lấy thêm 'thumbnail' và 'slug' để hiển thị đẹp hơn
+        $sql = "SELECT id, name, sku, slug, price, quantity, thumbnail 
+                FROM products 
+                WHERE id IN ($strIds)";
+                
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
 }
 ?>
