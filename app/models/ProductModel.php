@@ -299,5 +299,41 @@ class ProductModel extends BaseModel {
         }
         return $ids;
     }
+    // [CLIENT] Lấy danh sách các sản phẩm cùng gia đình (Cha + Con) để hiển thị nút chọn biến thể
+    public function getProductFamily($masterId) {
+        $masterId = $this->escape($masterId);
+        // Lấy ID, Tên, Giá, Thumbnail, Specs, Slug của cả cha lẫn con
+        $sql = "SELECT id, name, slug, price, market_price, thumbnail, specs_json, parent_id 
+                FROM products 
+                WHERE (id = '$masterId' OR parent_id = '$masterId') AND status = 1 
+                ORDER BY price ASC"; // Sắp xếp theo giá tăng dần
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+    // [CLIENT] Lấy bản đồ biến thể của cả gia đình sản phẩm (Dùng để gom nhóm nút bấm)
+    public function getFamilyVariantMap($masterId) {
+        $masterId = $this->escape($masterId);
+        
+        // Query này lấy ra: ProductID nào sở hữu Attribute nào và Giá trị là gì
+        // Chỉ lấy những thuộc tính là biến thể (is_variant = 1)
+        // Ưu tiên lấy giá trị từ bảng options, nếu không có thì lấy value_custom
+        $sql = "SELECT 
+                    p.id as product_id,
+                    p.price,
+                    pav.attribute_id,
+                    a.name as attribute_name,
+                    COALESCE(ao.value, pav.value_custom) as attribute_value
+                FROM products p
+                JOIN product_attribute_values pav ON p.id = pav.product_id
+                JOIN attributes a ON pav.attribute_id = a.id
+                LEFT JOIN attribute_options ao ON pav.option_id = ao.id
+                WHERE (p.id = '$masterId' OR p.parent_id = '$masterId') 
+                AND p.status = 1 
+                AND a.is_variant = 1
+                ORDER BY a.id ASC, p.price ASC";
+
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
 }
 ?>

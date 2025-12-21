@@ -98,7 +98,7 @@
             <?php if(!empty($products)): ?>
                 <div class="products-grid">
                     <?php foreach($products as $p): ?>
-                        <a href="#" class="product-card">
+                        <a href="index.php?module=client&controller=product&action=detail&id=<?= $p['id'] ?>" class="product-card">
                             <img src="<?= $p['thumbnail'] ?>" class="prod-img" alt="<?= htmlspecialchars($p['name']) ?>">
                             
                             <div class="prod-brand-tag"><?= htmlspecialchars($p['brand_name'] ?? '') ?></div>
