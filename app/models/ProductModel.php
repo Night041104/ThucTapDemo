@@ -246,5 +246,36 @@ class ProductModel extends BaseModel {
         $rs = $this->_query($sql);
         return mysqli_num_rows($rs) > 0;
     }
+    /**
+     * [BỔ SUNG] Hàm lấy thông tin nhiều sản phẩm theo danh sách ID
+     * Dùng để hiển thị Giỏ hàng và tính tiền
+     */
+    public function getProductsByIds($arrIds) {
+        if (empty($arrIds)) return [];
+        
+        // Chuyển mảng ID thành chuỗi an toàn (VD: 105,107)
+        $ids = implode(',', array_map('intval', $arrIds));
+        
+        // Query có xử lý lấy ảnh thumbnail: Ưu tiên ảnh con, nếu không có lấy ảnh cha
+        $sql = "SELECT p.id, p.name, p.sku, p.price, p.quantity,
+                       COALESCE(NULLIF(p.thumbnail, ''), p2.thumbnail) as thumbnail
+                FROM products p
+                LEFT JOIN products p2 ON p.parent_id = p2.id
+                WHERE p.id IN ($ids)";
+                
+        $result = $this->_query($sql);
+        
+        $data = [];
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                // Nếu vẫn không có ảnh thì dùng ảnh mặc định
+                if (empty($row['thumbnail'])) {
+                    $row['thumbnail'] = 'public/images/no-image.png'; 
+                }
+                $data[$row['id']] = $row;
+            }
+        }
+        return $data;
+    }
 }
 ?>

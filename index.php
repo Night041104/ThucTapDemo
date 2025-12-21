@@ -1,4 +1,5 @@
 <?php
+session_start();
 // FILE: index.php (Tại thư mục gốc)
 
 // 1. Lấy tham số từ URL
