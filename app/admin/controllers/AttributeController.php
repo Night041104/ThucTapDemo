@@ -94,48 +94,5 @@ class AttributeController {
         header("Location: index.php?module=admin&controller=attribute&action=index&msg=deleted");
         exit;
     }
-    // [CLIENT] Lấy các thuộc tính dùng để lọc (Sidebar)
-    public function getFiltersByCateForClient($cateId) {
-        $cateId = $this->escape($cateId);
-
-        // A. Lấy tên thuộc tính (RAM, ROM...) có xuất hiện trong danh mục này
-        // Chỉ lấy những thuộc tính được đánh dấu là biến thể (is_variant = 1)
-        $sqlAttrs = "SELECT DISTINCT a.id, a.name, a.code 
-                     FROM attributes a
-                     JOIN product_attribute_values pav ON a.id = pav.attribute_id
-                     JOIN products p ON pav.product_id = p.id
-                     WHERE p.category_id = '$cateId' 
-                     AND p.status = 1 
-                     AND a.is_variant = 1 
-                     ORDER BY a.id ASC";
-        
-        $rsAttrs = $this->_query($sqlAttrs);
-        $attributes = $rsAttrs ? mysqli_fetch_all($rsAttrs, MYSQLI_ASSOC) : [];
-
-        // B. Lấy các giá trị (Options) thực tế cho từng thuộc tính
-        foreach ($attributes as &$attr) {
-            $attrId = $attr['id'];
-            $sqlOpts = "SELECT DISTINCT pav.value_text, pav.value_id, ao.value as option_value
-                        FROM product_attribute_values pav
-                        JOIN products p ON pav.product_id = p.id
-                        LEFT JOIN attribute_options ao ON pav.value_id = ao.id
-                        WHERE p.category_id = '$cateId' 
-                        AND p.status = 1
-                        AND pav.attribute_id = '$attrId'
-                        ORDER BY ao.id ASC, pav.value_text ASC";
-            
-            $rsOpts = $this->_query($sqlOpts);
-            $options = [];
-            while($row = mysqli_fetch_assoc($rsOpts)) {
-                $val = !empty($row['option_value']) ? $row['option_value'] : $row['value_text'];
-                if(!in_array($val, $options) && !empty($val)) {
-                    $options[] = $val;
-                }
-            }
-            $attr['filter_options'] = $options;
-        }
-
-        return $attributes;
-    }
 }
 ?>
