@@ -70,6 +70,7 @@ class ProductController {
                                 if (!isset($pAttrs[$curAttrId]) || $pAttrs[$curAttrId] != $curVal) {
                                     $matchAll = false;
                                     break;
+                                    
                                 }
                             }
                         }
@@ -82,12 +83,16 @@ class ProductController {
                 }
                 // --- KẾT THÚC LOGIC TÌM ---
 
+                // ... (Các logic tìm targetId ở trên giữ nguyên) ...
+
                 // Xác định xem nút này có phải là nút đang active (của sản phẩm hiện tại) ko
                 $isActive = (isset($currentProductAttrs[$attrId]) && $currentProductAttrs[$attrId] == $val);
 
+                // [CẬP NHẬT] Thêm thumbnail và price vào mảng dữ liệu
                 $variantGroups[$attrName][$val] = [
                     'product_id' => $targetId,
-                    'active'     => $isActive
+                    'active'     => $isActive,
+                    'thumbnail'  => $row['thumbnail'] ?? '' // Lấy ảnh từ Model (bạn đã thêm cột này)
                 ];
             }
         }

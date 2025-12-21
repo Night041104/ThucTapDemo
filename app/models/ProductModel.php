@@ -311,15 +311,14 @@ class ProductModel extends BaseModel {
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
     // [CLIENT] Lấy bản đồ biến thể của cả gia đình sản phẩm (Dùng để gom nhóm nút bấm)
+    // [CLIENT] Lấy bản đồ biến thể (Đã thêm p.thumbnail để hiển thị ảnh trong nút chọn màu)
     public function getFamilyVariantMap($masterId) {
         $masterId = $this->escape($masterId);
         
-        // Query này lấy ra: ProductID nào sở hữu Attribute nào và Giá trị là gì
-        // Chỉ lấy những thuộc tính là biến thể (is_variant = 1)
-        // Ưu tiên lấy giá trị từ bảng options, nếu không có thì lấy value_custom
         $sql = "SELECT 
                     p.id as product_id,
                     p.price,
+                    p.thumbnail,  -- [MỚI] Thêm cột này
                     pav.attribute_id,
                     a.name as attribute_name,
                     COALESCE(ao.value, pav.value_custom) as attribute_value
