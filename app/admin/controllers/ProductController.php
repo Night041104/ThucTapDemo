@@ -157,12 +157,10 @@ class ProductController {
         $rowProd = $this->prodModel->getById($id);
         if (!$rowProd) die("Không tìm thấy sản phẩm");
 
-        // ... (Giữ nguyên các đoạn code lấy category, brand, gallery cũ) ...
         $categories = $this->cateModel->getAll();
         $brands = $this->brandModel->getByCategoryId($rowProd['category_id']);
         $gallery = $this->prodModel->getGallery($id);
         
-        // ... (Giữ nguyên đoạn template) ...
         $cate = $this->cateModel->getById($rowProd['category_id']);
         $catTemplate = ($cate && $cate['spec_template']) ? json_decode($cate['spec_template'], true) : [];
 
@@ -172,8 +170,6 @@ class ProductController {
         $allAttributeOptions = $this->attrModel->getAllOptionsGrouped();
         $currentSpecs = json_decode($rowProd['specs_json'], true) ?? [];
 
-        // [MỚI - QUAN TRỌNG] Lấy danh sách ID đã chọn (để map vào dropdown)
-        // Mảng dạng: [attribute_id => option_id]
         $eavRaw = $this->prodModel->getAttributeValues($id);
         $selectedOptions = [];
         foreach($eavRaw as $e) {
@@ -189,19 +185,6 @@ class ProductController {
             $oldProd = $this->prodModel->getById($id);
 
             $nameRaw = trim($_POST['name']);
-            // //Validate  dữ liệu đầu vào
-            // $error =  null;
-            // if(empty($nameRaw)) {
-            //     $error = "❌ Tên sản phẩm không được để trống!";
-            // } elseif (empty($_FILES['thumbnail']['name'])) {
-            //     $error = "❌ Thiếu ảnh Thumbnail";
-            // } elseif  (empty($_FILES['gallery']['name'][0])){
-            //     $error = "❌ Bắt buộc phải có ít nhất một ảnh Gallery";
-            // }
-            // if($error){
-            //     header("Location: index.php?module=admin&controller=product&action=create&cate_id=".$_POST['cate_id']."&msg=".urlencode($error));
-            //     exit;
-            // }
             $finalSlug = $oldProd['slug'];
             
             if ($nameRaw !== $oldProd['name']) {
@@ -212,23 +195,17 @@ class ProductController {
                 }
             }
 
-            // Upload Thumbnail (Xóa cũ nếu có mới)
+            // [SỬA LỖI]: Không dùng unlink ở đây. Chỉ upload ảnh mới.
             $thumbnailPath = $oldProd['thumbnail'];
             if (!empty($_FILES['thumbnail']['name'])) {
-                if (!empty($oldProd['thumbnail']) && file_exists($oldProd['thumbnail'])) {
-                    unlink($oldProd['thumbnail']);
-                }
                 $thumbnailPath = $this->processUpload($_FILES['thumbnail'], $finalSlug, 'thumb');
             }
 
-            // Specs Processing
             $specsData = $this->helperProcessSpecs($_POST);
 
-            // --> KIỂM TRA LỖI TRÙNG <--
             if (isset($specsData['error'])) {
-                // Nếu lỡ up ảnh mới thì xóa đi
                 if (!empty($_FILES['thumbnail']['name']) && file_exists($thumbnailPath)) {
-                    unlink($thumbnailPath);
+                    unlink($thumbnailPath); // Chỉ xóa ảnh MỚI vừa upload nếu có lỗi form
                 }
                 header("Location: index.php?module=admin&controller=product&action=edit&id=$id&msg=" . urlencode("❌ " . $specsData['error']));
                 exit;
@@ -243,7 +220,16 @@ class ProductController {
                 'quantity' => $_POST['quantity'], 'status' => $_POST['status']
             ];
             
+            // 1. Cập nhật DB
             $this->prodModel->update($id, $data);
+
+            // 2. [SỬA LỖI] Dọn dẹp file cũ SAU KHI update DB
+            // Lúc này SP hiện tại đã trỏ sang ảnh mới (hoặc vẫn ảnh cũ)
+            // Nếu đã trỏ sang ảnh mới, ta check xem ảnh cũ ($oldProd['thumbnail']) còn ai dùng ko.
+            // Vì ta đã update DB xong, nên count của ảnh cũ sẽ giảm đi 1. Nếu count = 0 -> Xóa.
+            if (!empty($_FILES['thumbnail']['name']) && !empty($oldProd['thumbnail'])) {
+                $this->prodModel->cleanupFile($oldProd['thumbnail']);
+            }
 
             $this->prodModel->clearAttributes($id);
             foreach ($specsData['eav'] as $eav) {
@@ -251,7 +237,7 @@ class ProductController {
             }
 
             $this->helperUploadGallery($id, $finalSlug);
-            $this->prodModel->syncFamilyData($id, $oldProd['parent_id'], $data);
+            $this->prodModel->syncFamilyData($id, $oldProd['parent_id'], $data, $specsData['eav']);
 
             header("Location: index.php?module=admin&controller=product&action=edit&id=$id&msg=updated");
             exit;
@@ -270,39 +256,54 @@ class ProductController {
     // =======================================================
     // 4. CLONE
     // =======================================================
+    // =======================================================
+    // 4. CLONE (NHÂN BẢN SẢN PHẨM)
+    // =======================================================
+    // =======================================================
+    // 4. CLONE
+    // =======================================================
     public function clone() {
         if (isset($_GET['id'])) {
             $sourceId = $_GET['id'];
             $source = $this->prodModel->getById($sourceId);
 
             if ($source) {
+                // Logic: Clone ra anh em (cùng cha) hoặc con (nếu clone từ cha)
                 $masterId = ($source['parent_id'] == 0 || $source['parent_id'] == NULL) ? $source['id'] : $source['parent_id'];
                 
-                $newName = $source['name'];
+                $newName = $source['name'] . " (Copy)";
                 $newSku = $source['sku'] . "-" . rand(100,999);
                 $newSlug = $this->prodModel->createSlug($newName) . "-" . rand(1000,9999);
 
                 $data = [
-                    'parent_id' => $masterId, 'name' => $newName, 'sku' => $newSku, 'slug' => $newSlug,
-                    'category_id' => $source['category_id'], 'brand_id' => $source['brand_id'],
-                    'thumbnail' => $source['thumbnail'], 'specs_json' => $source['specs_json'],
-                    'price' => (int)$source['price'], 'market_price' => (int)$source['market_price'],
-                    'quantity' => 0, 'status' => 0
+                    'parent_id' => $masterId, 
+                    'name' => $newName, 
+                    'sku' => $newSku, 
+                    'slug' => $newSlug,
+                    'category_id' => $source['category_id'], 
+                    'brand_id' => $source['brand_id'],
+                    'thumbnail' => $source['thumbnail'], // Kế thừa Thumbnail
+                    'specs_json' => $source['specs_json'],
+                    'price' => (int)$source['price'], 
+                    'market_price' => (int)$source['market_price'],
+                    'quantity' => 0, 
+                    'status' => 0
                 ];
 
                 $newId = $this->prodModel->create($data);
                 
                 if ($newId) {
-                    // Copy EAV
-                    $conn = Database::getInstance()->conn;
-                    $rsEav = mysqli_query($conn, "SELECT * FROM product_attribute_values WHERE product_id = $sourceId");
-                    while($eav = mysqli_fetch_assoc($rsEav)) {
+                    // 1. Copy EAV
+                    $eavs = $this->prodModel->getAttributeValues($sourceId);
+                    foreach($eavs as $eav) {
                         $this->prodModel->addAttributeValue($newId, $eav['attribute_id'], $eav['option_id'], $eav['value_custom']);
                     }
                     
-                    // Copy Gallery Link
+                    // 2. Copy Gallery (KẾ THỪA ẢNH TỪ NGUỒN)
+                    // Lấy toàn bộ ảnh của sản phẩm nguồn
                     $rsGal = $this->prodModel->getGallery($sourceId);
                     foreach($rsGal as $img) {
+                        // Thêm dòng mới vào DB cho sản phẩm mới, dùng chung URL ảnh
                         $this->prodModel->addImage($newId, $img['image_url']);
                     }
 
@@ -312,7 +313,6 @@ class ProductController {
             }
         }
     }
-
     // =======================================================
     // HELPERS
     // =======================================================
