@@ -26,6 +26,54 @@
     <h1 style="color:#1565c0">📦 QUẢN LÝ ĐƠN HÀNG</h1>
 
     <div class="table-box">
+        <div style="margin-bottom: 20px; background: white; padding: 20px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <form action="index.php" method="GET" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+        
+        <input type="hidden" name="module" value="admin">
+        <input type="hidden" name="controller" value="order">
+        <input type="hidden" name="action" value="index">
+
+        <div style="flex: 2; min-width: 250px;">
+            <input type="text" name="keyword" 
+                   value="<?= isset($keyword) ? htmlspecialchars($keyword) : '' ?>" 
+                   placeholder="Nhập mã đơn, tên khách, số điện thoại..." 
+                   style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+
+        <div style="flex: 1; min-width: 150px;">
+            <select name="status" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="1" <?= (isset($status) && $status == '1') ? 'selected' : '' ?>>Chờ xác nhận</option>
+                <option value="2" <?= (isset($status) && $status == '2') ? 'selected' : '' ?>>Đã thanh toán / Xác nhận</option>
+                <option value="3" <?= (isset($status) && $status == '3') ? 'selected' : '' ?>>Đang giao hàng</option>
+                <option value="4" <?= (isset($status) && $status == '4') ? 'selected' : '' ?>>Hoàn thành</option>
+                <option value="5" <?= (isset($status) && $status == '5') ? 'selected' : '' ?>>Đã hủy</option>
+            </select>
+        </div>
+
+        <div style="flex: 1; min-width: 150px;">
+            <select name="payment" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">
+                <option value="">-- Tất cả PTTT --</option>
+                <option value="COD" <?= (isset($payment) && $payment == 'COD') ? 'selected' : '' ?>>Tiền mặt (COD)</option>
+                <option value="VNPAY" <?= (isset($payment) && $payment == 'VNPAY') ? 'selected' : '' ?>>Ví điện tử (VNPAY)</option>
+            </select>
+        </div>
+
+        <div>
+            <button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                <i class="fa fa-filter"></i> Lọc đơn
+            </button>
+
+            <?php if (!empty($keyword) || $status !== '' || !empty($payment)): ?>
+                <a href="index.php?module=admin&controller=order&action=index" 
+                   style="padding: 10px 15px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; margin-left: 5px;">
+                   Xóa lọc
+                </a>
+            <?php endif; ?>
+        </div>
+
+    </form>
+</div>
         <table>
             <thead>
                 <tr>

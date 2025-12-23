@@ -158,8 +158,31 @@ class OrderModel extends BaseModel {
     // =================================================================
 
     // Lấy tất cả đơn hàng
-    public function getAllOrders() {
-        $sql = "SELECT * FROM orders ORDER BY created_at DESC";
+   // Lấy tất cả đơn hàng (Có hỗ trợ tìm kiếm theo keyword)
+   // Hàm lấy danh sách đơn hàng (Có Lọc theo Keyword, Trạng thái, Phương thức thanh toán)
+    public function getAllOrders($keyword = '', $status = '', $paymentMethod = '') {
+        $where = "1=1";
+
+        // 1. Lọc theo Keyword (Mã đơn, Tên, SĐT)
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (order_code LIKE '%$kw%' OR fullname LIKE '%$kw%' OR phone LIKE '%$kw%')";
+        }
+
+        // 2. Lọc theo Trạng thái (Nếu có chọn)
+        if ($status !== '') {
+            $st = (int)$status;
+            $where .= " AND status = '$st'";
+        }
+
+        // 3. Lọc theo Phương thức thanh toán (COD/VNPAY)
+        if ($paymentMethod) {
+            $pay = $this->escape($paymentMethod);
+            $where .= " AND payment_method = '$pay'";
+        }
+
+        $sql = "SELECT * FROM orders WHERE $where ORDER BY created_at DESC";
+        
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }

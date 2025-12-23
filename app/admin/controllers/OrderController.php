@@ -11,10 +11,17 @@ class OrderController {
 
     // 1. Danh sách đơn hàng
     public function index() {
-        $orders = $this->orderModel->getAllOrders();
-        require __DIR__ . '/../Views/order/index.php';
-    }
+        // 1. Lấy các tham số lọc từ URL
+        $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+        $status  = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : ''; // Chặn null
+        $payment = isset($_GET['payment']) ? $_GET['payment'] : '';
 
+        // 2. Gọi Model (Truyền đủ 3 tham số)
+        $orders = $this->orderModel->getAllOrders($keyword, $status, $payment);
+
+        // 3. Truyền biến ra View
+        require_once __DIR__ . '/../Views/order/index.php';
+    }
     // 2. Xem chi tiết đơn
     public function detail() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
