@@ -404,5 +404,30 @@ class ProductModel extends BaseModel {
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
+
+    // Tìm kiếm
+    public function searchProducts($keyword) {
+    $kw = $this->escape($keyword);
+    $where = "p.status = 1 AND (p.parent_id IS NULL OR p.parent_id = 0)";
+    
+    if ($kw != '') {
+        $where .= " AND p.name LIKE '%$kw%'";
+    }
+
+    $sql = "SELECT p.*, c.name as cate_name 
+            FROM products p 
+            LEFT JOIN categories c ON p.category_id = c.id 
+            WHERE $where 
+            ORDER BY 
+                CASE 
+                    WHEN p.name LIKE '$kw%' THEN 1  -- Bắt đầu bằng từ khóa: Ưu tiên 1
+                    WHEN p.name LIKE '% $kw%' THEN 2 -- Có chứa từ khóa đứng sau khoảng trắng: Ưu tiên 2
+                    ELSE 3                           -- Chứa từ khóa ở giữa từ (như bluetooth): Ưu tiên 3
+                END ASC, 
+                p.id DESC";
+            
+    $result = $this->_query($sql);
+    return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
 }
 ?>

@@ -72,7 +72,8 @@ $userName = $isLoggedIn ? ($_SESSION['user']['lname'] ?? 'Bạn') : '';
                 <form action="index.php" method="GET" style="display: flex; width: 100%;">
                     <input type="hidden" name="module" value="client">
                     <input type="hidden" name="controller" value="product">
-                    <input type="hidden" name="action" value="index">
+                    <!-- <input type="hidden" name="action" value="index"> -->
+                    <input type="hidden" name="action" value="search">
                     <button type="submit"><i class="fa fa-search"></i></button>
                     <input type="text" name="keyword" placeholder="Bạn muốn tìm gì hôm nay?">
                 </form>

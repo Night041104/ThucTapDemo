@@ -7,7 +7,7 @@
             $username = 'root';
             $password = '';
             $dbname = 'shop_mobile_test';
-            $this->conn = new  mysqli($hostname,$username,$password,$dbname,3307);
+            $this->conn = new  mysqli($hostname,$username,$password,$dbname,3306);
             if($this->conn->connect_error){
                 die("Kết nốt tới sql thất bại: " .$this->conn->connect_error);
             }

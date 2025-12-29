@@ -103,5 +103,39 @@ class ProductController {
         require __DIR__ . '/../views/header.php';
         require __DIR__ . '/../views/product/detail.php';
     }
+    public function search() {
+    // Lấy 'keyword' thay vì 'q' cho khớp với header.php
+    $keyword = $_GET['keyword'] ?? ''; 
+    $selectedCate = (int)($_GET['cate_id'] ?? 0);
+
+    // 1. Lấy toàn bộ kết quả tìm kiếm từ Model
+    $allResults = $this->prodModel->searchProducts($keyword);
+    // 2. Logic tạo Tab danh mục dựa trên kết quả tìm thấy
+    $categoryTabs = [];
+    foreach ($allResults as $p) {
+        $cId = $p['category_id'];
+        if (!isset($categoryTabs[$cId])) {
+            $categoryTabs[$cId] = [
+                'id' => $cId,
+                'name' => $p['cate_name'], // Tên danh mục lấy từ SQL JOIN
+                'count' => 0
+            ];
+        }
+        $categoryTabs[$cId]['count']++;
+    }
+
+    // 3. Nếu đang chọn 1 Tab cụ thể thì lọc lại danh sách hiển thị
+    $displayProducts = $allResults;
+    if ($selectedCate > 0) {
+        $displayProducts = array_filter($allResults, function($item) use ($selectedCate) {
+            return $item['category_id'] == $selectedCate;
+        });
+    }
+
+    // 4. Load View
+    require __DIR__ . '/../views/header.php';
+    require __DIR__ . '/../views/product/search_results.php';
+}
+
 }
 ?>
