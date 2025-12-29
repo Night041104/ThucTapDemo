@@ -142,14 +142,22 @@
 <div class="page-container">
     <div class="sidebar">
         <div class="user-brief">
-            <?php
-                // Xử lý ảnh đại diện
-                $avt = !empty($user['avatar']) ? $user['avatar'] : 'https://i.imgur.com/6k0s8.png';
-            ?>
-            <img src="<?= htmlspecialchars($avt) ?>" alt="Avatar" onerror="this.src='https://i.imgur.com/6k0s8.png'">
-            <h3><?= htmlspecialchars($user['lname'] . ' ' . $user['fname']) ?></h3>
-            <p><?= htmlspecialchars($user['email']) ?></p>
-        </div>
+    <?php
+        // Khai báo đường dẫn ảnh mặc định
+        // Lưu ý: Nếu thư mục uploads nằm trong public, bạn nên để là 'public/uploads/...'
+        $defaultAvt = 'uploads/default/default_avt.png'; 
+
+        // Xử lý ảnh: Nếu user có ảnh thì dùng, không thì dùng mặc định
+        $avt = !empty($user['avatar']) ? $user['avatar'] : $defaultAvt;
+    ?>
+    
+    <img src="<?= htmlspecialchars($avt) ?>" 
+         alt="Avatar" 
+         onerror="this.src='<?= $defaultAvt ?>'"> 
+         
+    <h3><?= htmlspecialchars($user['lname'] . ' ' . $user['fname']) ?></h3>
+    <p><?= htmlspecialchars($user['email']) ?></p>
+</div>
         
         <div class="sidebar-menu">
             <a href="index.php?controller=account&action=profile" class="menu-item active">
@@ -187,7 +195,7 @@
         <form action="index.php?controller=account&action=update" method="POST" enctype="multipart/form-data">
             
             <div class="avatar-section">
-                <img id="img-preview" src="<?= htmlspecialchars($avt) ?>" class="avatar-preview-lg" onerror="this.src='https://i.imgur.com/6k0s8.png'">
+                <img id="img-preview" src="<?= htmlspecialchars($avt) ?>" class="avatar-preview-lg" onerror="this.src='uploads/default/default_avt.png'">
                 <div>
                     <label style="font-weight: 600; display: block; margin-bottom: 5px;">Ảnh đại diện</label>
                     <label for="file-upload" class="upload-btn">
