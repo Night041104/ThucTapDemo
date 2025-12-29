@@ -259,8 +259,143 @@
         </form>
     <?php endif; ?>
 
+<style>
+        #toast-warning {
+            visibility: hidden; min-width: 350px; background-color: #ff9800; color: #fff;
+            text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 9999;
+            left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+        }
+        #toast-warning.show { visibility: visible; opacity: 1; bottom: 50px; }
+        .input-warning { background-color: #fff3e0 !important; border-color: #ff9800 !important; transition: 0.3s; }
+    </style>
+
+    <div id="toast-warning">
+        <span style="font-size: 20px;">⚠️</span> 
+        <span><b>Cảnh báo:</b> Bạn đang sửa thông tin CHUNG.<br>Thay đổi này sẽ áp dụng cho tất cả sản phẩm cùng loại!</span>
+    </div>
+
     <script>
-        // JS XỬ LÝ ẢNH & SPECS (GIỮ NGUYÊN)
+        document.addEventListener("DOMContentLoaded", function() {
+            // ============================================================
+            // A. KHỞI TẠO DỮ LIỆU
+            // ============================================================
+            // Nhận danh sách ID biến thể từ PHP
+            const variantIds = <?= json_encode($variantIds ?? []) ?>.map(String); 
+            // Kiểm tra xem có đang ở chế độ Edit không (PHP truyền sang)
+            const isEditMode = <?= isset($isEdit) && $isEdit ? 'true' : 'false' ?>;
+
+            // Cờ theo dõi: Đã sửa thông tin chung chưa?
+            let hasSharedChange = false; 
+
+            const toast = document.getElementById("toast-warning");
+            let toastTimeout;
+
+            // ============================================================
+            // B. HÀM HIỂN THỊ CẢNH BÁO (TOAST)
+            // ============================================================
+            function showWarningToast(element) {
+                // Đánh dấu là ĐÃ CÓ thay đổi chung
+                hasSharedChange = true;
+
+                // Highlight ô input
+                if(element) {
+                    element.classList.add('input-warning');
+                    setTimeout(() => element.classList.remove('input-warning'), 2000);
+                }
+
+                // Logic hiện Toast
+                if (toast.classList.contains('show')) {
+                    clearTimeout(toastTimeout);
+                    toast.classList.remove('show');
+                    void toast.offsetWidth; 
+                }
+                toast.classList.add("show");
+                toastTimeout = setTimeout(function(){ toast.classList.remove("show"); }, 4000);
+            }
+
+            // ============================================================
+            // C. LẮNG NGHE SỰ KIỆN THAY ĐỔI
+            // ============================================================
+
+            // 1. Các trường thông tin chung cố định
+            ['name', 'brand_id', 'status'].forEach(fieldName => {
+                const el = document.querySelector(`[name="${fieldName}"]`);
+                if (el) {
+                    el.addEventListener('change', () => showWarningToast(el));
+                    el.addEventListener('input', () => { 
+                        if(!toast.classList.contains('show')) showWarningToast(el); 
+                    });
+                }
+            });
+
+            // 2. Khu vực Thông số kỹ thuật (Shared Specs)
+            const specsContainer = document.getElementById('specs-container');
+            
+            if (specsContainer) {
+                function checkAndWarn(target) {
+                    const rowItem = target.closest('.row-item');
+                    if (!rowItem) return;
+
+                    const attrIdInput = rowItem.querySelector('input[name*="[attr_id]"]');
+                    if (attrIdInput) {
+                        const attrId = attrIdInput.value;
+                        // NẾU là biến thể (Màu, ROM...) -> KHÔNG tính là sửa chung
+                        if (variantIds.includes(attrId)) {
+                            return; 
+                        }
+                    }
+                    // Nếu không phải biến thể -> Báo động
+                    showWarningToast(target);
+                }
+
+                specsContainer.addEventListener('change', function(e) {
+                    if ((e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') && 
+                        e.target.type !== 'hidden' && e.target.type !== 'button') {
+                        checkAndWarn(e.target);
+                    }
+                });
+                
+                specsContainer.addEventListener('input', function(e) {
+                     if (e.target.tagName === 'INPUT' && !toast.classList.contains('show')) {
+                         checkAndWarn(e.target);
+                     }
+                });
+            }
+
+            // ============================================================
+            // D. CHẶN NÚT SUBMIT ĐỂ HỎI LẠI (CONFIRM DIALOG)
+            // ============================================================
+            const productForm = document.querySelector('form');
+            if(productForm) {
+                productForm.addEventListener('submit', function(e) {
+                    // Chỉ hỏi khi: Đang ở chế độ Sửa (Edit) VÀ Có thay đổi thông tin chung
+                    if (isEditMode && hasSharedChange) {
+                        const msg = "⚠️ CẢNH BÁO QUAN TRỌNG:\n\n" +
+                                    "Bạn đã chỉnh sửa các THÔNG TIN CHUNG (Tên, Thương hiệu, Trạng thái hoặc Thông số chung).\n" +
+                                    "Những thay đổi này sẽ được ĐỒNG BỘ cho tất cả các phiên bản khác của dòng sản phẩm này.\n\n" +
+                                    "Bạn có chắc chắn muốn tiếp tục cập nhật không?";
+                        
+                        // Nếu bấm Cancel (No) -> Chặn submit
+                        if (!confirm(msg)) {
+                            e.preventDefault(); 
+                        }
+                    }
+                });
+            }
+
+            // ============================================================
+            // E. CÁC HÀM XỬ LÝ CŨ (GIỮ NGUYÊN)
+            // ============================================================
+            document.querySelectorAll('.money').forEach(inp => {
+                inp.addEventListener('keyup', function() {
+                    let n = parseInt(this.value.replace(/\D/g,''), 10);
+                    this.value = isNaN(n) ? '' : n.toLocaleString('en-US');
+                });
+            });
+        });
+
         function previewThumb(input) {
             const container = document.getElementById('thumb-container');
             const preview = document.getElementById('thumb-preview');
@@ -314,17 +449,20 @@
         }
 
         function removeRow(btn) { btn.parentElement.remove(); }
+        
         function addNewRow(btn, groupIndex) {
-            const html = `<div class="row-item"><button type="button" class="btn-del" onclick="removeRow(this)">✕</button><input type="text" name="spec_item[${groupIndex}][name][]" placeholder="Tên thông số..." style="width:160px" required><input type="hidden" name="spec_item[${groupIndex}][type][]" value="text"><input type="text" name="spec_item[${groupIndex}][value_text][]" style="flex:1" placeholder="Nhập giá trị..." required><input type="hidden" name="spec_item[${groupIndex}][value_id][]" value=""><input type="hidden" name="spec_item[${groupIndex}][value_custom][]" value=""><input type="hidden" name="spec_item[${groupIndex}][attr_id][]" value=""></div>`;
+            const html = `
+                <div class="row-item">
+                    <button type="button" class="btn-del" onclick="removeRow(this)">✕</button>
+                    <input type="text" name="spec_item[${groupIndex}][name][]" placeholder="Tên thông số..." style="width:160px" required>
+                    <input type="hidden" name="spec_item[${groupIndex}][type][]" value="text">
+                    <input type="text" name="spec_item[${groupIndex}][value_text][]" style="flex:1" placeholder="Nhập giá trị..." required>
+                    <input type="hidden" name="spec_item[${groupIndex}][value_id][]" value="">
+                    <input type="hidden" name="spec_item[${groupIndex}][value_custom][]" value="">
+                    <input type="hidden" name="spec_item[${groupIndex}][attr_id][]" value="">
+                </div>`;
             btn.previousElementSibling.insertAdjacentHTML('beforeend', html);
         }
-        
-        document.querySelectorAll('.money').forEach(inp => {
-            inp.addEventListener('keyup', function() {
-                let n = parseInt(this.value.replace(/\D/g,''), 10);
-                this.value = isNaN(n) ? '' : n.toLocaleString('en-US');
-            });
-        });
     </script>
 </body>
 </html>

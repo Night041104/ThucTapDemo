@@ -157,5 +157,11 @@ class AttributeModel extends BaseModel {
 
         return $attributes;
     }
+    // public function getValuesByAttrId($attrId) {
+    //     $attrId = $this->escape($attrId);
+    //     $sql = "SELECT id, value FROM attribute_options WHERE attribute_id = '$attrId' ORDER BY id ASC";
+    //     $result = $this->_query($sql);
+    //     return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    // }
 }
 ?>
