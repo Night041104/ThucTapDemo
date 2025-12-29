@@ -120,3 +120,6 @@ $userName = $isLoggedIn ? ($_SESSION['user']['lname'] ?? 'Bạn') : '';
         </div>
     </div>
 </header>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="public/js/address_auto.js"></script>

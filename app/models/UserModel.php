@@ -91,14 +91,18 @@ class UserModel extends BaseModel {
     }
 
     // 5. [MỚI] CẬP NHẬT THÔNG TIN CÁ NHÂN
-    public function updateProfile($id, $data) {
+   public function updateProfile($id, $data) {
         $id = $this->escape($id);
         $fname = $this->escape($data['fname']);
         $lname = $this->escape($data['lname']);
         $phone = $this->escape($data['phone']);
-        $address = $this->escape($data['street_address']); // Dùng cột street_address
         
-        // Xử lý Avatar: Nếu có file mới thì cập nhật, không thì giữ nguyên
+        // [KIỂM TRA KỸ 4 DÒNG NÀY]
+        $street = $this->escape($data['street_address']);
+        $city = $this->escape($data['city']);
+        $district = $this->escape($data['district']);
+        $ward = $this->escape($data['ward']);
+        
         $avatarSql = "";
         if (!empty($data['avatar'])) {
             $avt = $this->escape($data['avatar']);
@@ -109,7 +113,10 @@ class UserModel extends BaseModel {
                 fname = '$fname', 
                 lname = '$lname', 
                 phone = '$phone', 
-                street_address = '$address' 
+                street_address = '$street', 
+                city = '$city', 
+                district = '$district', 
+                ward = '$ward'
                 $avatarSql
                 WHERE id = '$id'";
         
