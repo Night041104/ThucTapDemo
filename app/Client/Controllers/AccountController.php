@@ -33,53 +33,90 @@ class AccountController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = $_SESSION['user']['id'];
             
-            // Lấy dữ liệu từ Form
+            // 1. LẤY DỮ LIỆU TỪ FORM (Đảm bảo đúng tên name="")
             $fname = trim($_POST['fname']);
             $lname = trim($_POST['lname']);
             $phone = trim($_POST['phone']);
-            $address = trim($_POST['address']);
-            $avatarName = '';
+            
+            // [QUAN TRỌNG] Phải khớp với name="street_address" bên view
+            $street = trim($_POST['street_address']); 
+            
+            // Lấy 3 trường địa chỉ mới
+            $city     = trim($_POST['city']);
+            $district = trim($_POST['district']);
+            $ward     = trim($_POST['ward']);
 
-            // XỬ LÝ UPLOAD ẢNH (Avatar)
+           // 1. MẶC ĐỊNH KHÔNG CÓ ẢNH MỚI
+            $avatarName = ''; 
+
+            // 2. XỬ LÝ UPLOAD ẢNH
             if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] == 0) {
-                $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+                $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp']; // Thêm webp
                 $fileName = $_FILES['avatar']['name'];
-                $fileTmp = $_FILES['avatar']['tmp_name'];
+                $fileTmp  = $_FILES['avatar']['tmp_name'];
+                
+                // Lấy đuôi file
                 $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
                 if (in_array($fileExt, $allowed)) {
-                    // Tạo tên file mới để tránh trùng: avatar_USERID_TIMESTAMP.jpg
+                    // Đặt tên file mới: avatar_ID_TIMESTAMP.jpg
                     $newFileName = "avatar_" . $userId . "_" . time() . "." . $fileExt;
                     
-                    // Đường dẫn lưu file (Tạo thư mục public/uploads/avatars nếu chưa có)
-                    $uploadPath = __DIR__ . '/../../../../public/uploads/avatars/' . $newFileName;
+                    // Đường dẫn thư mục (Tuyệt đối)
+                    $targetDir = __DIR__ . '/../../../../uploads/avatars/';
                     
-                    if (move_uploaded_file($fileTmp, $uploadPath)) {
-                        $avatarName = 'public/uploads/avatars/' . $newFileName;
-                        
-                        // Cập nhật lại Session Avatar ngay lập tức
-                        $_SESSION['user']['avatar'] = $avatarName; 
+                    // [QUAN TRỌNG] Kiểm tra xem thư mục có tồn tại không, nếu không thì tạo
+                    if (!is_dir($targetDir)) {
+                        mkdir($targetDir, 0777, true);
                     }
+
+                    $targetFile = $targetDir . $newFileName;
+                    
+                    // Di chuyển file
+                    if (move_uploaded_file($fileTmp, $targetFile)) {
+                        // Lưu đường dẫn tương đối vào DB (để hiển thị trên web)
+                        $avatarName = '/uploads/avatars/' . $newFileName;
+                        
+                        // Cập nhật luôn vào Session để thấy ngay
+                        $_SESSION['user']['avatar'] = $avatarName; 
+                    } else {
+                        // Debug lỗi nếu không di chuyển được
+                        $_SESSION['error'] = "Không thể lưu file ảnh. Kiểm tra quyền ghi thư mục!";
+                        header("Location: index.php?controller=account&action=profile");
+                        exit;
+                    }
+                } else {
+                    $_SESSION['error'] = "Chỉ chấp nhận file ảnh (JPG, PNG, GIF)!";
+                    header("Location: index.php?controller=account&action=profile");
+                    exit;
                 }
             }
 
-            // Gọi Model cập nhật
+            // 2. GỌI MODEL CẬP NHẬT
             $data = [
                 'fname' => $fname,
                 'lname' => $lname,
                 'phone' => $phone,
-                'street_address' => $address,
+                'street_address' => $street, // Lưu số nhà
+                'city' => $city,             // Lưu Tỉnh
+                'district' => $district,     // Lưu Huyện
+                'ward' => $ward,             // Lưu Xã
                 'avatar' => $avatarName
             ];
 
             if ($this->userModel->updateProfile($userId, $data)) {
-                // Cập nhật lại Session tên để Header hiển thị đúng
+                // Cập nhật lại Session ngay lập tức để hiển thị ra View
                 $_SESSION['user']['fname'] = $fname;
                 $_SESSION['user']['lname'] = $lname;
+                $_SESSION['user']['phone'] = $phone;
+                $_SESSION['user']['street_address'] = $street;
+                $_SESSION['user']['city'] = $city;
+                $_SESSION['user']['district'] = $district;
+                $_SESSION['user']['ward'] = $ward;
                 
                 $_SESSION['success'] = "Cập nhật thông tin thành công!";
             } else {
-                $_SESSION['error'] = "Có lỗi xảy ra, vui lòng thử lại.";
+                $_SESSION['error'] = "Có lỗi xảy ra khi lưu Database.";
             }
 
             header("Location: index.php?controller=account&action=profile");

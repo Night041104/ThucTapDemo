@@ -91,14 +91,18 @@ class UserModel extends BaseModel {
     }
 
     // 5. [MỚI] CẬP NHẬT THÔNG TIN CÁ NHÂN
-    public function updateProfile($id, $data) {
+   public function updateProfile($id, $data) {
         $id = $this->escape($id);
         $fname = $this->escape($data['fname']);
         $lname = $this->escape($data['lname']);
         $phone = $this->escape($data['phone']);
-        $address = $this->escape($data['street_address']); // Dùng cột street_address
         
-        // Xử lý Avatar: Nếu có file mới thì cập nhật, không thì giữ nguyên
+        // [KIỂM TRA KỸ 4 DÒNG NÀY]
+        $street = $this->escape($data['street_address']);
+        $city = $this->escape($data['city']);
+        $district = $this->escape($data['district']);
+        $ward = $this->escape($data['ward']);
+        
         $avatarSql = "";
         if (!empty($data['avatar'])) {
             $avt = $this->escape($data['avatar']);
@@ -109,7 +113,10 @@ class UserModel extends BaseModel {
                 fname = '$fname', 
                 lname = '$lname', 
                 phone = '$phone', 
-                street_address = '$address' 
+                street_address = '$street', 
+                city = '$city', 
+                district = '$district', 
+                ward = '$ward'
                 $avatarSql
                 WHERE id = '$id'";
         
@@ -217,6 +224,35 @@ class UserModel extends BaseModel {
         }
 
         return false;
+    }
+    // --- KHU VỰC ADMIN ---
+
+    // 11. LẤY TẤT CẢ USER (Có thể phân trang nếu muốn)
+    public function getAllUsers() {
+        $sql = "SELECT * FROM users ORDER BY created_at DESC";
+        $result = $this->_query($sql);
+        $data = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $data[] = $row;
+        }
+        return $data;
+    }
+
+    // 12. ADMIN CẬP NHẬT USER (Sửa quyền, trạng thái)
+    public function updateUserByAdmin($id, $role_id, $is_verified) {
+        $id = $this->escape($id);
+        $role_id = (int)$role_id;
+        $is_verified = (int)$is_verified;
+
+        $sql = "UPDATE users SET role_id = $role_id, is_verified = $is_verified WHERE id = '$id'";
+        return $this->_query($sql);
+    }
+
+    // 13. XÓA USER
+    public function deleteUser($id) {
+        $id = $this->escape($id);
+        $sql = "DELETE FROM users WHERE id = '$id'";
+        return $this->_query($sql);
     }
 }
 ?>

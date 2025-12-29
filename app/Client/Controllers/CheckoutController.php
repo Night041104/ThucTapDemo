@@ -50,15 +50,21 @@ class CheckoutController {
         if ($finalTotal < 0) $finalTotal = 0;
 
         // Xử lý thông tin User
+        // Xử lý thông tin User
         $user = [];
         if (isset($_SESSION['user'])) {
             $u = $_SESSION['user'];
             $fullname = trim(($u['lname'] ?? '') . ' ' . ($u['fname'] ?? ''));
+            
+            // [SỬA LẠI] Lấy đầy đủ thông tin từ Session
             $user = [
-                'fullname' => $fullname,
-                'email'    => $u['email'] ?? '',
-                'phone'    => '', 
-                'address'  => '' 
+                'fullname'       => $fullname,
+                'email'          => $u['email'] ?? '',
+                'phone'          => $u['phone'] ?? '',
+                'street_address' => $u['street_address'] ?? '',
+                'city'           => $u['city'] ?? '',
+                'district'       => $u['district'] ?? '',
+                'ward'           => $u['ward'] ?? ''
             ];
         }
 
@@ -74,7 +80,17 @@ class CheckoutController {
             $fullname = trim($_POST['fullname'] ?? '');
             $email    = trim($_POST['email'] ?? '');
             $phone    = trim($_POST['phone'] ?? '');
-            $address  = trim($_POST['address'] ?? '');
+            // [SỬA] Lấy các thành phần địa chỉ và gộp lại
+            $street   = trim($_POST['street_address'] ?? ''); // Tên input số nhà
+            $ward     = trim($_POST['ward'] ?? '');           // Tên phường/xã
+            $district = trim($_POST['district'] ?? '');       // Tên quận/huyện
+            $city     = trim($_POST['city'] ?? '');           // Tên tỉnh/thành phố
+
+            // Gộp thành 1 chuỗi duy nhất để lưu vào Database
+            $address = $street;
+            if (!empty($ward))     $address .= ", " . $ward;
+            if (!empty($district)) $address .= ", " . $district;
+            if (!empty($city))     $address .= ", " . $city;
             $note     = trim($_POST['note'] ?? '');
             $paymentMethod = $_POST['payment_method'] ?? 'COD'; 
 

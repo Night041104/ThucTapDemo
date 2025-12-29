@@ -91,11 +91,11 @@ $userName = $isLoggedIn ? ($_SESSION['user']['lname'] ?? 'Bạn') : '';
                 </a>
 
                 <?php if ($isLoggedIn): ?>
-                    <a href="index.php?module=client&controller=auth&action=logout" class="action-item">
+                    <a href="index.php?controller=account&action=profile" class="action-item">
                         <i class="fa fa-user-check"></i>
                         <span>Chào <?= htmlspecialchars($userName) ?></span>
                     </a>
-                <?php else: ?>
+                    <?php else: ?>
                     <a href="index.php?module=client&controller=auth&action=login" class="action-item">
                         <i class="fa fa-user"></i>
                         <span>Đăng nhập</span>
@@ -121,3 +121,6 @@ $userName = $isLoggedIn ? ($_SESSION['user']['lname'] ?? 'Bạn') : '';
         </div>
     </div>
 </header>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="public/js/address_auto.js"></script>

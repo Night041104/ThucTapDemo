@@ -65,10 +65,32 @@
             </div>
 
             <div class="form-group">
-                <label>Địa chỉ nhận hàng (*)</label>
-                <input type="text" name="address" class="form-control" required placeholder="VD: Số 123, Đường ABC, Quận X..."
-                       value="<?= isset($user['address']) ? htmlspecialchars($user['address']) : '' ?>">
-            </div>
+    <label>Địa chỉ giao hàng</label>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <select id="province" class="form-control" style="width:33%"><option value="0">Tỉnh/Thành</option></select>
+        <select id="district" class="form-control" style="width:33%"><option value="0">Quận/Huyện</option></select>
+        <select id="ward" class="form-control" style="width:33%"><option value="0">Phường/Xã</option></select>
+    </div>
+
+    <input type="text" name="street_address" class="form-control" 
+           value="<?= isset($user['street_address']) ? htmlspecialchars($user['street_address']) : '' ?>" 
+           placeholder="Số nhà, tên đường..." required>
+
+    <?php if(!empty($user['city'])): ?>
+        <p style="font-size: 13px; color: green; margin-top: 5px;">
+            <i class="fa fa-map-marker-alt"></i> Đang dùng địa chỉ mặc định: 
+            <b><?= $user['street_address'] ?>, <?= $user['ward'] ?>, <?= $user['district'] ?>, <?= $user['city'] ?></b>
+        </p>
+        <input type="hidden" name="city" id="city_text" value="<?= $user['city'] ?>">
+        <input type="hidden" name="district" id="district_text" value="<?= $user['district'] ?>">
+        <input type="hidden" name="ward" id="ward_text" value="<?= $user['ward'] ?>">
+    <?php else: ?>
+        <input type="hidden" name="city" id="city_text">
+        <input type="hidden" name="district" id="district_text">
+        <input type="hidden" name="ward" id="ward_text">
+    <?php endif; ?>
+</div>
 
             <div class="form-group">
                 <label>Ghi chú đơn hàng (Tùy chọn)</label>
@@ -142,5 +164,8 @@
     </div>
 </form>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="public/js/address_auto.js"></script>
 </body>
 </html>
