@@ -48,9 +48,17 @@
 <div class="container">
     <div class="sidebar">
         <div class="user-brief">
-            <?php $avt = !empty($user['avatar']) ? $user['avatar'] : 'https://i.imgur.com/6k0s8.png'; ?> <img src="<?= $avt ?>" alt="Avatar">
-            <h3><?= htmlspecialchars($user['lname'] . ' ' . $user['fname']) ?></h3>
-        </div>
+    <?php
+        $avt = !empty($user['avatar'])
+            ? $user['avatar']
+            : 'uploads/default/default_avt.png';
+    ?>
+    <img src="<?= htmlspecialchars($avt) ?>"
+         alt="Avatar"
+         onerror="this.src='uploads/default/default_avt.png'">
+    <h3><?= htmlspecialchars($user['lname'] . ' ' . $user['fname']) ?></h3>
+</div>
+
         <a href="index.php?controller=account&action=profile" class="menu-item active">
             <i class="fa fa-user"></i> Thông tin tài khoản
         </a>
@@ -78,7 +86,8 @@
         <form action="index.php?controller=account&action=update" method="POST" enctype="multipart/form-data">
             
             <div class="avatar-upload">
-                <img id="img-preview" src="<?= $avt ?>" class="avatar-preview">
+                <img id="img-preview"src="<?= htmlspecialchars($avt) ?>"class="avatar-preview"onerror="this.src='uploads/default/default_avt.png'">
+
                 <div>
                     <label for="file-upload" style="cursor: pointer; background: #eee; padding: 8px 15px; border-radius: 4px; font-size: 13px;">
                         <i class="fa fa-camera"></i> Chọn ảnh mới
