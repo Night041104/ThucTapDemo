@@ -225,5 +225,34 @@ class UserModel extends BaseModel {
 
         return false;
     }
+    // --- KHU VỰC ADMIN ---
+
+    // 11. LẤY TẤT CẢ USER (Có thể phân trang nếu muốn)
+    public function getAllUsers() {
+        $sql = "SELECT * FROM users ORDER BY created_at DESC";
+        $result = $this->_query($sql);
+        $data = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $data[] = $row;
+        }
+        return $data;
+    }
+
+    // 12. ADMIN CẬP NHẬT USER (Sửa quyền, trạng thái)
+    public function updateUserByAdmin($id, $role_id, $is_verified) {
+        $id = $this->escape($id);
+        $role_id = (int)$role_id;
+        $is_verified = (int)$is_verified;
+
+        $sql = "UPDATE users SET role_id = $role_id, is_verified = $is_verified WHERE id = '$id'";
+        return $this->_query($sql);
+    }
+
+    // 13. XÓA USER
+    public function deleteUser($id) {
+        $id = $this->escape($id);
+        $sql = "DELETE FROM users WHERE id = '$id'";
+        return $this->_query($sql);
+    }
 }
 ?>
