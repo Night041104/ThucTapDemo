@@ -1,8 +1,4 @@
 <?php
-// LƯU Ý ĐƯỜNG DẪN:
-// __DIR__ đang là: app/Client/Controllers
-// Muốn ra models (app/models) -> phải lùi 2 cấp: /../../models
-
 require_once __DIR__ . '/../../models/CategoryModel.php';
 require_once __DIR__ . '/../../models/ProductModel.php';
 require_once __DIR__ . '/../../models/BrandModel.php';
@@ -21,67 +17,90 @@ class CategoryController {
         $this->attrModel  = new AttributeModel();
     }
 
-    // URL: index.php?module=client&controller=category&action=index&id=1
-    // [THUẬT TOÁN] Tạo khoảng giá thông minh
+    // --- [THUẬT TOÁN MỚI] CHIA ĐÚNG 5 MỨC GIÁ TRÒN ĐẸP ---
     private function getDynamicPriceRanges($cateId) {
-        // 1. Lấy giá sàn và trần thực tế
+        // 1. Lấy Min/Max thực tế từ DB
         $prices = $this->prodModel->getMinMaxPrice($cateId);
-        $min = $prices['min'];
-        $max = $prices['max'];
+        $minReal = $prices['min'];
+        $maxReal = $prices['max'];
 
-        // Nếu danh mục chưa có sản phẩm hoặc tất cả đồng giá
-        if ($min === 0 && $max === 0) return [];
-        if ($min === $max) return []; 
+        // Nếu không có sản phẩm hoặc đồng giá -> Trả về rỗng
+        if ($minReal === 0 && $maxReal === 0) return [];
+        if ($minReal === $maxReal) return []; 
+
+        // 2. Tính bước nhảy thô (Raw Step) để chia thành 5 phần
+        $diff = $maxReal - $minReal;
+        $rawStep = $diff / 5;
+
+        // 3. Làm tròn bước nhảy về con số đẹp (Magic Number)
+        $step = $this->roundToNiceStep($rawStep);
+
+        // 4. Xác định điểm bắt đầu (Base)
+        // Làm tròn Min xuống để mốc bắt đầu đẹp hơn (Ví dụ Min=13.5tr -> Base=13tr)
+        if ($minReal >= 1000000) {
+            $base = floor($minReal / 1000000) * 1000000;
+        } else {
+            $base = floor($minReal / 100000) * 100000;
+        }
 
         $ranges = [];
-        
-        // Luôn có nút "Dưới X" (X là giá thấp nhất + 1 khoảng nhỏ)
-        // Tính bước nhảy (Step): Chia khoảng giá thành 4 phần
-        $diff = $max - $min;
-        $step = ceil($diff / 4); 
+        $prev = $base; // Điểm mốc trước đó
 
-        // Làm tròn bước nhảy cho đẹp (VD: 2.340.000 -> 2.500.000)
-        // Logic làm tròn:
-        if ($step < 1000000) {
-            $step = ceil($step / 100000) * 100000; // Làm tròn 100k
-        } else {
-            $step = ceil($step / 500000) * 500000; // Làm tròn 500k
+        // 5. Tạo 5 khoảng giá
+        // Loop 4 lần để tạo 4 khoảng đầu, khoảng cuối cùng sẽ là "Trên..."
+        for ($i = 1; $i <= 4; $i++) {
+            // Mốc tiếp theo = Mốc trước + Bước nhảy
+            $current = $base + ($step * $i);
+            
+            // Xử lý Label hiển thị
+            if ($i == 1) {
+                // Khoảng 1: Dưới X (0 - X)
+                // Lưu ý: Key phải là "0-X" để Model xử lý đúng
+                $ranges["0-$current"] = "Dưới " . $this->formatPriceShort($current);
+            } else {
+                // Các khoảng giữa: Từ A - B
+                $ranges["$prev-$current"] = "Từ " . $this->formatPriceShort($prev) . " - " . $this->formatPriceShort($current);
+            }
+            
+            $prev = $current; // Cập nhật mốc trước cho vòng lặp sau
         }
 
-        // Tạo khoảng 1: Dưới [Min + Step]
-        $milestone1 = $min + $step;
-        $ranges["0-$milestone1"] = "Dưới " . $this->formatPriceShort($milestone1);
-
-        // Tạo các khoảng giữa
-        $current = $milestone1;
-        while ($current < $max) {
-            $next = $current + $step;
-            if ($next >= $max) break; // Nếu bước tiếp theo vượt quá Max thì dừng để gom vào nút cuối
-            
-            $key = "$current-$next";
-            $label = "Từ " . $this->formatPriceShort($current) . " - " . $this->formatPriceShort($next);
-            $ranges[$key] = $label;
-            
-            $current = $next;
-        }
-
-        // Tạo khoảng cuối: Trên [Current]
-        $ranges["$current-max"] = "Trên " . $this->formatPriceShort($current);
+        // Khoảng 5: Trên X (X - max)
+        $ranges["$prev-max"] = "Trên " . $this->formatPriceShort($prev);
 
         return $ranges;
     }
 
-    // Helper: Format giá gọn (2.500.000 -> 2.5 triệu, 500.000 -> 500k)
+    // Helper: Làm tròn bước nhảy về số đẹp gần nhất
+    private function roundToNiceStep($rawStep) {
+        // Danh sách các bước nhảy "đẹp" ưu tiên
+        $niceSteps = [
+            50000, 100000, 200000, 500000,          // < 1 triệu
+            1000000, 2000000, 3000000, 5000000,     // < 10 triệu
+            10000000, 20000000, 50000000            // > 10 triệu
+        ];
+
+        // Tìm số đẹp gần nhất (lớn hơn hoặc bằng rawStep)
+        foreach ($niceSteps as $step) {
+            if ($step >= $rawStep) return $step;
+        }
+        
+        // Nếu lớn hơn cả danh sách trên, làm tròn thô
+        return ceil($rawStep / 1000000) * 1000000;
+    }
+
+    // Helper: Format hiển thị (1.5 triệu, 500k)
     private function formatPriceShort($price) {
         if ($price >= 1000000) {
-            $val = round($price / 1000000, 1); // 1.5
+            $val = round($price / 1000000, 1); // VD: 1.5
+            // Xóa .0 nếu có (1.0 -> 1)
+            if ($val == (int)$val) $val = (int)$val;
             return str_replace('.', ',', $val) . " triệu";
         } else {
             return ($price / 1000) . "k";
         }
     }
 
-    // --- CẬP NHẬT HÀM INDEX ---
     public function index() {
         $cateId = $_GET['id'] ?? 0;
         
@@ -90,34 +109,31 @@ class CategoryController {
 
         $products = $this->prodModel->getProductsByCateForClient($cateId);
         $filterBrands = $this->brandModel->getByCategoryId($cateId);
-        
-        // [UPDATE 1] Lấy full option thuộc tính
         $filterAttrs  = $this->attrModel->getFiltersByCateForClient($cateId);
-
-        // [UPDATE 2] Tính khoảng giá động thông minh
+        
+        // Tính khoảng giá động (Mới)
         $priceRanges = $this->getDynamicPriceRanges($cateId);
 
         require __DIR__ . '/../views/header.php'; 
         require __DIR__ . '/../views/category/category.php';
     }
+
     public function filter() {
         $cateId = $_GET['id'] ?? 0;
         
-        // Nhận dữ liệu từ AJAX
-        $brands = isset($_GET['brands']) ? explode(',', $_GET['brands']) : [];
+        // FIX BUG: Lọc bỏ giá trị rỗng để tránh lỗi SQL IN (0)
+        $brandsRaw = isset($_GET['brands']) ? explode(',', $_GET['brands']) : [];
+        $brands = array_filter($brandsRaw, function($value) { return $value !== ''; });
+        
         $price  = $_GET['price'] ?? '';
         
-        // Xử lý thuộc tính: Client gửi attrs[RAM]=8GB,16GB
         $attrs = $_GET['attrs'] ?? [];
         foreach($attrs as $key => $val) {
             $attrs[$key] = explode(',', $val);
         }
 
-        // Gọi Model lọc
         $products = $this->prodModel->getProductsByFilter($cateId, $brands, $price, $attrs);
 
-        // Trả về HTML của danh sách sản phẩm (Partial View)
-        // Lưu ý: Không load header/footer ở đây
         require __DIR__ . '/../views/category/product_list.php';
     }
 }

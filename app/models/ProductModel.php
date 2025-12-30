@@ -330,19 +330,6 @@ class ProductModel extends BaseModel {
         return mysqli_num_rows($rs) > 0;
     }
 
-    public function getProductsByCateForClient($cateId) {
-        $cateId = $this->escape($cateId);
-        $sql = "SELECT p.*, b.name as brand_name 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.category_id = '$cateId' 
-                AND p.status = 1 
-                AND (p.parent_id IS NULL OR p.parent_id = 0) 
-                ORDER BY p.id DESC";
-        $result = $this->_query($sql);
-        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
-    }
-
     public function getAttributeValues($productId) {
         $id = $this->escape($productId);
         $sql = "SELECT attribute_id, option_id, value_custom FROM product_attribute_values WHERE product_id = '$id'";
@@ -427,58 +414,68 @@ class ProductModel extends BaseModel {
     $result = $this->_query($sql);
     return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
-    // Trong class ProductModel
-
-    public function getProductsByFilter($cateId, $brandIds = [], $priceRange = '', $attributes = []) {
+    // 1. Hàm lấy danh sách mặc định (Chỉ lấy SP Cha)
+    public function getProductsByCateForClient($cateId) {
         $cateId = $this->escape($cateId);
-        
-        // Query cơ bản
+        // THÊM: AND (parent_id IS NULL OR parent_id = 0)
         $sql = "SELECT p.*, b.name as brand_name 
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.category_id = '$cateId' AND p.status = 1";
+                WHERE p.category_id = '$cateId' 
+                AND p.status = 1 
+                AND (p.parent_id IS NULL OR p.parent_id = 0) 
+                ORDER BY p.id DESC";
+        
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
 
-        // 1. Lọc theo Thương hiệu
+    // 2. Hàm lọc sản phẩm (Chỉ lấy SP Cha)
+    public function getProductsByFilter($cateId, $brandIds = [], $priceRange = '', $attributes = []) {
+        $cateId = $this->escape($cateId);
+        
+        // THÊM: AND (p.parent_id IS NULL OR p.parent_id = 0)
+        $sql = "SELECT p.*, b.name as brand_name 
+                FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id 
+                WHERE p.category_id = '$cateId' 
+                AND p.status = 1
+                AND (p.parent_id IS NULL OR p.parent_id = 0)";
+
+        // ... (Giữ nguyên các logic lọc Brand, Price, Attribute cũ của bạn ở đây) ...
+        
+        // Code ghép chuỗi SQL lọc cũ của bạn:
         if (!empty($brandIds)) {
-            // brandIds sẽ là mảng [1, 5, 8...]
             $ids = implode(',', array_map('intval', $brandIds));
             $sql .= " AND p.brand_id IN ($ids)";
         }
-
-        // 2. Lọc theo Giá
         if (!empty($priceRange)) {
-            // Giả sử client gửi lên dạng "0-2000000" hoặc "20000000-max"
             $ranges = explode('-', $priceRange);
             if (count($ranges) == 2) {
                 $min = (int)$ranges[0];
-                $max = ($ranges[1] == 'max') ? 9999999999 : (int)$ranges[1];
+                $max = ($ranges[1] == 'max') ? 99999999999 : (int)$ranges[1];
                 $sql .= " AND p.price >= $min AND p.price <= $max";
             }
         }
-
-        // 3. Lọc theo Thuộc tính (Khó nhất)
-        // Logic: Sản phẩm phải có (Attr=RAM và Val=8GB)
+        // Logic lọc Attribute (EXISTS) giữ nguyên...
         if (!empty($attributes)) {
-            foreach ($attributes as $attrName => $values) {
-                // $values là mảng các giá trị đã chọn, ví dụ: ['8GB', '16GB']
+             // ... (Code lọc thuộc tính cũ) ...
+             foreach ($attributes as $attrName => $values) {
                 if (!empty($values)) {
+                    $attrName = $this->escape($attrName);
                     $valStr = "'" . implode("','", array_map([$this, 'escape'], $values)) . "'";
-                    
-                    // Kỹ thuật: Subquery để tìm sản phẩm có thuộc tính này
-                    $sql .= " AND p.id IN (
-                                SELECT pav.product_id 
-                                FROM product_attribute_values pav 
-                                JOIN attributes a ON pav.attribute_id = a.id
-                                WHERE a.name = '$attrName' AND (pav.value_custom IN ($valStr) OR pav.option_id IN (
-                                    SELECT id FROM attribute_options WHERE value IN ($valStr)
-                                ))
-                            )";
+                    $subQuery = "SELECT 1 FROM product_attribute_values pav
+                                 JOIN attributes a ON pav.attribute_id = a.id
+                                 LEFT JOIN attribute_options ao ON pav.option_id = ao.id
+                                 WHERE pav.product_id = p.id AND a.name = '$attrName'
+                                 AND (pav.value_custom IN ($valStr) OR ao.value IN ($valStr))";
+                    $sql .= " AND EXISTS ($subQuery)";
                 }
             }
         }
 
-        $sql .= " ORDER BY p.id DESC"; // Hoặc sort theo giá tùy chọn
-
+        $sql .= " ORDER BY p.id DESC";
+        
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
