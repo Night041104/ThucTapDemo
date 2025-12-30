@@ -427,6 +427,74 @@ class ProductModel extends BaseModel {
     $result = $this->_query($sql);
     return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
+    // Trong class ProductModel
 
+    public function getProductsByFilter($cateId, $brandIds = [], $priceRange = '', $attributes = []) {
+        $cateId = $this->escape($cateId);
+        
+        // Query cơ bản
+        $sql = "SELECT p.*, b.name as brand_name 
+                FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id 
+                WHERE p.category_id = '$cateId' AND p.status = 1";
+
+        // 1. Lọc theo Thương hiệu
+        if (!empty($brandIds)) {
+            // brandIds sẽ là mảng [1, 5, 8...]
+            $ids = implode(',', array_map('intval', $brandIds));
+            $sql .= " AND p.brand_id IN ($ids)";
+        }
+
+        // 2. Lọc theo Giá
+        if (!empty($priceRange)) {
+            // Giả sử client gửi lên dạng "0-2000000" hoặc "20000000-max"
+            $ranges = explode('-', $priceRange);
+            if (count($ranges) == 2) {
+                $min = (int)$ranges[0];
+                $max = ($ranges[1] == 'max') ? 9999999999 : (int)$ranges[1];
+                $sql .= " AND p.price >= $min AND p.price <= $max";
+            }
+        }
+
+        // 3. Lọc theo Thuộc tính (Khó nhất)
+        // Logic: Sản phẩm phải có (Attr=RAM và Val=8GB)
+        if (!empty($attributes)) {
+            foreach ($attributes as $attrName => $values) {
+                // $values là mảng các giá trị đã chọn, ví dụ: ['8GB', '16GB']
+                if (!empty($values)) {
+                    $valStr = "'" . implode("','", array_map([$this, 'escape'], $values)) . "'";
+                    
+                    // Kỹ thuật: Subquery để tìm sản phẩm có thuộc tính này
+                    $sql .= " AND p.id IN (
+                                SELECT pav.product_id 
+                                FROM product_attribute_values pav 
+                                JOIN attributes a ON pav.attribute_id = a.id
+                                WHERE a.name = '$attrName' AND (pav.value_custom IN ($valStr) OR pav.option_id IN (
+                                    SELECT id FROM attribute_options WHERE value IN ($valStr)
+                                ))
+                            )";
+                }
+            }
+        }
+
+        $sql .= " ORDER BY p.id DESC"; // Hoặc sort theo giá tùy chọn
+
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+// [MỚI] Lấy giá thấp nhất và cao nhất trong danh mục để chia khoảng lọc
+    public function getMinMaxPrice($cateId) {
+        $cateId = $this->escape($cateId);
+        $sql = "SELECT MIN(price) as min_price, MAX(price) as max_price 
+                FROM products 
+                WHERE category_id = '$cateId' AND status = 1";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        
+        return [
+            'min' => (int)($row['min_price'] ?? 0),
+            'max' => (int)($row['max_price'] ?? 0)
+        ];
+    }
 }
 ?>
