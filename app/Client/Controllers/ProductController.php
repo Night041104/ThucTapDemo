@@ -6,11 +6,13 @@ require_once __DIR__ . '/../../models/ReviewModel.php';
 class ProductController {
     private $prodModel;
     private $cateModel;
+    private $reviewModel;
 
     public function __construct() {
         $this->prodModel = new ProductModel();
         $this->cateModel = new CategoryModel();
         $this->reviewModel = new ReviewModel(); // Khởi tạo nó ở đây
+
     }
 
     // URL: index.php?module=client&controller=product&action=detail&id=123
@@ -110,7 +112,7 @@ class ProductController {
         $reviews = $this->reviewModel->getReviewsByProduct($id);
         $reviewStats = $this->reviewModel->getReviewStats($id);
 
-        require __DIR__ . '/../views/header.php';
+        require __DIR__ . '/../views/layouts/header.php';
         require __DIR__ . '/../views/product/detail.php';
     }
 
@@ -144,7 +146,7 @@ class ProductController {
     }
 
     // 4. Load View
-    require __DIR__ . '/../views/header.php';
+    require __DIR__ . '/../views/layouts/header.php';
     require __DIR__ . '/../views/product/search_results.php';
     }
 

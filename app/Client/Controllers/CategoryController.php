@@ -4,7 +4,9 @@ require_once __DIR__ . '/../../models/ProductModel.php';
 require_once __DIR__ . '/../../models/BrandModel.php';
 require_once __DIR__ . '/../../models/AttributeModel.php';
 
+
 class CategoryController {
+    
     private $cateModel;
     private $prodModel;
     private $brandModel;
@@ -114,8 +116,9 @@ class CategoryController {
         // Tính khoảng giá động (Mới)
         $priceRanges = $this->getDynamicPriceRanges($cateId);
 
-        require __DIR__ . '/../views/header.php'; 
+        require __DIR__ . '/../views/layouts/header.php'; 
         require __DIR__ . '/../views/category/category.php';
+        require_once __DIR__ . '/../views/layouts/footer.php';
     }
 
     public function filter() {
