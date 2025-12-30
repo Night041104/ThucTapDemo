@@ -1,122 +1,131 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title><?= $currentData['id'] ? 'Chỉnh sửa' : 'Thêm mới' ?> Danh mục</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f6f8; max-width: 1000px; margin: 0 auto; }
-        .form-container { background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h2 { margin-top: 0; color: #333; }
-        input[type=text], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .group-box { background: #e3f2fd; padding: 15px; margin-bottom: 15px; border: 1px solid #90caf9; border-radius: 5px; position: relative; }
-        .item-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; background: white; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
-        .btn-save { background: #1976d2; color: white; padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .btn-cancel { color: #d32f2f; text-decoration: none; margin-left: 15px; font-weight: bold; }
-        .btn-add-group { background: #4caf50; color: white; padding: 8px 15px; border: none; cursor: pointer; border-radius: 4px; margin-bottom: 20px; font-weight: bold;}
-        .btn-add-item { background: #ff9800; color: white; padding: 5px 10px; border: none; cursor: pointer; border-radius: 4px; font-size: 12px; }
-        .btn-del { color: #d32f2f; background: none; border: none; cursor: pointer; font-weight: bold; }
-    </style>
-</head>
-<body>
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-<div class="form-container">
-    <h2><?= $currentData['id'] ? "Chỉnh sửa: " . htmlspecialchars($currentData['name']) : "Tạo Danh mục Mới" ?></h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark mb-0">
+        <?= $currentData['id'] ? "Chỉnh sửa Danh mục" : "Tạo Danh mục mới" ?>
+    </h3>
+    <a href="index.php?module=admin&controller=category&action=index" class="btn btn-outline-secondary">
+        <i class="fa fa-arrow-left me-1"></i> Quay lại
+    </a>
+</div>
 
-    <?php if(isset($msg)): ?>
-        <div style="padding:15px; background:#ffebee; color:#c62828; border:1px solid #ef9a9a; margin-bottom:20px; border-radius:4px;">
-            <?= $msg ?>
-        </div>
-    <?php endif; ?>
+<?php if(isset($msg) && $msg): ?>
+    <div class="alert alert-danger border-0 shadow-sm mb-4">
+        <i class="fa fa-exclamation-triangle me-2"></i> <?= htmlspecialchars($msg) ?>
+    </div>
+<?php endif; ?>
 
-    <form method="POST" action="index.php?module=admin&controller=category&action=save">
-        
-        <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
-        
-        <div style="display:flex; gap: 20px; margin-bottom: 20px;">
-            <div style="flex:1">
-                <label><b>Tên Danh mục:</b></label><br>
-                <input type="text" name="name" value="<?= htmlspecialchars($currentData['name']) ?>" required style="width:100%; margin-top:5px;">
-            </div>
-            <div style="flex:1">
-                <label><b>Slug (URL):</b></label><br>
-                <input type="text" name="slug" value="<?= htmlspecialchars($currentData['slug']) ?>" placeholder="Để trống sẽ tự tạo" style="width:100%; margin-top:5px;">
-            </div>
-        </div>
+<form method="POST" action="index.php?module=admin&controller=category&action=save">
+    <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
 
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-        <h3>⚙️ Cấu hình Thông số kỹ thuật (Template)</h3>
-        <p style="color:#666; font-size: 0.9em; margin-bottom: 15px;">
-            Cấu hình này sẽ tự động hiển thị khi bạn tạo sản phẩm thuộc danh mục này.<br>
-            <i>Ví dụ: Nhóm "Màn hình" gồm: Kích thước, Độ phân giải...</i>
-        </p>
-        
-        <div id="template-container">
-            <?php 
-            $jsGroupCount = 0; 
-            if (!empty($currentData['template'])): 
-                foreach ($currentData['template'] as $gIndex => $group): 
-                    $jsGroupCount = max($jsGroupCount, $gIndex + 1);
-            ?>
-                <div class="group-box" id="group-<?= $gIndex ?>">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="flex-grow: 1;">
-                            <b>Nhóm:</b> 
-                            <input type="text" name="groups[<?= $gIndex ?>]" value="<?= htmlspecialchars($group['group_name']) ?>" placeholder="Tên nhóm (VD: Màn hình)" required style="width: 70%; font-weight: bold;">
-                        </div>
-                        <button type="button" class="btn-del" onclick="removeElement('group-<?= $gIndex ?>')">✕ Xóa Nhóm</button>
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card card-custom border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h6 class="mb-0 fw-bold text-primary"><i class="fa fa-info-circle me-2"></i>Thông tin chung</h6>
+                </div>
+                <div class="card-body pt-0">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên Danh mục <span class="text-danger">*</span></label>
+                        <input type="text" name="name" value="<?= htmlspecialchars($currentData['name']) ?>" 
+                               class="form-control" required placeholder="VD: Điện thoại, Laptop...">
                     </div>
                     
-                    <div class="items-list-<?= $gIndex ?>">
-                        <?php if(isset($group['items']) && is_array($group['items'])): ?>
-                            <?php foreach ($group['items'] as $item): ?>
-                                <div class="item-row">
-                                    <span>Tên:</span>
-                                    <input type="text" name="items[<?= $gIndex ?>][name][]" value="<?= htmlspecialchars($item['name']) ?>" required>
-                                    
-                                    <span>Loại:</span>
-                                    <select name="items[<?= $gIndex ?>][type][]" onchange="toggleAttr(this)">
-                                        <option value="text" <?= $item['type']=='text'?'selected':'' ?>>Text thường</option>
-                                        <option value="attribute" <?= $item['type']=='attribute'?'selected':'' ?>>🔗 Liên kết Attribute</option>
-                                    </select>
-                                    
-                                    <select name="items[<?= $gIndex ?>][attr_id][]" style="display: <?= $item['type']=='attribute'?'inline-block':'none' ?>;">
-                                        <option value="">-- Chọn Attribute --</option>
-                                        <?php foreach($attrs as $a): ?>
-                                            <?php 
-                                                $isVar = isset($a['is_variant']) ? $a['is_variant'] : ($a['is_customizable'] ?? 0);
-                                                $label = $a['name'] . ($isVar ? ' (Variant)' : '');
-                                            ?>
-                                            <option value="<?= $a['id'] ?>" <?= (isset($item['attribute_id']) && $item['attribute_id'] == $a['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($label) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    
-                                    <button type="button" class="btn-del" onclick="this.parentElement.remove()">✕</button>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <div style="margin-top:10px;">
-                        <button type="button" class="btn-add-item" onclick="addItem(<?= $gIndex ?>, this)">+ Thêm dòng thông số</button>
+                    <div class="alert alert-light border small text-muted">
+                        <i class="fa fa-lightbulb text-warning me-1"></i> 
+                        Slug sẽ được tự động tạo từ tên nếu để trống.
                     </div>
                 </div>
-            <?php endforeach; endif; ?>
+            </div>
         </div>
 
-        <button type="button" class="btn-add-group" onclick="addGroup()">+ THÊM NHÓM MỚI</button>
-        <br><br><br>
-        
-        <div style="border-top: 1px solid #ddd; padding-top: 20px;">
-            <button type="submit" class="btn-save">
-                <?= $currentData['id'] ? "LƯU CẬP NHẬT" : "TẠO DANH MỤC" ?>
-            </button>
-            <a href="index.php?module=admin&controller=category&action=index" class="btn-cancel">Hủy bỏ</a>
+        <div class="col-lg-8 mb-4">
+            <div class="card card-custom border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom-0 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0 fw-bold text-success"><i class="fa fa-cogs me-2"></i>Cấu hình Template Thông số</h6>
+                        <small class="text-muted">Định nghĩa các trường thông số kỹ thuật cho sản phẩm thuộc danh mục này.</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-success shadow-sm fw-bold" onclick="addGroup()">
+                        <i class="fa fa-plus me-1"></i> Thêm Nhóm
+                    </button>
+                </div>
+                
+                <div class="card-body pt-0" id="template-container">
+                    <?php 
+                    $jsGroupCount = 0; 
+                    if (!empty($currentData['template'])): 
+                        foreach ($currentData['template'] as $gIndex => $group): 
+                            $jsGroupCount = max($jsGroupCount, $gIndex + 1);
+                    ?>
+                        <div class="card mb-3 border bg-light" id="group-<?= $gIndex ?>">
+                            <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-2 px-3">
+                                <div class="d-flex align-items-center flex-grow-1">
+                                    <span class="badge bg-secondary me-2">Nhóm</span>
+                                    <input type="text" name="groups[<?= $gIndex ?>]" value="<?= htmlspecialchars($group['group_name']) ?>" 
+                                           class="form-control form-control-sm fw-bold border-0 bg-transparent ps-0" 
+                                           placeholder="Tên nhóm (VD: Màn hình)" required style="box-shadow:none;">
+                                </div>
+                                <button type="button" class="btn btn-sm text-danger" onclick="removeElement('group-<?= $gIndex ?>')" title="Xóa nhóm">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="card-body py-2 px-3 items-list-<?= $gIndex ?>">
+                                <?php if(isset($group['items']) && is_array($group['items'])): ?>
+                                    <?php foreach ($group['items'] as $item): ?>
+                                        <div class="row g-2 mb-2 item-row align-items-center">
+                                            <div class="col-md-4">
+                                                <input type="text" name="items[<?= $gIndex ?>][name][]" value="<?= htmlspecialchars($item['name']) ?>" 
+                                                       class="form-control form-control-sm" placeholder="Tên thông số" required>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select name="items[<?= $gIndex ?>][type][]" class="form-select form-select-sm" onchange="toggleAttr(this)">
+                                                    <option value="text" <?= $item['type']=='text'?'selected':'' ?>>Text thường</option>
+                                                    <option value="attribute" <?= $item['type']=='attribute'?'selected':'' ?>>🔗 Liên kết Attribute</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select name="items[<?= $gIndex ?>][attr_id][]" class="form-select form-select-sm" 
+                                                        style="display: <?= $item['type']=='attribute'?'block':'none' ?>;">
+                                                    <option value="">-- Chọn Attribute --</option>
+                                                    <?php foreach($attrs as $a): ?>
+                                                        <?php 
+                                                            $isVar = isset($a['is_variant']) ? $a['is_variant'] : ($a['is_customizable'] ?? 0);
+                                                            $label = $a['name'] . ($isVar ? ' (Variant)' : '');
+                                                        ?>
+                                                        <option value="<?= $a['id'] ?>" <?= (isset($item['attribute_id']) && $item['attribute_id'] == $a['id']) ? 'selected' : '' ?>>
+                                                            <?= htmlspecialchars($label) ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-1 text-end">
+                                                <button type="button" class="btn btn-sm btn-light text-danger border-0" onclick="this.closest('.item-row').remove()">✕</button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="card-footer bg-transparent border-top-0 pt-0 pb-2">
+                                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill" onclick="addItem(<?= $gIndex ?>, this)">
+                                    <i class="fa fa-plus-circle"></i> Thêm thông số
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; endif; ?>
+                </div>
+                
+                <div class="card-footer bg-white py-3 border-top">
+                    <button type="submit" class="btn btn-primary fw-bold shadow-sm px-4">
+                        <i class="fa fa-save me-2"></i><?= $currentData['id'] ? "LƯU THAY ĐỔI" : "TẠO DANH MỤC" ?>
+                    </button>
+                </div>
+            </div>
         </div>
-    </form>
-</div>
+    </div>
+</form>
 
 <script>
     // 1. Nhận dữ liệu attributes từ PHP
@@ -128,17 +137,22 @@
         const idx = groupCounter++;
         
         const html = `
-            <div class="group-box" id="group-${idx}">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="flex-grow: 1;">
-                        <b>Nhóm:</b> 
-                        <input type="text" name="groups[${idx}]" placeholder="Tên nhóm (VD: Camera)" required style="width: 70%; font-weight: bold;">
+            <div class="card mb-3 border bg-light animate__animated animate__fadeIn" id="group-${idx}">
+                <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-2 px-3">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <span class="badge bg-secondary me-2">Nhóm</span>
+                        <input type="text" name="groups[${idx}]" placeholder="Tên nhóm (VD: Camera)" 
+                               class="form-control form-control-sm fw-bold border-0 bg-transparent ps-0" required style="box-shadow:none;">
                     </div>
-                    <button type="button" class="btn-del" onclick="removeElement('group-${idx}')">✕ Xóa Nhóm</button>
+                    <button type="button" class="btn btn-sm text-danger" onclick="removeElement('group-${idx}')">
+                        <i class="fa fa-trash"></i>
+                    </button>
                 </div>
-                <div class="items-list-${idx}"></div>
-                <div style="margin-top:10px;">
-                    <button type="button" class="btn-add-item" onclick="addItem(${idx}, this)">+ Thêm dòng thông số</button>
+                <div class="card-body py-2 px-3 items-list-${idx}"></div>
+                <div class="card-footer bg-transparent border-top-0 pt-0 pb-2">
+                    <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill" onclick="addItem(${idx}, this)">
+                        <i class="fa fa-plus-circle"></i> Thêm thông số
+                    </button>
                 </div>
             </div>`;
         container.insertAdjacentHTML('beforeend', html);
@@ -148,7 +162,6 @@
         let attrOptions = '<option value="">-- Chọn Attribute --</option>';
         if (attributesList && attributesList.length > 0) {
             attributesList.forEach(attr => {
-                // Logic check variant trong JS để hiển thị
                 let isVar = attr.is_variant == 1 || attr.is_customizable == 1;
                 let label = isVar ? `${attr.name} (Variant)` : attr.name;
                 attrOptions += `<option value="${attr.id}">${label}</option>`;
@@ -156,35 +169,46 @@
         }
 
         const html = `
-            <div class="item-row">
-                <span>Tên:</span> 
-                <input type="text" name="items[${groupIdx}][name][]" placeholder="VD: Độ phân giải" required>
-                <span>Loại:</span>
-                <select name="items[${groupIdx}][type][]" onchange="toggleAttr(this)">
-                    <option value="text">Text thường</option>
-                    <option value="attribute">🔗 Liên kết Attribute</option>
-                </select>
-                <select name="items[${groupIdx}][attr_id][]" style="display:none">
-                    ${attrOptions}
-                </select>
-                <button type="button" class="btn-del" onclick="this.parentElement.remove()">✕</button>
+            <div class="row g-2 mb-2 item-row align-items-center animate__animated animate__fadeIn">
+                <div class="col-md-4">
+                    <input type="text" name="items[${groupIdx}][name][]" placeholder="Tên thông số" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-3">
+                    <select name="items[${groupIdx}][type][]" class="form-select form-select-sm" onchange="toggleAttr(this)">
+                        <option value="text">Text thường</option>
+                        <option value="attribute">🔗 Liên kết Attribute</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <select name="items[${groupIdx}][attr_id][]" class="form-select form-select-sm" style="display:none">
+                        ${attrOptions}
+                    </select>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn btn-sm btn-light text-danger border-0" onclick="this.closest('.item-row').remove()">✕</button>
+                </div>
             </div>`;
         
-        const itemsListDiv = btn.parentElement.previousElementSibling;
-        itemsListDiv.insertAdjacentHTML('beforeend', html);
+        // Chèn vào div chứa list items (là phần tử con thứ 2 của card)
+        const cardBody = document.querySelector(`#group-${groupIdx} .items-list-${groupIdx}`);
+        if(cardBody) cardBody.insertAdjacentHTML('beforeend', html);
     }
 
     function toggleAttr(select) {
-        const attrSelect = select.nextElementSibling;
-        attrSelect.style.display = (select.value === 'attribute') ? 'inline-block' : 'none';
+        // Tìm select attribute kế bên (nằm ở col tiếp theo)
+        const parentRow = select.closest('.item-row');
+        const attrSelect = parentRow.querySelector('select[name*="[attr_id]"]');
+        if(attrSelect) {
+            attrSelect.style.display = (select.value === 'attribute') ? 'block' : 'none';
+        }
     }
 
     function removeElement(id) {
         if(confirm('Bạn có chắc muốn xóa nhóm này?')) {
-            document.getElementById(id).remove();
+            const el = document.getElementById(id);
+            if(el) el.remove();
         }
     }
 </script>
 
-</body>
-</html>
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

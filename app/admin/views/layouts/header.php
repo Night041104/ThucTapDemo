@@ -72,7 +72,7 @@
             margin: 4px 10px;
             border-radius: 8px;
             cursor: pointer;
-            text-transform: uppercase; letter-spacing: 0.5px; /* Làm giống header section */
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
         
         .nav-link-content { display: flex; align-items: center; }
@@ -80,19 +80,17 @@
         
         .nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
         
-        /* Khi menu cha đang mở */
         .nav-link[aria-expanded="true"] {
             color: white;
             background: rgba(255,255,255,0.05);
         }
 
-        /* Mũi tên xoay */
         .arrow-icon { font-size: 0.8rem; transition: transform 0.3s ease; }
         .nav-link[aria-expanded="true"] .arrow-icon { transform: rotate(90deg); }
         
         /* SUB-MENU ITEMS */
         .collapse-inner {
-            background: rgba(0,0,0,0.3); /* Nền tối hơn cho menu con */
+            background: rgba(0,0,0,0.3);
             margin: 0 10px;
             border-radius: 0 0 8px 8px;
             padding: 5px 0;
@@ -101,14 +99,14 @@
         
         .collapse-item {
             color: #9ca3af;
-            padding: 10px 15px 10px 50px; /* Thụt đầu dòng sâu hơn */
+            padding: 10px 15px 10px 50px;
             display: flex; align-items: center;
             text-decoration: none;
             font-size: 0.9rem;
             transition: 0.2s;
             position: relative;
         }
-        .collapse-item:hover { color: white; padding-left: 55px; } /* Hiệu ứng trượt nhẹ */
+        .collapse-item:hover { color: white; padding-left: 55px; }
         
         .collapse-item.active { 
             color: #38bdf8; 
@@ -168,7 +166,6 @@
         <div class="sidebar-content">
             
             <?php 
-                // Active nếu controller là dashboard
                 $isOverview = ($ctrl == 'dashboard'); 
             ?>
             <a class="nav-link <?= $isOverview ? '' : 'collapsed' ?>" 
@@ -190,8 +187,8 @@
             </div>
 
             <?php 
-                // Active nếu controller là product, order, hoặc user
-                $mgmtControllers = ['product', 'order', 'user'];
+                // Cập nhật danh sách controller thuộc nhóm Quản lý
+                $mgmtControllers = ['category', 'attribute', 'brand', 'product', 'order', 'user'];
                 $isMgmt = in_array($ctrl, $mgmtControllers);
             ?>
             <div style="margin-top: 5px;"></div>
@@ -206,6 +203,21 @@
             </a>
             <div class="collapse <?= $isMgmt ? 'show' : '' ?>" id="collapseMgmt">
                 <div class="collapse-inner">
+                    <a class="collapse-item <?= ($ctrl == 'category') ? 'active' : '' ?>" 
+                       href="index.php?module=admin&controller=category&action=index">
+                       <i class="fa-solid fa-folder-tree me-2"></i> Danh mục
+                    </a>
+
+                    <a class="collapse-item <?= ($ctrl == 'attribute') ? 'active' : '' ?>" 
+                       href="index.php?module=admin&controller=attribute&action=index">
+                       <i class="fa-solid fa-sliders me-2"></i> Thuộc tính
+                    </a>
+
+                    <a class="collapse-item <?= ($ctrl == 'brand') ? 'active' : '' ?>" 
+                       href="index.php?module=admin&controller=brand&action=index">
+                       <i class="fa-solid fa-tag me-2"></i> Thương hiệu
+                    </a>
+
                     <a class="collapse-item <?= ($ctrl == 'product') ? 'active' : '' ?>" 
                        href="index.php?module=admin&controller=product&action=index">
                        <i class="fa-solid fa-box-open me-2"></i> Sản phẩm
@@ -224,7 +236,6 @@
             </div>
 
             <?php 
-                // Có thể mở rộng thêm setting, banner, ...
                 $sysControllers = ['setting', 'banner']; 
                 $isSys = in_array($ctrl, $sysControllers);
             ?>
@@ -240,7 +251,7 @@
             </a>
             <div class="collapse <?= $isSys ? 'show' : '' ?>" id="collapseSystem">
                 <div class="collapse-inner">
-                    <a class="collapse-item" href="index.php?module=client&controller=home" target="_blank">
+                    <a class="collapse-item" href="index.php?module=client&controller=home" >
                         <i class="fa-solid fa-globe me-2"></i> Xem Website
                     </a>
                     <a class="collapse-item text-danger" href="index.php?module=client&controller=auth&action=logout">

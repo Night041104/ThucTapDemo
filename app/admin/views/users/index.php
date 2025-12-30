@@ -1,126 +1,237 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý thành viên | Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', sans-serif; }
-        .main-container { max-width: 1200px; margin: 30px auto; padding: 0 15px; }
-        
-        /* Card Style */
-        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .card-header { background: white; border-bottom: 1px solid #f0f0f0; padding: 20px 25px; border-radius: 12px 12px 0 0 !important; display: flex; justify-content: space-between; align-items: center; }
-        .card-title { font-size: 1.25rem; font-weight: 700; color: #333; margin: 0; }
-        
-        /* Table Style */
-        .table thead th { background-color: #f1f3f5; color: #495057; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; border: none; padding: 15px; }
-        .table tbody td { vertical-align: middle; padding: 15px; border-bottom: 1px solid #f0f0f0; color: #555; font-size: 0.95rem; }
-        .table tbody tr:last-child td { border-bottom: none; }
-        .table tbody tr:hover { background-color: #fafafa; }
-        
-        /* Avatar */
-        .user-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        /* Badge Status */
-        .badge { padding: 8px 12px; border-radius: 30px; font-weight: 500; font-size: 0.75rem; }
-        .badge-admin { background-color: #ffe0e0; color: #d63031; }
-        .badge-user { background-color: #e3f2fd; color: #0984e3; }
-        .badge-active { background-color: #d4edda; color: #155724; }
-        .badge-inactive { background-color: #fff3cd; color: #856404; }
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-        /* Buttons */
-        .btn-action { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; transition: 0.2s; border: none; }
-        .btn-edit { background-color: #e3f2fd; color: #0984e3; margin-right: 5px; }
-        .btn-edit:hover { background-color: #0984e3; color: white; }
-        .btn-delete { background-color: #ffe0e0; color: #d63031; }
-        .btn-delete:hover { background-color: #d63031; color: white; }
-    </style>
-</head>
-<body>
+<?php 
+    $totalUsers = count($users);
+    $adminCount = 0;
+    $activeCount = 0;
+    $blockedCount = 0;
 
-    <nav class="navbar navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1"><i class="fa fa-cogs me-2"></i>Admin Dashboard</span>
-            <a href="index.php" class="btn btn-outline-light btn-sm">Về trang chủ Web</a>
-        </div>
-    </nav>
+    foreach($users as $u) {
+        if($u['role_id'] == 1) $adminCount++;
+        if($u['is_verified'] == 1) $activeCount++;
+        else $blockedCount++;
+    }
+?>
 
-    <div class="main-container">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title"><i class="fa fa-users me-2 text-primary"></i>Danh sách thành viên</h2>
-                <span class="badge bg-secondary"><?= count($users) ?> tài khoản</span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table mb-0">
-                        <thead>
-                            <tr>
-                                <th class="ps-4">Thành viên</th>
-                                <th>Email</th>
-                                <th>Vai trò</th>
-                                <th>Trạng thái</th>
-                                <th class="text-end pe-4">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $u): ?>
-                                <tr>
-                                    <td class="ps-4">
-                                        <div class="d-flex align-items-center">
-                                            <?php 
-                                                // Xử lý ảnh đại diện
-                                                $defaultAvt = 'public/uploads/default/default_avt.png';
-                                                $avt = !empty($u['avatar']) ? $u['avatar'] : $defaultAvt;
-                                            ?>
-                                            <img src="<?= htmlspecialchars($avt) ?>" 
-                                                 class="user-avatar me-3" 
-                                                 alt="Avatar"
-                                                 onerror="this.src='<?= $defaultAvt ?>'">
-                                            <div>
-                                                <div style="font-weight: 600; color: #333;"><?= htmlspecialchars($u['lname'] . ' ' . $u['fname']) ?></div>
-                                                <div style="font-size: 12px; color: #999;">ID: <?= substr($u['id'], 0, 8) ?>...</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td><?= htmlspecialchars($u['email']) ?></td>
-                                    <td>
-                                        <?php if($u['role_id'] == 1): ?>
-                                            <span class="badge badge-admin"><i class="fa fa-crown me-1"></i> Admin</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-user">Khách hàng</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if($u['is_verified'] == 1): ?>
-                                            <span class="badge badge-active"><i class="fa fa-check-circle me-1"></i> Đã kích hoạt</span>
-                                        <?php else: ?>
-                                            <span class="badge badge-inactive"><i class="fa fa-clock me-1"></i> Chưa kích hoạt</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <a href="index.php?module=admin&controller=user&action=edit&id=<?= $u['id'] ?>" 
-                                           class="btn-action btn-edit" title="Sửa quyền">
-                                            <i class="fa fa-pen"></i>
-                                        </a>
-                                        <a href="index.php?module=admin&controller=user&action=delete&id=<?= $u['id'] ?>" 
-                                           class="btn-action btn-delete" 
-                                           onclick="return confirm('⚠️ CẢNH BÁO:\n\nBạn có chắc chắn muốn xóa thành viên này không?\nHành động này không thể hoàn tác!');"
-                                           title="Xóa user">
-                                            <i class="fa fa-trash"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-primary small mb-1">Tổng thành viên</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalUsers ?></div>
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #e74a3b !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-danger small mb-1">Quản trị viên (Admin)</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $adminCount ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1cc88a !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-success small mb-1">Đang hoạt động</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $activeCount ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f6c23e !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-warning small mb-1">Chưa kích hoạt</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $blockedCount ?></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-</body>
-</html>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Quản lý Thành viên</h4>
+        <p class="text-muted small mb-0">Danh sách tài khoản và phân quyền hệ thống</p>
+    </div>
+    </div>
+
+<div class="card card-custom border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-bottom-0">
+        <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
+            <input type="hidden" name="module" value="admin">
+            <input type="hidden" name="controller" value="user">
+            <input type="hidden" name="action" value="index">
+
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+                    <input type="text" name="keyword" id="keyword" 
+                           class="form-control bg-light border-start-0" 
+                           placeholder="Tìm tên, email...">
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <select name="role" id="role" class="form-select bg-light">
+                    <option value="">-- Tất cả vai trò --</option>
+                    <option value="1">👑 Admin</option>
+                    <option value="0">👤 Khách hàng</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="status" id="status" class="form-select bg-light">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="1">✅ Active</option>
+                    <option value="0">⛔ Pending</option>
+                </select>
+            </div>
+
+            <div class="col-md-auto d-flex align-items-center gap-2">
+                <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
+                <button type="button" class="btn btn-light text-danger fw-bold" onclick="resetFilter()" title="Xóa lọc">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary">
+                    <tr>
+                        <th class="ps-4 py-3">Thành viên</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <?php if(!empty($users)): ?>
+                        <?php foreach ($users as $u): ?>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <?php 
+                                            $defaultAvt = 'public/uploads/default/default_avt.png';
+                                            $avt = !empty($u['avatar']) ? $u['avatar'] : $defaultAvt;
+                                        ?>
+                                        <div class="position-relative">
+                                            <img src="<?= htmlspecialchars($avt) ?>" 
+                                                 class="rounded-circle border" 
+                                                 style="width: 45px; height: 45px; object-fit: cover;"
+                                                 onerror="this.src='<?= $defaultAvt ?>'">
+                                            <?php if($u['role_id'] == 1): ?>
+                                                <span class="position-absolute bottom-0 end-0 bg-danger border border-white rounded-circle p-1" style="width:15px; height:15px; display:block;"></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="ms-3">
+                                            <div class="fw-bold text-dark"><?= htmlspecialchars($u['lname'] . ' ' . $u['fname']) ?></div>
+                                            <div class="small text-muted" style="font-size: 0.75rem;">ID: <?= substr($u['id'], 0, 8) ?>...</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><?= htmlspecialchars($u['email']) ?></td>
+                                <td>
+                                    <?php if($u['role_id'] == 1): ?>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle rounded-pill px-3">
+                                            <i class="fa fa-crown me-1"></i> Admin
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-info bg-opacity-10 text-info border border-info-subtle rounded-pill px-3">
+                                            User
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if($u['is_verified'] == 1): ?>
+                                        <span class="badge bg-success bg-opacity-10 text-success"><i class="fa fa-check-circle me-1"></i> Active</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning"><i class="fa fa-clock me-1"></i> Pending</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown">
+                                            <i class="fa fa-ellipsis-v text-muted"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                            <li>
+                                                <a class="dropdown-item" href="index.php?module=admin&controller=user&action=edit&id=<?= $u['id'] ?>">
+                                                    <i class="fa fa-user-shield text-primary me-2"></i> Phân quyền
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <a class="dropdown-item text-danger" href="index.php?module=admin&controller=user&action=delete&id=<?= $u['id'] ?>" 
+                                                   onclick="return confirm('⚠️ CẢNH BÁO: Xóa user này sẽ mất toàn bộ dữ liệu đơn hàng liên quan.\n\nBạn có chắc chắn muốn xóa?')">
+                                                    <i class="fa fa-trash me-2"></i> Xóa tài khoản
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="5" class="text-center py-5 text-muted">Không tìm thấy thành viên nào.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById('filterForm');
+        const inputs = form.querySelectorAll('input, select');
+        const spinner = document.getElementById('loadingSpinner');
+        const tableBody = document.getElementById('userTableBody');
+        let timeout = null;
+
+        function fetchUsers() {
+            spinner.classList.remove('d-none');
+            
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            
+            fetch('index.php?' + params.toString())
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTbody = doc.getElementById('userTableBody');
+                    
+                    if(newTbody) {
+                        tableBody.innerHTML = newTbody.innerHTML;
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => {
+                    spinner.classList.add('d-none');
+                });
+        }
+
+        inputs.forEach(input => {
+            if (input.type === 'text') {
+                input.addEventListener('input', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(fetchUsers, 400); 
+                });
+            }
+            if (input.tagName === 'SELECT') {
+                input.addEventListener('change', fetchUsers);
+            }
+        });
+        
+        window.resetFilter = function() {
+            form.reset();
+            fetchUsers();
+        }
+    });
+</script>
+
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

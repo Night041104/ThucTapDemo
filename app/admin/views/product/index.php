@@ -1,211 +1,286 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản Lý Sản Phẩm (Master-Slave)</title>
-    <style>
-        /* GIỮ NGUYÊN CSS CŨ CỦA BẠN */
-        body{font-family:'Segoe UI', sans-serif; padding:20px; background:#f4f6f8; color:#333;}
-        .table-box{background:white; padding:20px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);}
-        table{width:100%; border-collapse:collapse; margin-top:15px;}
-        th,td{padding:12px 10px; border-bottom:1px solid #eee; text-align:left; vertical-align: middle;}
-        th{background:#e3f2fd; color:#0d47a1; font-weight:600;}
-        tr:hover {background-color: #f9f9f9;}
-        
-        .is-child{background-color: #fafafa;}
-        .is-child .name-cell{padding-left: 40px; position:relative;}
-        .is-child .name-cell:before{content:'↳'; position:absolute; left:15px; font-weight:bold; color:#ff9800; font-size:18px;}
-        
-        .badge-master{background:#2e7d32; color:white; padding:3px 8px; border-radius:4px; font-size:10px; font-weight:bold; text-transform: uppercase;}
-        
-        /* Button Styles */
-        .btn{text-decoration:none; padding:6px 12px; border-radius:4px; font-size:13px; display:inline-block; margin-right:5px; font-weight:500; border:none; cursor:pointer;}
-        
-        .btn-clone{background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;} .btn-clone:hover{background:#ffe0b2;}
-        .btn-edit{background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;} .btn-edit:hover{background:#bbdefb;}
-        .btn-del{background:#ffebee; color:#c62828; border:1px solid #ffcdd2;} .btn-del:hover{background:#ffcdd2;}
-        .btn-create{background:#2e7d32; color:white; padding:10px 20px; font-size:14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-        /* [MỚI] CSS CHO NÚT LỊCH SỬ (MÀU TÍM) */
-        .btn-history { background: #f3e5f5; color: #7b1fa2; border: 1px solid #e1bee7; } 
-        .btn-history:hover { background: #e1bee7; color: #4a148c; }
+<?php 
+    $totalProd = count($products);
+    $activeProd = 0; $outOfStock = 0; $hiddenProd = 0;
+    foreach($products as $p) {
+        if($p['status'] == 1) $activeProd++;
+        if($p['status'] == 0) $hiddenProd++;
+        if($p['quantity'] <= 0) $outOfStock++;
+    }
+?>
 
-        /* Status Badges */
-        .st-active { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        .st-hidden { color: #616161; background: #eeeeee; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        .st-stop   { color: #fff; background: #424242; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-
-        .filter-box { background:#f1f8e9; padding:15px; border-radius:5px; display:flex; gap:10px; align-items:center; border:1px solid #c8e6c9; flex-wrap: wrap; }
-        .input-search { padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px; }
-        .input-select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; min-width: 250px; }
-
-        .badge-variant { 
-            display: inline-block; 
-            background: #f3e5f5; 
-            color: #7b1fa2; 
-            border: 1px solid #e1bee7; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            font-size: 11px; 
-            margin-right: 4px; 
-            margin-bottom: 4px;
-        }
-    </style>
-</head>
-<body>
-    
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1 style="color:#1565c0; margin:0;">📦 KHO HÀNG TỔNG HỢP</h1>
-        <a href="index.php?module=admin&controller=product&action=create" class="btn btn-create">+ Tạo Sản Phẩm Mới</a>
-    </div>
-
-    <?php if (isset($_GET['msg'])): ?>
-        <div style="padding:15px; background:#d4edda; color:#155724; border:1px solid #c3e6cb; margin-bottom:20px; border-radius:4px;">
-            <?php 
-                if ($_GET['msg'] == 'created') echo "✅ Tạo sản phẩm mới thành công!";
-                elseif ($_GET['msg'] == 'updated') echo "✅ Cập nhật sản phẩm thành công!";
-                elseif ($_GET['msg'] == 'cloned') echo "📋 Nhân bản thành công!";
-                elseif ($_GET['msg'] == 'deleted') echo "🗑️ Đã xóa sản phẩm.";
-            ?>
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-primary small mb-1">Tổng sản phẩm</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalProd ?></div>
+            </div>
         </div>
-    <?php endif; ?>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1cc88a !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-success small mb-1">Đang kinh doanh</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $activeProd ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #e74a3b !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-danger small mb-1">Hết hàng (Kho)</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $outOfStock ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f6c23e !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-warning small mb-1">Đang tạm ẩn</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $hiddenProd ?></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <div class="table-box">
-        <form method="GET" action="index.php" class="filter-box">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Kho hàng tổng hợp</h4>
+        <p class="text-muted small mb-0">Quản lý Master Product và các biến thể (SKU)</p>
+    </div>
+    <a href="index.php?module=admin&controller=product&action=create" class="btn btn-primary shadow-sm px-3">
+        <i class="fa fa-plus-circle me-2"></i>Tạo Sản Phẩm Mới
+    </a>
+</div>
+
+<?php if (isset($_GET['msg'])): ?>
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="fa fa-check-circle me-2"></i>
+        <?php 
+            if ($_GET['msg'] == 'created') echo "Tạo sản phẩm mới thành công!";
+            elseif ($_GET['msg'] == 'updated') echo "Cập nhật sản phẩm thành công!";
+            elseif ($_GET['msg'] == 'cloned') echo "Nhân bản sản phẩm thành công!";
+            elseif ($_GET['msg'] == 'deleted') echo "Đã xóa sản phẩm khỏi hệ thống.";
+        ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<div class="card card-custom border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-bottom-0">
+        <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
             <input type="hidden" name="module" value="admin">
             <input type="hidden" name="controller" value="product">
             <input type="hidden" name="action" value="index">
 
-            <input type="text" name="q" value="<?= htmlspecialchars($keyword ?? '') ?>" class="input-search" placeholder="Tìm tên hoặc SKU...">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+                    <input type="text" name="q" id="keyword" 
+                           value="<?= htmlspecialchars($keyword ?? '') ?>" 
+                           class="form-control bg-light border-start-0" 
+                           placeholder="Tìm theo tên sản phẩm, mã SKU...">
+                </div>
+            </div>
             
-            <select name="master_id" class="input-select" onchange="this.form.submit()">
-                <option value="0">-- Tất cả dòng sản phẩm --</option>
-                <?php foreach($masters as $m): ?>
-                    <option value="<?= $m['id'] ?>" <?= (isset($filterMasterId) && $filterMasterId == $m['id']) ? 'selected' : '' ?>>
-                        <?= $m['name'] ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            
-            <button type="submit" class="btn" style="background:#2196f3; color:white;">Lọc</button>
-            <?php if(!empty($filterMasterId) || !empty($keyword)): ?>
-                <a href="index.php?module=admin&controller=product&action=index" style="color:#c62828; text-decoration:none; font-weight:bold; margin-left:10px;">✕ Bỏ lọc</a>
-            <?php endif; ?>
-        </form>
+            <div class="col-md-4">
+                <select name="master_id" id="master_id" class="form-select bg-light">
+                    <option value="0">-- Tất cả dòng sản phẩm --</option>
+                    <?php foreach($masters as $m): ?>
+                        <option value="<?= $m['id'] ?>" <?= (isset($filterMasterId) && $filterMasterId == $m['id']) ? 'selected' : '' ?>>
+                            <?= $m['name'] ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th width="60">Ảnh</th>
-                    <th width="250">Tên Sản Phẩm</th>
-                    <th width="150">Biến thể</th> <th width="120">Thông tin</th>
-                    <th width="100">Giá bán</th>
-                    <th width="60">Kho</th>
-                    <th width="100">Trạng thái</th>
-                    <th width="240">Hành động</th> </tr>
-            </thead>
-            <tbody>
-                <?php if(!empty($products)): ?>
-                    <?php foreach($products as $row): ?>
-                        <?php 
-                            $isChild = ($row['parent_id'] > 0); 
-                            $roleClass = $isChild ? 'is-child' : '';
-                            
-                            // Xử lý hiển thị biến thể từ JSON
-                            $specs = json_decode($row['specs_json'], true) ?? [];
-                            $variantHtml = '';
-                            
-                            // Duyệt qua JSON specs để tìm thuộc tính biến thể
-                            if (!empty($specs) && !empty($variantIds)) {
-                                foreach ($specs as $group) {
-                                    if(isset($group['items'])) {
-                                        foreach ($group['items'] as $item) {
-                                            // Kiểm tra nếu thuộc tính này là biến thể và có giá trị
-                                            if (isset($item['attr_id']) && in_array($item['attr_id'], $variantIds) && !empty($item['value'])) {
-                                                $variantHtml .= '<span class="badge-variant">' . htmlspecialchars($item['name']) . ': ' . htmlspecialchars($item['value']) . '</span>';
+            <div class="col-md-auto d-flex align-items-center gap-2">
+                <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
+                
+                <a href="index.php?module=admin&controller=product&action=index" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
+                    <i class="fa fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary">
+                    <tr>
+                        <th class="ps-4 py-3" width="60">Ảnh</th>
+                        <th width="300">Tên Sản Phẩm / SKU</th>
+                        <th>Biến thể (Specs)</th>
+                        <th>Thông tin</th>
+                        <th>Giá bán</th>
+                        <th>Kho</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4" width="100">Xử lý</th>
+                    </tr>
+                </thead>
+                
+                <tbody id="productTableBody">
+                    <?php if(!empty($products)): ?>
+                        <?php foreach($products as $row): ?>
+                            <?php 
+                                $isChild = ($row['parent_id'] > 0); 
+                                $bgClass = $isChild ? 'bg-light bg-opacity-50' : '';
+                                $specs = json_decode($row['specs_json'], true) ?? [];
+                                $variantHtml = '';
+                                if (!empty($specs) && !empty($variantIds)) {
+                                    foreach ($specs as $group) {
+                                        if(isset($group['items'])) {
+                                            foreach ($group['items'] as $item) {
+                                                if (isset($item['attr_id']) && in_array($item['attr_id'], $variantIds) && !empty($item['value'])) {
+                                                    $variantHtml .= '<span class="badge bg-purple text-purple border border-purple-light me-1 mb-1">' . htmlspecialchars($item['name']) . ': ' . htmlspecialchars($item['value']) . '</span>';
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
-                        ?>
-                        <tr class="<?= $roleClass ?>">
-                            <td>
-                                <img src="<?= $row['thumbnail'] ?>" style="width:50px; height:50px; object-fit:contain; border:1px solid #ddd; background:#fff; padding:2px; border-radius: 4px;">
-                            </td>
-                            
-                            <td class="name-cell">
-                                <div>
-                                    <a href="index.php?module=admin&controller=product&action=edit&id=<?= $row['id'] ?>" style="color:#333; font-weight:bold; text-decoration:none; font-size:14px;">
-                                        <?= $row['name'] ?>
-                                    </a>
-                                </div>
-                                <div style="font-size:11px; color:#999; margin-top:3px;">
-                                    SKU: <?= $row['sku'] ?>
-                                </div>
-                                <div style="margin-top: 5px;">
-                                    <?php if(!$isChild): ?>
-                                        <span class="badge-master">Master / Gốc</span>
+                            ?>
+                            <tr class="<?= $bgClass ?>">
+                                <td class="ps-4">
+                                    <div class="position-relative d-inline-block">
+                                        <img src="<?= $row['thumbnail'] ?>" class="rounded border" style="width:48px; height:48px; object-fit:contain; background:#fff; padding: 2px;">
+                                        <?php if($isChild): ?>
+                                            <span class="position-absolute top-0 start-0 translate-middle p-1 bg-secondary border border-light rounded-circle" title="Child">
+                                                <span class="visually-hidden">Child</span>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex">
+                                        <?php if($isChild): ?><div class="text-muted me-2" style="font-size: 1.2rem; opacity: 0.5;">↳</div><?php endif; ?>
+                                        <div>
+                                            <a href="index.php?module=admin&controller=product&action=edit&id=<?= $row['id'] ?>" class="fw-bold text-dark text-decoration-none">
+                                                <?= $row['name'] ?>
+                                            </a>
+                                            <div class="d-flex align-items-center mt-1">
+                                                <span class="badge bg-light text-secondary border me-2">SKU: <?= $row['sku'] ?></span>
+                                                <?php if(!$isChild): ?><span class="badge bg-success bg-opacity-10 text-success" style="font-size: 10px;">MASTER</span><?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><?= $variantHtml ? $variantHtml : '<span class="text-muted small fst-italic">-- Mặc định --</span>' ?></td>
+                                <td class="small">
+                                    <div class="text-muted"><i class="fa fa-folder me-1 text-warning"></i> <?= $row['cate_name'] ?></div>
+                                    <div class="text-muted mt-1"><i class="fa fa-tag me-1 text-info"></i> <?= $row['brand_name'] ?></div>
+                                </td>
+                                <td class="fw-bold text-danger"><?= number_format($row['price']) ?>₫</td>
+                                <td>
+                                    <?php if($row['quantity'] > 0): ?>
+                                        <span class="fw-bold text-success"><?= $row['quantity'] ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger">Hết hàng</span>
                                     <?php endif; ?>
-                                </div>
-                            </td>
-
-                            <td>
-                                <?= $variantHtml ? $variantHtml : '<span style="color:#ccc; font-size:11px;">--</span>' ?>
-                            </td>
-
-                            <td style="font-size: 13px; color: #555;">
-                                <div>📂 <?= $row['cate_name'] ?></div>
-                                <div>🏷️ <?= $row['brand_name'] ?></div>
-                            </td>
-
-                            <td style="color:#d32f2f; font-weight:bold;">
-                                <?= number_format($row['price']) ?>₫
-                            </td>
-                            
-                            <td>
-                                <?php if($row['quantity'] > 0): ?>
-                                    <span style="color:#2e7d32; font-weight:bold;"><?= $row['quantity'] ?></span>
-                                <?php else: ?>
-                                    <span style="color:#c62828; background:#ffebee; padding:2px 5px; border-radius:4px; font-size:11px;">Hết</span>
-                                <?php endif; ?>
-                            </td>
-
-                            <td>
-                                <?php 
-                                    if($row['status'] == 1) echo '<span class="st-active">Đang bán</span>';
-                                    elseif($row['status'] == 0) echo '<span class="st-hidden">Tạm ẩn</span>';
-                                    elseif($row['status'] == -1) echo '<span class="st-stop">Ngừng KD</span>';
-                                ?>
-                            </td>
-
-                            <td>
-                                <?php 
-                                    // Nếu là con -> Xem lịch sử của Cha
-                                    // Nếu là cha -> Xem lịch sử của chính nó
-                                    $historyId = ($row['parent_id'] > 0) ? $row['parent_id'] : $row['id'];
-                                ?>
-
-                                <a href="index.php?module=admin&controller=product&action=history&master_id=<?= $historyId ?>" 
-                                   class="btn btn-history" 
-                                   title="Xem lịch sử thay đổi">
-                                    🕒 Log
-                                </a>
-
-                                <a href="index.php?module=admin&controller=product&action=clone&id=<?= $row['id'] ?>" class="btn btn-clone" title="Nhân bản sản phẩm này">
-                                    ❐ Clone
-                                </a>
-                                <a href="index.php?module=admin&controller=product&action=edit&id=<?= $row['id'] ?>" class="btn btn-edit">Sửa</a>
-                                <a href="index.php?module=admin&controller=product&action=delete&id=<?= $row['id'] ?>" class="btn btn-del" onclick="return confirm('⚠️ CẢNH BÁO XÓA:\n\n- Nếu xóa MASTER, sản phẩm con kế tiếp sẽ được tự động đưa lên làm Master.\n- Hành động này không thể hoàn tác.\n\nBạn có chắc chắn muốn xóa?')">Xóa</a>
+                                </td>
+                                <td>
+                                    <?php if($row['status'] == 1): ?>
+                                        <span class="badge bg-success bg-opacity-10 text-success"><i class="fa fa-check-circle"></i> Đang bán</span>
+                                    <?php elseif($row['status'] == 0): ?>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary"><i class="fa fa-eye-slash"></i> Tạm ẩn</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-dark"><i class="fa fa-ban"></i> Ngừng KD</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm rounded-circle shadow-sm" type="button" data-bs-toggle="dropdown">
+                                            <i class="fa fa-ellipsis-v text-muted"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                            <?php $historyId = ($row['parent_id'] > 0) ? $row['parent_id'] : $row['id']; ?>
+                                            <li><a class="dropdown-item" href="index.php?module=admin&controller=product&action=edit&id=<?= $row['id'] ?>"><i class="fa fa-pen text-primary me-2"></i> Chỉnh sửa</a></li>
+                                            <li><a class="dropdown-item" href="index.php?module=admin&controller=product&action=history&master_id=<?= $historyId ?>"><i class="fa fa-history text-info me-2"></i> Xem lịch sử</a></li>
+                                            <li><a class="dropdown-item" href="index.php?module=admin&controller=product&action=clone&id=<?= $row['id'] ?>"><i class="fa fa-copy text-warning me-2"></i> Nhân bản</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="index.php?module=admin&controller=product&action=delete&id=<?= $row['id'] ?>" onclick="return confirm('Bạn có chắc chắn muốn xóa?')"><i class="fa fa-trash me-2"></i> Xóa sản phẩm</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" width="80" class="mb-3 opacity-50">
+                                <p class="text-muted">Không tìm thấy sản phẩm nào.</p>
                             </td>
                         </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr><td colspan="8" style="text-align:center; padding:30px; color: #777;">Không tìm thấy sản phẩm nào.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
+    
+    <div class="card-footer bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center small">
+            <span class="text-muted">Đang hiển thị danh sách sản phẩm</span>
+        </div>
+    </div>
+</div>
 
-</body>
-</html>
+<style>
+    .bg-purple { background-color: #f3e5f5 !important; }
+    .text-purple { color: #7b1fa2 !important; }
+    .border-purple-light { border-color: #e1bee7 !important; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const form = document.getElementById('filterForm');
+        const inputs = form.querySelectorAll('input, select');
+        const spinner = document.getElementById('loadingSpinner');
+        const tableBody = document.getElementById('productTableBody');
+        let timeout = null;
+
+        function fetchProducts() {
+            spinner.classList.remove('d-none');
+            
+            // 1. Tạo URL query từ form
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData);
+            
+            // 2. Gọi về chính trang index này (Controller vẫn xử lý bình thường)
+            fetch('index.php?' + params.toString())
+                .then(response => response.text())
+                .then(html => {
+                    // 3. Phân tích HTML trả về để lấy phần <tbody> mới
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTbody = doc.getElementById('productTableBody');
+                    
+                    if(newTbody) {
+                        // 4. Thay thế nội dung bảng cũ
+                        tableBody.innerHTML = newTbody.innerHTML;
+                    }
+                })
+                .catch(err => console.error(err))
+                .finally(() => {
+                    spinner.classList.add('d-none');
+                });
+        }
+
+        inputs.forEach(input => {
+            // Sự kiện gõ phím (có delay 400ms để tránh gọi liên tục)
+            if (input.type === 'text') {
+                input.addEventListener('input', () => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(fetchProducts, 400); 
+                });
+            }
+            // Sự kiện chọn Select box
+            if (input.tagName === 'SELECT') {
+                input.addEventListener('change', fetchProducts);
+            }
+        });
+    });
+</script>
+
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

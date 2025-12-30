@@ -16,8 +16,17 @@ class UserController {
     }
 
     // 1. DANH SÁCH USER
+   // 1. DANH SÁCH USER (CÓ TÌM KIẾM)
     public function index() {
-        $users = $this->userModel->getAllUsers();
+        // Lấy tham số từ URL (do AJAX hoặc Form gửi lên)
+        $keyword = $_GET['keyword'] ?? '';
+        $role    = $_GET['role'] ?? '';
+        $status  = $_GET['status'] ?? '';
+
+        // Gọi Model để lấy dữ liệu đã lọc
+        $users = $this->userModel->getAllUsers($keyword, $role, $status);
+        
+        // Trả về View
         require_once __DIR__ . '/../Views/users/index.php';
     }
 

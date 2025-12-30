@@ -1,95 +1,160 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Quản lý Thuộc tính</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f4f6f8; color: #333; }
-        .table-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px 10px; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
-        th { background: #e3f2fd; color: #0d47a1; font-weight: 600; }
-        tr:hover { background-color: #f9f9f9; }
-        
-        .btn { text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 500; display: inline-block; margin-right: 5px; cursor: pointer;}
-        .btn-create { background: #2e7d32; color: white; padding: 10px 20px; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .btn-edit { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
-        .btn-del { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
-        
-        .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-right: 5px; display: inline-block; }
-        .bg-custom { background: #9c27b0; color: white; }
-        .bg-variant { background: #ff9800; color: white; }
-        .bg-simple { background: #9e9e9e; color: white; }
-        
-        .msg-box { padding:15px; margin-bottom:20px; border-radius:4px; font-weight:500; }
-        .msg-success { background:#d4edda; color:#155724; border: 1px solid #c3e6cb; }
-    </style>
-</head>
-<body>
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1 style="color:#1565c0; margin:0;">⚙️ QUẢN LÝ THUỘC TÍNH</h1>
-        <a href="index.php?module=admin&controller=attribute&action=create" class="btn btn-create">+ Thêm Thuộc tính</a>
+<?php 
+    $total = count($listAttrs);
+    $variantCount = 0;
+    $customCount = 0;
+    foreach($listAttrs as $a) {
+        if(!empty($a['is_variant'])) $variantCount++;
+        if(!empty($a['is_customizable'])) $customCount++;
+    }
+?>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-primary small mb-1">Tổng thuộc tính</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $total ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f6c23e !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-warning small mb-1">Dùng làm biến thể</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $variantCount ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #e74a3b !important;">
+            <div class="card-body">
+                <div class="text-uppercase fw-bold text-danger small mb-1">Cho phép tùy chỉnh</div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $customCount ?></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">Cấu hình Thuộc tính</h4>
+        <p class="text-muted small mb-0">Quản lý các đặc tính sản phẩm (Màu sắc, Size, RAM...)</p>
+    </div>
+    <a href="index.php?module=admin&controller=attribute&action=create" class="btn btn-primary shadow-sm px-3">
+        <i class="fa fa-plus-circle me-2"></i>Thêm mới
+    </a>
+</div>
+
+<?php if (isset($_GET['msg'])): ?>
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert">
+        <i class="fa fa-check-circle me-2"></i>
+        <?php 
+            if ($_GET['msg'] == 'created') echo "Tạo thuộc tính mới thành công!";
+            elseif ($_GET['msg'] == 'updated') echo "Cập nhật thành công!";
+            elseif ($_GET['msg'] == 'deleted') echo "Đã xóa thuộc tính.";
+            else echo htmlspecialchars($_GET['msg']);
+        ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+<?php endif; ?>
+
+<div class="card card-custom border-0 shadow-sm">
+    <div class="card-header bg-white py-3 border-bottom-0">
+        <div class="input-group" style="max-width: 400px;">
+            <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+            <input type="text" id="searchInput" class="form-control bg-light border-start-0" placeholder="Tìm nhanh thuộc tính...">
+        </div>
     </div>
 
-    <?php if (isset($_GET['msg'])): ?>
-        <div class="msg-box msg-success">
-            <?php 
-                if ($_GET['msg'] == 'created') echo "✅ Tạo mới thành công!";
-                elseif ($_GET['msg'] == 'updated') echo "✅ Cập nhật thành công!";
-                elseif ($_GET['msg'] == 'deleted') echo "🗑️ Đã xóa thành công!";
-                else echo htmlspecialchars($_GET['msg']);
-            ?>
-        </div>
-    <?php endif; ?>
-
-    <div class="table-box">
-        <table>
-            <thead>
-                <tr>
-                    <th width="50">ID</th>
-                    <th width="100">Mã</th>
-                    <th width="250">Tên & Loại</th>
-                    <th>Danh sách Options</th>
-                    <th width="150">Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if(!empty($listAttrs)): ?>
-                    <?php foreach($listAttrs as $row): ?>
-                        <tr>
-                            <td><?= $row['id'] ?></td>
-                            <td><code style="background:#eee; padding:2px 5px; border-radius:4px;"><?= $row['code'] ?></code></td>
-                            <td>
-                                <b style="font-size: 1.1em; color:#333;"><?= htmlspecialchars($row['name']) ?></b><br>
-                                <div style="margin-top:5px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary">
+                    <tr>
+                        <th class="ps-4 py-3" width="50">ID</th>
+                        <th width="150">Mã (Code)</th>
+                        <th width="250">Tên hiển thị</th>
+                        <th>Phân loại</th>
+                        <th>Giá trị mẫu</th>
+                        <th class="text-end pe-4" width="150">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="attrTableBody">
+                    <?php if(!empty($listAttrs)): ?>
+                        <?php foreach($listAttrs as $row): ?>
+                            <tr>
+                                <td class="ps-4 text-muted small"><?= $row['id'] ?></td>
+                                <td>
+                                    <code class="bg-light text-primary px-2 py-1 rounded border border-light fw-bold">
+                                        <?= $row['code'] ?>
+                                    </code>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-dark fs-6"><?= htmlspecialchars($row['name']) ?></span>
+                                </td>
+                                <td>
                                     <?php if(!empty($row['is_variant'])): ?>
-                                        <span class="badge bg-variant">Biến thể</span>
+                                        <span class="badge bg-purple text-purple bg-opacity-10 border border-purple-light me-1">
+                                            <i class="fa fa-tags me-1"></i>Biến thể
+                                        </span>
                                     <?php endif; ?>
 
                                     <?php if($row['is_customizable']): ?>
-                                        <span class="badge bg-custom">Custom</span>
+                                        <span class="badge bg-info text-info bg-opacity-10 border border-info-light">
+                                            <i class="fa fa-pen me-1"></i>Custom
+                                        </span>
                                     <?php endif; ?>
 
                                     <?php if(empty($row['is_variant']) && empty($row['is_customizable'])): ?>
-                                        <span class="badge bg-simple">Thông số</span>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border">Thông số thường</span>
                                     <?php endif; ?>
-                                </div>
-                            </td>
-                            <td style="color:#555; line-height: 1.4;"><?= htmlspecialchars($row['opts_list'] ?? '') ?></td>
-                            <td>
-                                <a href="index.php?module=admin&controller=attribute&action=edit&id=<?= $row['id'] ?>" class="btn btn-edit">Sửa</a>
-                                <a href="index.php?module=admin&controller=attribute&action=delete&id=<?= $row['id'] ?>" class="btn btn-del" onclick="return confirm('Bạn có chắc muốn xóa thuộc tính này?')">Xóa</a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr><td colspan="5" style="text-align:center; padding: 20px; color:#777;">Chưa có thuộc tính nào.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                                </td>
+                                <td class="text-muted small text-truncate" style="max-width: 300px;">
+                                    <i class="fa fa-list-ul me-1 text-muted"></i>
+                                    <?= htmlspecialchars($row['opts_list'] ?? '(Chưa có giá trị)') ?>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="index.php?module=admin&controller=attribute&action=edit&id=<?= $row['id'] ?>" 
+                                       class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Sửa">
+                                        <i class="fa fa-pen"></i>
+                                    </a>
+                                    <a href="index.php?module=admin&controller=attribute&action=delete&id=<?= $row['id'] ?>" 
+                                       class="btn btn-sm btn-outline-danger border-0 rounded-circle ms-1" 
+                                       onclick="return confirm('⚠️ Cảnh báo: Xóa thuộc tính này có thể ảnh hưởng đến các sản phẩm đang sử dụng nó.\n\nBạn có chắc chắn muốn xóa?')" title="Xóa">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="6" class="text-center py-5 text-muted">Chưa có thuộc tính nào.</td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
     </div>
+</div>
 
-</body>
-</html>
+<style>
+    .bg-purple { background-color: #f3e5f5 !important; }
+    .text-purple { color: #7b1fa2 !important; }
+    .border-purple-light { border-color: #e1bee7 !important; }
+    
+    .bg-info-light { background-color: #e3f2fd !important; }
+    .border-info-light { border-color: #bbdefb !important; }
+</style>
+
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let value = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#attrTableBody tr');
+        
+        rows.forEach(row => {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.indexOf(value) > -1 ? '' : 'none';
+        });
+    });
+</script>
+
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>
