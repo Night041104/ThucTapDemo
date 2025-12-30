@@ -38,26 +38,30 @@ class OrderController {
     }
 
     // 3. Xử lý cập nhật trạng thái
+    // Trong OrderController.php
     public function update_status() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $id = $_POST['order_id'];
-            $status = $_POST['status'];
+            $orderId = $_POST['order_id'];
+            $status  = $_POST['status'];
 
-            // Gọi hàm updateStatus
-            $result = $this->orderModel->updateStatus($id, $status);
+            // Gọi Model cập nhật (Giả sử bạn đã có hàm này)
+            $result = $this->orderModel->updateStatus($orderId, $status);
 
-            if ($result === true || is_object($result)) {
-                // Thành công
-                $msg = 'updated';
-            } else {
-                // Thất bại (Trả về chuỗi lỗi)
-                $msg = urlencode("❌ Lỗi: " . $result);
+            // [QUAN TRỌNG] Kiểm tra xem request có phải là AJAX không
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                if ($result) {
+                    echo json_encode(['status' => 'success', 'message' => 'Cập nhật trạng thái thành công!']);
+                } else {
+                    echo json_encode(['status' => 'error', 'message' => 'Lỗi hệ thống!']);
+                }
+                exit; // Dừng code tại đây để không load lại view
             }
 
-            // Quay lại trang chi tiết
-            header("Location: index.php?module=admin&controller=order&action=detail&id=$id&msg=$msg");
-            exit;
+            // Fallback cho trình duyệt cũ (Load lại trang)
+            header("Location: index.php?module=admin&controller=order&action=detail&id=$orderId");
         }
     }
+    
 }
 ?>

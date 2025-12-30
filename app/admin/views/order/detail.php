@@ -1,167 +1,280 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>Chi tiết đơn hàng - Admin</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f4f6f8; }
-        .container { display: flex; gap: 20px; }
-        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex: 1; }
-        
-        h2 { margin-top: 0; color: #1565c0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        p { margin: 10px 0; line-height: 1.5; color: #333; }
-        strong { color: #555; }
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        /* Table Style */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f8f9fa; color: #333; }
-        td { color: #444; }
-
-        /* Buttons */
-        .btn-update { background: #28a745; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-weight: bold; font-size: 14px; }
-        .btn-update:hover { background: #218838; }
-        .back-link { text-decoration: none; color: #666; font-weight: bold; display: inline-block; margin-bottom: 15px; font-size: 14px; }
-        .back-link:hover { color: #000; }
-
-        /* Badge Status */
-        .badge { padding: 6px 12px; border-radius: 20px; color: white; font-weight: bold; font-size: 12px; display: inline-block; margin-bottom: 10px;}
-        .st-1 { background: #ffc107; color: #333; } /* Chờ xác nhận */
-        .st-2 { background: #17a2b8; } /* Đã xác nhận/Thanh toán */
-        .st-3 { background: #007bff; } /* Đang giao */
-        .st-4 { background: #28a745; } /* Hoàn thành */
-        .st-5 { background: #dc3545; } /* Hủy */
-
-        /* Alert Message */
-        .alert-success { background: #d4edda; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #c3e6cb; }
-        .alert-error { background: #f8d7da; color: #721c24; padding: 15px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #f5c6cb; }
-    </style>
-</head>
-<body>
-
-    <a href="index.php?module=admin&controller=order&action=index" class="back-link">← Quay lại danh sách đơn hàng</a>
+<div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="index.php?module=admin&controller=order&action=index" class="btn btn-outline-secondary btn-sm rounded-circle">
+                <i class="fa fa-arrow-left"></i>
+            </a>
+            <h3 class="fw-bold text-dark mb-0">Đơn hàng #<?= $order['order_code'] ?></h3>
+            
+            <?php 
+                $st = $order['status'];
+                $colors = [1=>'warning', 2=>'info', 3=>'primary', 4=>'success', 5=>'danger'];
+                $labels = [1=>'Chờ xác nhận', 2=>'Đã xác nhận', 3=>'Đang giao', 4=>'Hoàn thành', 5=>'Đã hủy'];
+                $color = $colors[$st] ?? 'secondary';
+                $label = $labels[$st] ?? 'Không rõ';
+            ?>
+            <span class="badge bg-<?= $color ?> rounded-pill ms-2"><?= $label ?></span>
+        </div>
+        <p class="text-muted small ms-5 mb-0">Ngày đặt: <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></p>
+    </div>
     
-    <?php if(isset($_GET['msg'])): ?>
-        <?php if($_GET['msg'] == 'updated'): ?>
-            <div class="alert-success">✅ Cập nhật trạng thái đơn hàng thành công!</div>
-        <?php else: ?>
-            <div class="alert-error"><?= htmlspecialchars(urldecode($_GET['msg'])) ?></div>
-        <?php endif; ?>
-    <?php endif; ?>
+    <button class="btn btn-dark shadow-sm" onclick="printInvoice()">
+        <i class="fa fa-print me-1"></i> In Hóa Đơn
+    </button>
+</div>
 
-    <div class="container">
-        
-        <div class="box">
-            <h2>ℹ️ Thông tin đơn hàng: <?= $order['order_code'] ?></h2>
-            
-            <div>
-                <?php 
-                    $st = $order['status'];
-                    $stLabel = '';
-                    $stClass = 'st-' . $st;
-                    
-                    switch($st) {
-                        case 1: $stLabel = 'Chờ xác nhận'; break;
-                        case 2: $stLabel = ($order['payment_method'] == 'VNPAY') ? 'Đã thanh toán' : 'Đã xác nhận'; break;
-                        case 3: $stLabel = 'Đang giao hàng'; break;
-                        case 4: $stLabel = 'Hoàn thành'; break;
-                        case 5: $stLabel = 'Đã hủy'; break;
-                        default: $stLabel = 'Không rõ';
-                    }
-                ?>
-                <span class="badge <?= $stClass ?>">Trạng thái: <?= $stLabel ?></span>
+<div class="row d-print-none">
+    <div class="col-lg-8">
+        <div class="card card-custom border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fa fa-box-open me-2"></i>Chi tiết đơn hàng</h6>
             </div>
-
-            <p><strong>Ngày đặt:</strong> <?= date('H:i - d/m/Y', strtotime($order['created_at'])) ?></p>
-            
-            <p>
-                <strong>Phương thức thanh toán: </strong> 
-                <?php if($order['payment_method'] == 'VNPAY'): ?>
-                    <span style="color: #6610f2; font-weight:bold; background: #e0d4fc; padding: 2px 8px; border-radius: 4px;">
-                        💳 Thanh toán Online (VNPAY)
-                    </span>
-                <?php else: ?>
-                    <span style="color: #333; font-weight:bold; background: #eee; padding: 2px 8px; border-radius: 4px;">
-                        💵 Thanh toán khi nhận hàng (COD)
-                    </span>
-                <?php endif; ?>
-            </p>
-
-            <hr style="border: 0; border-top: 1px dashed #ddd; margin: 15px 0;">
-
-            <p><strong>Người nhận:</strong> <?= htmlspecialchars($order['fullname']) ?></p>
-            <p><strong>Email:</strong> <?= htmlspecialchars($order['email']) ?></p>
-            <p><strong>Điện thoại:</strong> <?= htmlspecialchars($order['phone']) ?></p>
-            <p><strong>Địa chỉ:</strong> <?= htmlspecialchars($order['address']) ?></p>
-            <p><strong>Ghi chú:</strong> <em style="color:#666"><?= htmlspecialchars($order['note'] ?: 'Không có') ?></em></p>
-
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            
-            <h3 style="color:#333; font-size: 16px;">Cập nhật trạng thái xử lý</h3>
-            <form action="index.php?module=admin&controller=order&action=update_status" method="POST">
-                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                
-                <div style="display: flex; gap: 10px;">
-                    <select name="status" style="padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 4px;">
-                        <option value="1" <?= $order['status']==1 ? 'selected':'' ?>>1. Chờ xác nhận</option>
-                        <option value="2" <?= $order['status']==2 ? 'selected':'' ?>>2. Đã xác nhận / Đã thanh toán</option>
-                        <option value="3" <?= $order['status']==3 ? 'selected':'' ?>>3. Đang giao hàng</option>
-                        <option value="4" <?= $order['status']==4 ? 'selected':'' ?>>4. Hoàn thành (Đã giao)</option>
-                        <option value="5" <?= $order['status']==5 ? 'selected':'' ?>>5. ❌ Hủy đơn hàng</option>
-                    </select>
-
-                    <button type="submit" class="btn-update">Cập nhật</button>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-light text-secondary small">
+                            <tr>
+                                <th class="ps-4">Sản phẩm</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end pe-4">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($items as $item): ?>
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                                <i class="fa fa-image text-secondary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark"><?= htmlspecialchars($item['product_name']) ?></div>
+                                                <div class="small text-muted">ID: <?= $item['product_id'] ?></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-end"><?= number_format($item['price']) ?>₫</td>
+                                    <td class="text-center fw-bold">x<?= $item['quantity'] ?></td>
+                                    <td class="text-end pe-4 fw-bold text-dark">
+                                        <?= number_format($item['price'] * $item['quantity']) ?>₫
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <td colspan="3" class="text-end py-3 fw-bold text-uppercase text-muted">Tổng tiền hàng:</td>
+                                <td class="text-end py-3 pe-4">
+                                    <span class="h5 fw-bold text-danger mb-0"><?= number_format($order['total_money']) ?>₫</span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-            </form>
-            
-            <?php if($order['status'] != 5): ?>
-                <p style="color: #d9534f; font-size: 13px; margin-top: 10px; font-style: italic;">
-                    * Lưu ý: Khi chuyển sang "Hủy đơn hàng", hệ thống sẽ tự động cộng lại số lượng sản phẩm vào kho.
-                </p>
-            <?php else: ?>
-                 <p style="color: #28a745; font-size: 13px; margin-top: 10px; font-style: italic;">
-                    * Đơn hàng đang ở trạng thái Hủy. Nếu bạn chuyển về trạng thái khác, hệ thống sẽ trừ lại kho (nếu đủ hàng).
-                </p>
-            <?php endif; ?>
+            </div>
         </div>
-
-        <div class="box">
-            <h2>🛒 Sản phẩm trong đơn</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Sản phẩm</th>
-                        <th>Đơn giá</th>
-                        <th style="text-align: center;">SL</th>
-                        <th style="text-align: right;">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($items as $item): ?>
-                        <tr>
-                            <td>
-                                <strong><?= htmlspecialchars($item['product_name']) ?></strong><br>
-                                <small style="color:#888">ID: <?= $item['product_id'] ?></small>
-                            </td>
-                            <td><?= number_format($item['price'], 0, ',', '.') ?>₫</td>
-                            <td style="text-align: center; font-weight: bold;">x<?= $item['quantity'] ?></td>
-                            <td style="text-align: right;">
-                                <?= number_format($item['price'] * $item['quantity'], 0, ',', '.') ?>₫
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    
-                    <tr style="background: #fff8e1;">
-                        <td colspan="3" style="text-align: right; font-weight: bold; padding-top: 20px;">TỔNG CỘNG:</td>
-                        <td style="text-align: right; color: #cb1c22; font-size: 20px; font-weight: bold; padding-top: 20px;">
-                            <?= number_format($order['total_money'], 0, ',', '.') ?>₫
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
     </div>
 
-</body>
-</html>
+    <div class="col-lg-4">
+        <div class="card card-custom border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-success"><i class="fa fa-tasks me-2"></i>Cập nhật trạng thái</h6>
+            </div>
+            <div class="card-body">
+                <form id="updateStatusForm">
+                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                    
+                    <label class="form-label small fw-bold text-muted">Trạng thái đơn hàng:</label>
+                    <select name="status" class="form-select mb-3">
+                        <option value="1" <?= $order['status']==1 ? 'selected':'' ?>>1. 🟡 Chờ xác nhận</option>
+                        <option value="2" <?= $order['status']==2 ? 'selected':'' ?>>2. 🔵 Đã xác nhận / Đã thanh toán</option>
+                        <option value="3" <?= $order['status']==3 ? 'selected':'' ?>>3. 🚚 Đang giao hàng</option>
+                        <option value="4" <?= $order['status']==4 ? 'selected':'' ?>>4. 🟢 Hoàn thành (Đã giao)</option>
+                        <option value="5" <?= $order['status']==5 ? 'selected':'' ?>>5. 🔴 Hủy đơn hàng</option>
+                    </select>
+
+                    <button type="button" onclick="updateStatusAJAX()" class="btn btn-primary w-100 fw-bold">
+                        Lưu thay đổi
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card card-custom border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="mb-0 fw-bold text-dark"><i class="fa fa-address-card me-2"></i>Thông tin nhận hàng</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Khách hàng</label>
+                    <div class="fw-bold text-dark"><?= htmlspecialchars($order['fullname']) ?></div>
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Liên hệ</label>
+                    <div><?= $order['phone'] ?></div>
+                    <div class="small"><?= htmlspecialchars($order['email']) ?></div>
+                </div>
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold text-uppercase">Địa chỉ</label>
+                    <div><?= htmlspecialchars($order['address']) ?></div>
+                </div>
+                <div class="mb-0">
+                    <label class="small text-muted fw-bold text-uppercase">Ghi chú</label>
+                    <div class="fst-italic bg-light p-2 rounded small text-secondary">
+                        <?= !empty($order['note']) ? htmlspecialchars($order['note']) : 'Không có ghi chú' ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="invoice-template" class="d-none d-print-block">
+    <div class="p-4" style="font-family: 'Times New Roman', Times, serif; color: #000;">
+        
+        <div class="row mb-4 border-bottom pb-3">
+            <div class="col-6">
+                <h2 class="fw-bold text-uppercase mb-1">FPT SHOP</h2>
+                <p class="mb-0 small">Địa chỉ: 261 Khánh Hội, P2, Q4, TP.HCM</p>
+                <p class="mb-0 small">Hotline: 1800 6601</p>
+            </div>
+            <div class="col-6 text-end">
+                <h3 class="fw-bold mb-1">HÓA ĐƠN BÁN HÀNG</h3>
+                <p class="mb-0">Mã đơn: <strong>#<?= $order['order_code'] ?></strong></p>
+                <p class="mb-0 small">Ngày: <?= date('d/m/Y', strtotime($order['created_at'])) ?></p>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <p class="mb-1"><strong>Khách hàng:</strong> <?= htmlspecialchars($order['fullname']) ?></p>
+                <p class="mb-1"><strong>Điện thoại:</strong> <?= $order['phone'] ?></p>
+                <p class="mb-1"><strong>Địa chỉ:</strong> <?= htmlspecialchars($order['address']) ?></p>
+                <p class="mb-0"><strong>Ghi chú:</strong> <?= htmlspecialchars($order['note']) ?></p>
+            </div>
+        </div>
+
+        <table class="table table-bordered border-dark mb-4">
+            <thead>
+                <tr class="text-center">
+                    <th style="width: 50px;">STT</th>
+                    <th>Tên sản phẩm</th>
+                    <th style="width: 100px;">Đơn giá</th>
+                    <th style="width: 60px;">SL</th>
+                    <th style="width: 120px;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php $i=1; foreach ($items as $item): ?>
+                <tr>
+                    <td class="text-center"><?= $i++ ?></td>
+                    <td>
+                        <?= htmlspecialchars($item['product_name']) ?>
+                        <div class="small fst-italic">Mã SP: <?= $item['product_id'] ?></div>
+                    </td>
+                    <td class="text-end"><?= number_format($item['price']) ?></td>
+                    <td class="text-center"><?= $item['quantity'] ?></td>
+                    <td class="text-end fw-bold"><?= number_format($item['price'] * $item['quantity']) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-end fw-bold text-uppercase">Tổng thanh toán:</td>
+                    <td class="text-end fw-bold fs-5"><?= number_format($order['total_money']) ?> đ</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="row mt-5">
+            <div class="col-6 text-center">
+                <p class="fw-bold">Người mua hàng</p>
+                <p class="small fst-italic">(Ký, ghi rõ họ tên)</p>
+            </div>
+            <div class="col-6 text-center">
+                <p class="fw-bold">Người bán hàng</p>
+                <p class="small fst-italic">(Ký, ghi rõ họ tên)</p>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5 pt-3 border-top small fst-italic">
+            Cảm ơn quý khách đã mua hàng tại FPT Shop!
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Hàm in hóa đơn
+    function printInvoice() {
+        window.print();
+    }
+
+    // 2. AJAX Cập nhật trạng thái
+    function updateStatusAJAX() {
+        const form = document.getElementById('updateStatusForm');
+        const formData = new FormData(form);
+
+        Swal.fire({
+            title: 'Đang xử lý...',
+            didOpen: () => { Swal.showLoading() }
+        });
+
+        fetch('index.php?module=admin&controller=order&action=update_status', {
+            method: 'POST',
+            body: formData,
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'Thành công', text: data.message, timer: 1000, showConfirmButton: false })
+                .then(() => location.reload());
+            } else {
+                Swal.fire('Lỗi', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ', 'error');
+        });
+    }
+</script>
+
+<style>
+    @media print {
+        /* Ẩn tất cả mọi thứ mặc định */
+        body * {
+            visibility: hidden;
+        }
+        
+        /* Ẩn Sidebar, Topbar, Header layout nếu chúng nằm ngoài body */
+        .sidebar, .topbar, footer { display: none !important; }
+
+        /* Chỉ hiển thị vùng hóa đơn */
+        #invoice-template, #invoice-template * {
+            visibility: visible;
+        }
+
+        /* Định vị hóa đơn full màn hình trắng */
+        #invoice-template {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: white;
+            color: black !important; /* Đảm bảo chữ đen khi in */
+        }
+        
+        /* Reset các style của Bootstrap gây ảnh hưởng khi in */
+        .badge { border: 1px solid #000 !important; color: #000 !important; background: none !important; }
+        .bg-light { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+    }
+</style>
+
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

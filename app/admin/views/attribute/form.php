@@ -1,85 +1,133 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title><?= $currentData['id'] ? 'Chỉnh sửa' : 'Thêm mới' ?> Thuộc tính</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; background-color: #f4f6f8; color:#333; }
-        .form-container { background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        h2 { color: #1565c0; margin-top: 0; }
-        
-        input[type=text], textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; font-family: inherit;}
-        input[type=text]:focus, textarea:focus { border-color: #1976d2; outline: none; }
-        
-        .checkbox-group { display: flex; gap: 15px; margin: 20px 0; }
-        .checkbox-box { flex: 1; padding: 15px; border-radius: 6px; border: 1px solid transparent; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; transition: 0.2s; }
-        .checkbox-box:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .checkbox-box input { width: 20px; height: 20px; margin-top: 2px; cursor: pointer; }
-        
-        .box-custom { background: #f3e5f5; border-color: #e1bee7; }
-        .box-variant { background: #fff3e0; border-color: #ffe0b2; }
-        
-        .btn-save { padding: 12px 30px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; }
-        .btn-save:hover { background: #1565c0; }
-        
-        .btn-cancel { display:block; text-align:center; margin-top:15px; color:#666; text-decoration:none; }
-        
-        .msg-error { background:#ffebee; color:#c62828; padding:15px; border-radius:4px; margin-bottom:20px; border: 1px solid #ef9a9a; font-weight: 500;}
-    </style>
-</head>
-<body>
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-    <div class="form-container">
-        <h2><?= $currentData['id'] ? "✏️ Chỉnh sửa thuộc tính" : "➕ Tạo thuộc tính mới" ?></h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-dark mb-0">
+        <?= $currentData['id'] ? "Chỉnh sửa thuộc tính" : "Tạo thuộc tính mới" ?>
+    </h3>
+    <a href="index.php?module=admin&controller=attribute&action=index" class="btn btn-outline-secondary">
+        <i class="fa fa-arrow-left me-1"></i> Quay lại
+    </a>
+</div>
 
-        <?php if(isset($msg) && $msg): ?>
-            <div class="msg-error"><?= $msg ?></div>
-        <?php endif; ?>
-        
-        <form method="POST" action="index.php?module=admin&controller=attribute&action=save">
-            <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
-
-            <div style="display:flex; gap:20px; margin-bottom:15px;">
-                <div style="flex:1">
-                    <label><b>Mã (Code) <span style="color:red">*</span>:</b></label>
-                    <input type="text" name="code" value="<?= htmlspecialchars($currentData['code']) ?>" required placeholder="VD: color, ram">
-                </div>
-                <div style="flex:2">
-                    <label><b>Tên hiển thị <span style="color:red">*</span>:</b></label>
-                    <input type="text" name="name" value="<?= htmlspecialchars($currentData['name']) ?>" required placeholder="VD: Màu sắc, Bộ nhớ trong">
-                </div>
-            </div>
-
-            <div class="checkbox-group">
-                <label class="checkbox-box box-custom">
-                    <input type="checkbox" name="is_customizable" value="1" <?= $currentData['is_customizable'] == 1 ? 'checked' : '' ?>>
-                    <div>
-                        <b style="color:#6a1b9a">Cho phép đổi tên (Custom)?</b><br>
-                        <small style="color:#555">Dùng cho: <b>Màu sắc</b> (Để sửa Tím -> Tím Mộng Mơ).</small>
-                    </div>
-                </label>
-
-                <label class="checkbox-box box-variant">
-                    <input type="checkbox" name="is_variant" value="1" <?= $currentData['is_variant'] == 1 ? 'checked' : '' ?>>
-                    <div>
-                        <b style="color:#e65100">Dùng sinh biến thể (Variant)?</b><br>
-                        <small style="color:#555">Check nếu thuộc tính này tạo ra sản phẩm con (VD: Màu, RAM).</small>
-                    </div>
-                </label>
-            </div>
-
-            <label><b>Các giá trị (Options):</b> <small>(Ngăn cách bằng dấu phẩy)</small></label>
-            <textarea name="options" style="height:100px; margin-top:5px;" placeholder="VD: Đỏ, Xanh, Vàng, Tím"><?= htmlspecialchars($currentData['options_str']) ?></textarea>
-            <small style="color:#666; display:block; margin-top:5px;"><i>* Lưu ý: Khi chỉnh sửa, hệ thống sẽ thêm các giá trị mới vào danh sách. Các giá trị cũ sẽ được giữ nguyên để không ảnh hưởng đến sản phẩm đã tạo.</i></small>
-            
-            <br><br>
-            <button type="submit" name="btn_save" class="btn-save">
-                <?= $currentData['id'] ? "LƯU CẬP NHẬT" : "LƯU MỚI" ?>
-            </button>
-
-            <a href="index.php?module=admin&controller=attribute&action=index" class="btn-cancel">Hủy bỏ, quay lại danh sách</a>
-        </form>
+<?php if(isset($msg) && $msg): ?>
+    <div class="alert alert-danger border-0 shadow-sm mb-4">
+        <i class="fa fa-exclamation-triangle me-2"></i> <?= $msg ?>
     </div>
+<?php endif; ?>
 
-</body>
-</html>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card card-custom border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom-0">
+                <h6 class="mb-0 fw-bold text-primary"><i class="fa fa-cog me-2"></i>Thông tin cấu hình</h6>
+            </div>
+            
+            <div class="card-body pt-0">
+                <form method="POST" action="index.php?module=admin&controller=attribute&action=save">
+                    <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-7">
+                            <label class="form-label fw-bold">Tên hiển thị <span class="text-danger">*</span></label>
+                            <input type="text" name="name" value="<?= htmlspecialchars($currentData['name']) ?>" 
+                                   class="form-control form-control-lg" required placeholder="VD: Màu sắc, Bộ nhớ trong...">
+                            <div class="form-text">Tên này sẽ hiện thị ngoài trang chủ shop.</div>
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold">Mã hệ thống (Code) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa fa-code"></i></span>
+                                <input type="text" name="code" value="<?= htmlspecialchars($currentData['code']) ?>" 
+                                       class="form-control form-control-lg" required placeholder="VD: color, ram">
+                            </div>
+                            <div class="form-text">Viết liền không dấu, dùng để định danh.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-3">Loại thuộc tính:</label>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="feature-card h-100 cursor-pointer">
+                                    <input type="checkbox" name="is_variant" value="1" class="d-none peer" 
+                                           <?= $currentData['is_variant'] == 1 ? 'checked' : '' ?>>
+                                    <div class="card-body border rounded p-3 transition-all h-100 peer-checked-variant">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="icon-box bg-warning bg-opacity-10 text-warning rounded-circle me-3">
+                                                <i class="fa fa-tags"></i>
+                                            </div>
+                                            <h6 class="mb-0 fw-bold text-dark">Dùng làm biến thể</h6>
+                                        </div>
+                                        <p class="text-muted small mb-0 lh-sm">
+                                            Check mục này nếu thuộc tính tạo ra các phiên bản con (VD: Màu sắc, Dung lượng).
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="feature-card h-100 cursor-pointer">
+                                    <input type="checkbox" name="is_customizable" value="1" class="d-none peer" 
+                                           <?= $currentData['is_customizable'] == 1 ? 'checked' : '' ?>>
+                                    <div class="card-body border rounded p-3 transition-all h-100 peer-checked-custom">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="icon-box bg-purple bg-opacity-10 text-purple rounded-circle me-3">
+                                                <i class="fa fa-pen-fancy"></i>
+                                            </div>
+                                            <h6 class="mb-0 fw-bold text-dark">Cho phép đổi tên</h6>
+                                        </div>
+                                        <p class="text-muted small mb-0 lh-sm">
+                                            Cho phép nhập giá trị khác với danh sách có sẵn (VD: Sửa "Vàng" thành "Vàng Ánh Kim").
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Các giá trị mặc định (Options)</label>
+                        <textarea name="options" class="form-control" style="height: 120px;" 
+                                  placeholder="Nhập các giá trị ngăn cách nhau bằng dấu phẩy. VD: Đỏ, Xanh, Vàng, Tím"><?= htmlspecialchars($currentData['options_str']) ?></textarea>
+                        
+                        <div class="alert alert-light border mt-2 d-flex align-items-start">
+                            <i class="fa fa-info-circle text-info mt-1 me-2"></i>
+                            <div class="small text-muted">
+                                <b>Lưu ý:</b> Khi chỉnh sửa, hệ thống sẽ thêm các giá trị mới vào danh sách. Các giá trị cũ sẽ được giữ nguyên để không ảnh hưởng đến sản phẩm đã tạo.
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <button type="submit" name="btn_save" class="btn btn-primary btn-lg w-100 shadow-sm fw-bold">
+                        <i class="fa fa-save me-2"></i><?= $currentData['id'] ? "CẬP NHẬT THUỘC TÍNH" : "LƯU THUỘC TÍNH MỚI" ?>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-box { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .cursor-pointer { cursor: pointer; }
+    
+    /* Hiệu ứng khi check checkbox */
+    .peer:checked + .peer-checked-variant {
+        border-color: #ff9800 !important;
+        background-color: #fff3e0;
+        box-shadow: 0 0 0 2px #ff9800;
+    }
+    .peer:checked + .peer-checked-custom {
+        border-color: #9c27b0 !important;
+        background-color: #f3e5f5;
+        box-shadow: 0 0 0 2px #9c27b0;
+    }
+    
+    .bg-purple { background-color: #9c27b0 !important; }
+    .text-purple { color: #9c27b0 !important; }
+</style>
+
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

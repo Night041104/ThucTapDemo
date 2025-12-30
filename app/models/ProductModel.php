@@ -330,19 +330,6 @@ class ProductModel extends BaseModel {
         return mysqli_num_rows($rs) > 0;
     }
 
-    public function getProductsByCateForClient($cateId) {
-        $cateId = $this->escape($cateId);
-        $sql = "SELECT p.*, b.name as brand_name 
-                FROM products p 
-                LEFT JOIN brands b ON p.brand_id = b.id 
-                WHERE p.category_id = '$cateId' 
-                AND p.status = 1 
-                AND (p.parent_id IS NULL OR p.parent_id = 0) 
-                ORDER BY p.id DESC";
-        $result = $this->_query($sql);
-        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
-    }
-
     public function getAttributeValues($productId) {
         $id = $this->escape($productId);
         $sql = "SELECT attribute_id, option_id, value_custom FROM product_attribute_values WHERE product_id = '$id'";
@@ -404,8 +391,6 @@ class ProductModel extends BaseModel {
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
-
-    // Tìm kiếm
     public function searchProducts($keyword) {
     $kw = $this->escape($keyword);
     $where = "p.status = 1 AND (p.parent_id IS NULL OR p.parent_id = 0)";
@@ -428,6 +413,85 @@ class ProductModel extends BaseModel {
             
     $result = $this->_query($sql);
     return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+    // 1. Hàm lấy danh sách mặc định (Chỉ lấy SP Cha)
+    public function getProductsByCateForClient($cateId) {
+        $cateId = $this->escape($cateId);
+        // THÊM: AND (parent_id IS NULL OR parent_id = 0)
+        $sql = "SELECT p.*, b.name as brand_name 
+                FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id 
+                WHERE p.category_id = '$cateId' 
+                AND p.status = 1 
+                AND (p.parent_id IS NULL OR p.parent_id = 0) 
+                ORDER BY p.id DESC";
+        
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+
+    // 2. Hàm lọc sản phẩm (Chỉ lấy SP Cha)
+    public function getProductsByFilter($cateId, $brandIds = [], $priceRange = '', $attributes = []) {
+        $cateId = $this->escape($cateId);
+        
+        // THÊM: AND (p.parent_id IS NULL OR p.parent_id = 0)
+        $sql = "SELECT p.*, b.name as brand_name 
+                FROM products p 
+                LEFT JOIN brands b ON p.brand_id = b.id 
+                WHERE p.category_id = '$cateId' 
+                AND p.status = 1
+                AND (p.parent_id IS NULL OR p.parent_id = 0)";
+
+        // ... (Giữ nguyên các logic lọc Brand, Price, Attribute cũ của bạn ở đây) ...
+        
+        // Code ghép chuỗi SQL lọc cũ của bạn:
+        if (!empty($brandIds)) {
+            $ids = implode(',', array_map('intval', $brandIds));
+            $sql .= " AND p.brand_id IN ($ids)";
+        }
+        if (!empty($priceRange)) {
+            $ranges = explode('-', $priceRange);
+            if (count($ranges) == 2) {
+                $min = (int)$ranges[0];
+                $max = ($ranges[1] == 'max') ? 99999999999 : (int)$ranges[1];
+                $sql .= " AND p.price >= $min AND p.price <= $max";
+            }
+        }
+        // Logic lọc Attribute (EXISTS) giữ nguyên...
+        if (!empty($attributes)) {
+             // ... (Code lọc thuộc tính cũ) ...
+             foreach ($attributes as $attrName => $values) {
+                if (!empty($values)) {
+                    $attrName = $this->escape($attrName);
+                    $valStr = "'" . implode("','", array_map([$this, 'escape'], $values)) . "'";
+                    $subQuery = "SELECT 1 FROM product_attribute_values pav
+                                 JOIN attributes a ON pav.attribute_id = a.id
+                                 LEFT JOIN attribute_options ao ON pav.option_id = ao.id
+                                 WHERE pav.product_id = p.id AND a.name = '$attrName'
+                                 AND (pav.value_custom IN ($valStr) OR ao.value IN ($valStr))";
+                    $sql .= " AND EXISTS ($subQuery)";
+                }
+            }
+        }
+
+        $sql .= " ORDER BY p.id DESC";
+        
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+// [MỚI] Lấy giá thấp nhất và cao nhất trong danh mục để chia khoảng lọc
+    public function getMinMaxPrice($cateId) {
+        $cateId = $this->escape($cateId);
+        $sql = "SELECT MIN(price) as min_price, MAX(price) as max_price 
+                FROM products 
+                WHERE category_id = '$cateId' AND status = 1";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        
+        return [
+            'min' => (int)($row['min_price'] ?? 0),
+            'max' => (int)($row['max_price'] ?? 0)
+        ];
     }
 }
 ?>

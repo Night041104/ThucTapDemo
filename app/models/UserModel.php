@@ -228,8 +228,30 @@ class UserModel extends BaseModel {
     // --- KHU VỰC ADMIN ---
 
     // 11. LẤY TẤT CẢ USER (Có thể phân trang nếu muốn)
-    public function getAllUsers() {
-        $sql = "SELECT * FROM users ORDER BY created_at DESC";
+    // 11. [ĐÃ NÂNG CẤP] LẤY TẤT CẢ USER (CÓ LỌC)
+    public function getAllUsers($keyword = '', $role = '', $status = '') {
+        $sql = "SELECT * FROM users WHERE 1=1";
+
+        // 1. Tìm theo từ khóa (Tên hoặc Email)
+        if (!empty($keyword)) {
+            $keyword = $this->escape($keyword);
+            $sql .= " AND (lname LIKE '%$keyword%' OR fname LIKE '%$keyword%' OR email LIKE '%$keyword%')";
+        }
+
+        // 2. Lọc theo Vai trò (0 hoặc 1)
+        if ($role !== '') {
+            $role = (int)$role;
+            $sql .= " AND role_id = $role";
+        }
+
+        // 3. Lọc theo Trạng thái (0 hoặc 1)
+        if ($status !== '') {
+            $status = (int)$status;
+            $sql .= " AND is_verified = $status";
+        }
+
+        $sql .= " ORDER BY created_at DESC";
+
         $result = $this->_query($sql);
         $data = [];
         while ($row = mysqli_fetch_assoc($result)) {

@@ -3,12 +3,13 @@ require_once __DIR__ . '/../../models/ProductModel.php';
 require_once __DIR__ . '/../../models/CategoryModel.php';
 require_once __DIR__ . '/../../models/AttributeModel.php';
 require_once __DIR__ . '/../../models/BrandModel.php';
-
+require_once __DIR__ . '/../../models/ProductLogModel.php';
 class ProductController {
     private $prodModel;
     private $cateModel;
     private $attrModel;
     private $brandModel;
+    private $logModel;
     private $uploadDir = 'uploads/products/';
 
     public function __construct() {
@@ -16,15 +17,11 @@ class ProductController {
         $this->cateModel = new CategoryModel();
         $this->attrModel = new AttributeModel();
         $this->brandModel = new BrandModel(); 
-        
+        $this->logModel  = new ProductLogModel();
         if (!is_dir($this->uploadDir)) {
             mkdir($this->uploadDir, 0777, true);
         }
     }
-
-    // =======================================================
-    // 1. INDEX
-    // =======================================================
     // =======================================================
     // 1. INDEX
     // =======================================================
@@ -79,6 +76,7 @@ class ProductController {
         $attrConfigs = [];
         foreach($attrs as $a) $attrConfigs[$a['id']] = $a['is_customizable'];
         $allAttributeOptions = $this->attrModel->getAllOptionsGrouped();
+        $variantIds = $this->prodModel->getVariantAttributeIds();
         require __DIR__ . '/../views/product/form.php';
     }
 
@@ -175,7 +173,7 @@ class ProductController {
         foreach($eavRaw as $e) {
             $selectedOptions[$e['attribute_id']] = $e['option_id'];
         }
-
+        $variantIds = $this->prodModel->getVariantAttributeIds();
         require __DIR__ . '/../views/product/form.php';
     }
 
@@ -238,7 +236,7 @@ class ProductController {
 
             $this->helperUploadGallery($id, $finalSlug);
             $this->prodModel->syncFamilyData($id, $oldProd['parent_id'], $data, $specsData['eav']);
-
+            $this->logModel->logHistory($id, $oldProd, $data);
             header("Location: index.php?module=admin&controller=product&action=edit&id=$id&msg=updated");
             exit;
         }
@@ -253,12 +251,6 @@ class ProductController {
         }
     }
 
-    // =======================================================
-    // 4. CLONE
-    // =======================================================
-    // =======================================================
-    // 4. CLONE (NHÂN BẢN SẢN PHẨM)
-    // =======================================================
     // =======================================================
     // 4. CLONE
     // =======================================================
@@ -410,6 +402,27 @@ class ProductController {
             }
         }
         return ['json' => $specsForJson, 'eav' => $eavData];
+    }
+    public function history() {
+        $masterId = isset($_GET['master_id']) ? (int)$_GET['master_id'] : 0;
+        
+        $masterProd = $this->prodModel->getById($masterId);
+        $logs = $this->logModel->getLogsByFamily($masterId);
+
+        // Lấy danh sách Brand/Cate để map tên
+        $brands = $this->brandModel->getAll(); 
+        $cates  = $this->cateModel->getAll();
+
+        $brandsMap = [];
+        if ($brands) foreach($brands as $b) $brandsMap[$b['id']] = $b['name'];
+
+        $catesMap = [];
+        if ($cates) foreach($cates as $c) $catesMap[$c['id']] = $c['name'];
+
+        // [MỚI] Lấy danh sách ID thuộc tính biến thể (Màu, ROM...) để View xử lý hiển thị
+        $variantIds = $this->prodModel->getVariantAttributeIds();
+
+        require __DIR__ . '/../views/product/history.php';
     }
 }
 ?>

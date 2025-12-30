@@ -111,51 +111,68 @@ class AttributeModel extends BaseModel {
     }
     // [CLIENT] Lấy các thuộc tính dùng để lọc (Sidebar)
     // [CLIENT] Lấy các thuộc tính dùng để lọc (Sidebar)
+    // [CLIENT] Lấy các thuộc tính dùng để lọc (Sidebar) - PHIÊN BẢN NÂNG CẤP
     public function getFiltersByCateForClient($cateId) {
         $cateId = $this->escape($cateId);
 
-        // A. Lấy danh sách tên thuộc tính (RAM, ROM...)
-        // (Phần này giữ nguyên vì tên cột bảng attributes và products đã đúng)
-        $sqlAttrs = "SELECT DISTINCT a.id, a.name, a.code 
+        // BƯỚC 1: Lấy danh sách CÁC THUỘC TÍNH có liên quan đến danh mục này
+        // (Logic: Chỉ cần có ít nhất 1 sản phẩm trong danh mục dùng thuộc tính này thì sẽ hiện tiêu đề thuộc tính đó)
+        // [QUAN TRỌNG]: Đã bỏ điều kiện "AND a.is_variant = 1" để lấy cả thuộc tính lọc thường
+        $sqlAttrs = "SELECT DISTINCT a.id, a.name, a.code, a.input_type
                      FROM attributes a
                      JOIN product_attribute_values pav ON a.id = pav.attribute_id
                      JOIN products p ON pav.product_id = p.id
                      WHERE p.category_id = '$cateId' 
                      AND p.status = 1 
-                     AND a.is_variant = 1 
                      ORDER BY a.id ASC";
         
         $rsAttrs = $this->_query($sqlAttrs);
         $attributes = $rsAttrs ? mysqli_fetch_all($rsAttrs, MYSQLI_ASSOC) : [];
 
-        // B. Lấy các giá trị (Options) thực tế
+        // BƯỚC 2: Lấy TOÀN BỘ GIÁ TRỊ (Full Options) của từng thuộc tính
         foreach ($attributes as &$attr) {
             $attrId = $attr['id'];
-            
-            // [SỬA LẠI ĐOẠN NÀY]: Thay value_text -> value_custom, value_id -> option_id
-            $sqlOpts = "SELECT DISTINCT pav.value_custom, pav.option_id, ao.value as option_value
-                        FROM product_attribute_values pav
-                        JOIN products p ON pav.product_id = p.id
-                        LEFT JOIN attribute_options ao ON pav.option_id = ao.id
-                        WHERE p.category_id = '$cateId' 
-                        AND p.status = 1
-                        AND pav.attribute_id = '$attrId'
-                        ORDER BY ao.id ASC, pav.value_custom ASC";
-            
-            $rsOpts = $this->_query($sqlOpts);
             $options = [];
-            while($row = mysqli_fetch_assoc($rsOpts)) {
-                // Logic: Nếu có option_value (từ bảng options) thì lấy, nếu không thì lấy value_custom (nhập tay)
-                $val = !empty($row['option_value']) ? $row['option_value'] : $row['value_custom'];
-                
-                if(!in_array($val, $options) && !empty($val)) {
-                    $options[] = $val;
+
+            if ($attr['input_type'] == 'select') {
+                // Nếu là kiểu Select: Lấy tất cả Option định nghĩa trong bảng attribute_options
+                // Bất kể sản phẩm có dùng hay không (theo yêu cầu của bạn)
+                $sqlOpts = "SELECT value FROM attribute_options 
+                            WHERE attribute_id = '$attrId' 
+                            ORDER BY id ASC";
+                $rsOpts = $this->_query($sqlOpts);
+                if ($rsOpts) {
+                    while($row = mysqli_fetch_assoc($rsOpts)) {
+                        $options[] = $row['value'];
+                    }
                 }
+            } else {
+                // Nếu là kiểu Text (nhập tay): Vẫn phải lấy từ sản phẩm thực tế vì không có bảng options
+                $sqlOpts = "SELECT DISTINCT pav.value_custom
+                            FROM product_attribute_values pav
+                            JOIN products p ON pav.product_id = p.id
+                            WHERE p.category_id = '$cateId' 
+                            AND pav.attribute_id = '$attrId'
+                            AND pav.value_custom IS NOT NULL AND pav.value_custom != ''
+                            ORDER BY pav.value_custom ASC";
+                 $rsOpts = $this->_query($sqlOpts);
+                 if ($rsOpts) {
+                     while($row = mysqli_fetch_assoc($rsOpts)) {
+                         $options[] = $row['value_custom'];
+                     }
+                 }
             }
+            
             $attr['filter_options'] = $options;
         }
 
         return $attributes;
     }
+    // public function getValuesByAttrId($attrId) {
+    //     $attrId = $this->escape($attrId);
+    //     $sql = "SELECT id, value FROM attribute_options WHERE attribute_id = '$attrId' ORDER BY id ASC";
+    //     $result = $this->_query($sql);
+    //     return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    // }
 }
 ?>
