@@ -149,6 +149,66 @@
     .sp-val { width: 60%; color: #333; font-weight: 500; }
 </style>
 
+
+<!-- Đánh giá -->
+ <style>
+    /* SECTION ĐÁNH GIÁ - TỔNG THỂ */
+    .review-section { 
+        border-top: 1px solid #eee; 
+        padding: 30px 20px; 
+        background: #fff; 
+        margin-top: 20px; 
+        border-radius: 8px; 
+    }
+    
+    /* CĂN GIỮA PHẦN TỔNG QUAN */
+    .rating-summary { 
+        display: flex; 
+        flex-direction: column; /* Xếp dọc */
+        align-items: center;    /* Căn giữa tất cả thành phần bên trong */
+        gap: 25px; 
+        margin-bottom: 40px; 
+        background: #fdfdfd; 
+        padding: 25px; 
+        border-radius: 12px;
+    }
+
+    .avg-score { text-align: center; }
+    .avg-score h2 { font-size: 56px; color: #fe2c6a; margin: 0; line-height: 1; }
+    .stars { color: #ffbe00; font-size: 24px; margin: 10px 0; }
+
+    /* CĂN CHỈNH THANH PHẦN TRĂM DÀI ĐỀU NHAU */
+    .progress-bars { 
+        width: 100%; 
+        max-width: 450px; /* Giới hạn độ rộng để không bị loãng */
+    }
+    .bar-item { 
+        display: flex; 
+        align-items: center; 
+        gap: 12px; 
+        margin-bottom: 8px; 
+    }
+    .bar-bg { background: #eee; height: 10px; flex-grow: 1; border-radius: 5px; overflow: hidden; }
+    .bar-fill { background: #fe2c6a; height: 100%; border-radius: 5px; }
+    
+    /* NÚT BẤM */
+    .btn-review-action {
+        background: #cd1818; 
+        color: white; 
+        border: none; 
+        padding: 12px 35px; 
+        border-radius: 25px; 
+        font-weight: bold; 
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-review-action:hover { background: #b71c1c; transform: scale(1.05); }
+
+    /* PHẦN DANH SÁCH REVIEW DƯỚI GIỮ NGUYÊN HOẶC CHỈNH NHẸ */
+    .review-item { border-bottom: 1px solid #f1f1f1; padding: 20px 0; text-align: left; }
+    .user-info { font-weight: bold; display: flex; align-items: center; gap: 10px; }
+</style>
+
 <div class="container breadcrumb">
     <a href="index.php">Trang chủ</a> / 
     <a href="index.php?module=client&controller=category&action=index&id=<?= $product['category_id'] ?>"><?= $category['name'] ?? 'Danh mục' ?></a> / 
@@ -197,7 +257,13 @@
         <h1 class="prod-title"><?= $product['name'] ?></h1>
         <div class="prod-sku">
             <span>SKU: <?= $product['sku'] ?></span> | 
-            <span class="rating-box">★★★★★ (15 đánh giá)</span>
+            <span class="rating-box">
+                <?php 
+                    $avg = $reviewStats['avg'] ?? 0;
+                    for($i=1; $i<=5; $i++) echo ($i <= $avg) ? '★' : '☆';
+                ?>
+                (<?= $reviewStats['total'] ?? 0 ?> đánh giá)
+            </span>
         </div>
 
         <div class="price-box">
@@ -290,6 +356,148 @@
         </div>
     </div>
 </div>
+<!-- Đánh giá -->
+<div class="review-section container">
+    <h3 style="text-align: center; margin-bottom: 30px; font-size: 22px;">Đánh giá sản phẩm <?= $product['name'] ?></h3>
+    
+    <div class="rating-summary">
+        <div class="avg-score">
+            <h2><?= $reviewStats['avg'] ?>/5</h2>
+            <div class="stars">
+                <?php 
+                $avg = $reviewStats['avg'] ?? 0;
+                for($i=1; $i<=5; $i++) echo ($i <= $avg) ? '★' : '☆'; 
+                ?>
+            </div>
+            <p><?= $reviewStats['total'] ?> đánh giá</p>
+        </div>
+        <div class="progress-bars">
+            <?php for($i=5; $i>=1; $i--): 
+                $percent = ($reviewStats['total'] > 0) ? ($reviewStats[$i] / $reviewStats['total']) * 100 : 0;
+            ?>
+            <div class="bar-item">
+                <span style="min-width: 25px;"><?= $i ?>★</span>
+                <div class="bar-bg"><div class="bar-fill" style="width: <?= $percent ?>%"></div></div>
+                <span style="min-width: 25px; text-align: right;"><?= $reviewStats[$i] ?></span>
+            </div>
+            <?php endfor; ?>
+        </div>
+        <?php if(!$userReview): ?>
+    <button onclick="<?= isset($_SESSION['user']) ? "$('#formReview').toggle()" : "window.location.href='index.php?module=client&controller=auth&action=login'" ?>" class="btn-review-action">
+        Viết đánh giá
+    </button>
+    <?php else: ?>
+    <div style="flex: 1; text-align: center; color: #28a745; font-weight: 500;">
+        <i class="fa fa-check-circle"></i> Bạn đã đánh giá sản phẩm này
+    </div>
+    <?php endif; ?>
+    </div>
+
+    <div id="formReview" style="display:none; margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fdfdfd;">
+        <?php if(isset($_SESSION['user'])): ?>
+        <form action="index.php?module=client&controller=review&action=submit" method="POST">
+            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+            
+            <label style="font-weight: bold; display: block; margin-bottom: 10px;">
+                <?= $userReview ? 'Chỉnh sửa đánh giá của bạn:' : 'Gửi đánh giá mới:' ?>
+            </label>
+            
+            <select name="rating" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px;">
+                <?php for($i=5; $i>=1; $i--): ?>
+                    <option value="<?= $i ?>" <?= (isset($userReview) && $userReview['rating'] == $i) ? 'selected' : '' ?>>
+                        <?= $i ?> sao <?= $i==5 ? '(Rất tốt)' : '' ?>
+                    </option>
+                <?php endfor; ?>
+            </select>
+
+            <textarea name="comment" required style="width: 100%; height: 100px; padding: 10px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px;" placeholder="Cảm nhận của bạn..."><?= $userReview['comment'] ?? '' ?></textarea>
+            
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn-review-action" style="padding: 10px 20px;">
+                    <?= $userReview ? 'Cập nhật' : 'Hoàn tất' ?>
+                </button>
+                <button type="button" onclick="$('#formReview').hide()" style="background: #eee; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Hủy</button>
+            </div>
+        </form>
+        <?php endif; ?>
+    </div>
+
+    <div class="review-list">
+    <?php if(empty($reviews)): ?>
+        <p style="text-align:center; color:#999;">Chưa có đánh giá nào cho sản phẩm này.</p>
+    <?php endif; ?>
+
+    <?php foreach($reviews as $rev): ?>
+        <div class="review-item" style="border-bottom: 1px solid #eee; padding: 15px 0;">
+            <div class="user-info" style="font-weight:bold;">
+                <?= htmlspecialchars($rev['fname'] . ' ' . $rev['lname']) ?>
+                <span style="color:#ffbe00; margin-left:10px;">
+                    <?= str_repeat('★', $rev['rating']) ?>
+                </span>
+            </div>
+            
+            <p style="margin:8px 0;"><?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                <small style="color:#999"><?= date('d/m/Y', strtotime($rev['created_at'])) ?></small>
+
+                <?php if(isset($_SESSION['user']) && $rev['user_id'] == $_SESSION['user']['id']): ?>
+                    <div class="action-links">
+                        <a href="javascript:void(0)" onclick="$('#formReview').show(); window.scrollTo(0, $('#formReview').offset().top - 100);" style="color:#007bff; font-size:12px;">Sửa</a>
+                        <span style="color:#ddd">|</span>
+                        <a href="index.php?controller=review&action=delete&id=<?= $rev['id'] ?>" style="color:red; font-size:12px;" onclick="return confirm('Xóa đánh giá này?')">Xóa</a>
+                    </div>
+                <?php elseif(isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
+                    <a href="index.php?controller=review&action=delete&id=<?= $rev['id'] ?>" style="color:red; font-size:12px;" onclick="return confirm('Xóa đánh giá này (Admin)?')">Xóa</a>
+                    <span style="color:#ddd">|</span>
+                    <a href="javascript:void(0)" onclick="toggleReplyForm(<?= $rev['id'] ?>)" style="color:#28a745; font-size:12px; font-weight:bold;">Phản hồi</a>
+                <?php endif; ?>
+            </div>
+
+            <?php if (!empty($rev['replies'])): ?>
+                <?php foreach ($rev['replies'] as $reply): ?>
+                    <div class="admin-reply-box" style="margin-left: 40px; background: #f9f9f9; padding: 12px; border-left: 3px solid #cd1818; border-radius: 4px; margin-top: 10px;">
+                        <div style="margin-bottom: 5px;">
+                            <strong style="color: #cd1818;"><i class="fa fa-check-circle"></i> FPT Shop Trả lời:</strong>
+                        </div>
+                        <div style="font-size: 14px; color: #333; line-height: 1.5;">
+                            <?= nl2br(htmlspecialchars($reply['reply_content'])) ?>
+                        </div>
+                        <div style="margin-top: 5px;">
+                            <small style="color: #999; font-size: 11px;"><?= date('d/m/Y H:i', strtotime($reply['created_at'])) ?></small>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
+                <div id="reply-form-<?= $rev['id'] ?>" style="display:none; margin-left: 40px; margin-top: 15px; background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
+                    <form action="index.php?module=admin&controller=review&action=reply" method="POST">
+                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
+                        <textarea name="reply_text" required style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;" placeholder="Nhập nội dung phản hồi khách hàng..."></textarea>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <button type="submit" class="btn-review-action" style="padding: 6px 15px; font-size: 13px; border-radius: 4px;">Gửi phản hồi</button>
+                            <button type="button" onclick="toggleReplyForm(<?= $rev['id'] ?>)" style="background: #eee; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 13px;">Hủy</button>
+                        </div>
+                    </form>
+                </div>
+            <?php endif; ?>
+            
+        </div>
+    <?php endforeach; ?>
+</div>
+
+</div>
+<script>
+function toggleReplyForm(id) {
+    var form = document.getElementById('reply-form-' + id);
+    if (form.style.display === "none") {
+        form.style.display = "block";
+    } else {
+        form.style.display = "none";
+    }
+}
+</script>
 
 <script>
     function changeImage(src) {

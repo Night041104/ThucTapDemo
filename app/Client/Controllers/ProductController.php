@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../models/ProductModel.php';
 require_once __DIR__ . '/../../models/CategoryModel.php';
+require_once __DIR__ . '/../../models/ReviewModel.php';
 
 class ProductController {
     private $prodModel;
@@ -9,13 +10,19 @@ class ProductController {
     public function __construct() {
         $this->prodModel = new ProductModel();
         $this->cateModel = new CategoryModel();
+        $this->reviewModel = new ReviewModel(); // Khởi tạo nó ở đây
     }
 
     // URL: index.php?module=client&controller=product&action=detail&id=123
     // URL: index.php?module=client&controller=product&action=detail&id=123
     public function detail() {
         $id = $_GET['id'] ?? 0;
-        
+        $this->reviewModel = new ReviewModel();
+        $userReview = null;
+        if(isset($_SESSION['user'])) {
+            $userReview = $this->reviewModel->getUserReview($_SESSION['user']['id'], $id);
+        } // Khởi tạo model review
+                
         // 1. Lấy thông tin sản phẩm hiện tại
         $product = $this->prodModel->getById($id);
         if (!$product) die("Sản phẩm không tồn tại!");
@@ -99,10 +106,14 @@ class ProductController {
 
         // 4. Decode Specs hiển thị
         $specs = json_decode($product['specs_json'], true) ?? [];
+        // LẤY DỮ LIỆU ĐÁNH GIÁ
+        $reviews = $this->reviewModel->getReviewsByProduct($id);
+        $reviewStats = $this->reviewModel->getReviewStats($id);
 
         require __DIR__ . '/../views/header.php';
         require __DIR__ . '/../views/product/detail.php';
     }
+
     public function search() {
     // Lấy 'keyword' thay vì 'q' cho khớp với header.php
     $keyword = $_GET['keyword'] ?? ''; 
@@ -135,7 +146,8 @@ class ProductController {
     // 4. Load View
     require __DIR__ . '/../views/header.php';
     require __DIR__ . '/../views/product/search_results.php';
-}
+    }
+
 
 }
 ?>
