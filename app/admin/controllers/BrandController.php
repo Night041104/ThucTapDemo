@@ -9,6 +9,10 @@ class BrandController {
     private $uploadDir = 'uploads/brands/';
 
     public function __construct() {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
+        header("Location: index.php?module=client&controller=auth&action=login");
+        exit;
+    }
         $this->brandModel = new BrandModel();
         $this->cateModel = new CategoryModel();
         

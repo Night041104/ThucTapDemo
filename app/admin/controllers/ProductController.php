@@ -13,6 +13,10 @@ class ProductController {
     private $uploadDir = 'uploads/products/';
 
     public function __construct() {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
+        header("Location: index.php?module=client&controller=auth&action=login");
+        exit;
+    }
         $this->prodModel = new ProductModel();
         $this->cateModel = new CategoryModel();
         $this->attrModel = new AttributeModel();

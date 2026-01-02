@@ -114,6 +114,7 @@ class ProductController {
 
         require __DIR__ . '/../views/layouts/header.php';
         require __DIR__ . '/../views/product/detail.php';
+        require __DIR__ . '/../views/layouts/footer.php';
     }
 
     public function search() {

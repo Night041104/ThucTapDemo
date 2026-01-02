@@ -291,10 +291,16 @@ function getIconBySlug($slug) {
                 <a href="index.php?controller=cart" class="action-item">
                     <i class="fa-solid fa-cart-shopping"></i>
                     <span>Giỏ hàng</span>
-                    <?php if($totalQty > 0): ?>
-                        <span class="cart-badge"><?= $totalQty ?></span>
-                    <?php endif; ?>
+                    <span id="cart-total-count" class="cart-badge" style="<?= $totalQty > 0 ? '' : 'display:none;' ?>">
+                        <?= $totalQty > 0 ? $totalQty : 0 ?>
+                    </span>
                 </a>
+                <?php if (isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
+        <a href="index.php?module=admin&controller=dashboard" class="action-item text-warning">
+            <i class="fa-solid fa-user-shield"></i>
+            <span>Quản trị</span>
+        </a>
+    <?php endif; ?>
 
                 <?php if($isLoggedIn): ?>
                     <a href="index.php?controller=account&action=profile" class="action-item">

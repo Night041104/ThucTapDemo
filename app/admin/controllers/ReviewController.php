@@ -2,6 +2,12 @@
 // Tương tự UserController, check quyền role_id == 1 trong __construct
 require_once __DIR__ . '/../../models/ReviewModel.php';
 class ReviewController {
+    public function __construct() {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
+            header("Location: index.php?module=client&controller=auth&action=login");
+            exit;
+        }
+    }
     // Hàm liệt kê tất cả review để admin duyệt/xoá
     public function index() {
         // Gọi model lấy toàn bộ review

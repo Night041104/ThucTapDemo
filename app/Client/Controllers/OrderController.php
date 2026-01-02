@@ -21,7 +21,10 @@ class OrderController {
         // Gọi Model lấy danh sách đơn của User này
         $orders = $this->orderModel->getOrdersByUserId($userId);
 
+        // Load View cùng Header/Footer
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/account/history.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 2. CHI TIẾT ĐƠN HÀNG
@@ -43,8 +46,11 @@ class OrderController {
         $data = $this->orderModel->getOrderDetail($orderId);
         $order = $data['info'];
         $items = $data['items'];
-
+        // Load View cùng Header/Footer
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/account/order_detail.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
+        
     }
 
     // 3. KHÁCH HÀNG TỰ HỦY ĐƠN (Chỉ khi đơn mới tạo)

@@ -59,8 +59,14 @@ class CartController {
         $finalTotal = $totalMoney - $discountAmount;
         if ($finalTotal < 0) $finalTotal = 0;
 
-        // Truyền các biến mới sang View
-        require_once __DIR__ . '/../Views/cart/index.php';
+        // Load Header
+    require_once __DIR__ . '/../Views/layouts/header.php';
+    
+    // Load nội dung giỏ hàng (File bạn vừa sửa ở Bước 1)
+    require_once __DIR__ . '/../Views/cart/index.php';
+    
+    // Load Footer
+    require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 2. THÊM VÀO GIỎ (Xử lý khi bấm nút MUA NGAY)

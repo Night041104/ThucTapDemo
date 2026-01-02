@@ -107,10 +107,14 @@ class AuthController {
     // (Giữ nguyên các hàm login, register view, logout...)
     public function login() {
         if (isset($_SESSION['user'])) { header("Location: index.php"); exit; }
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/auth/login.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
     public function register() {
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/auth/register.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
     public function logout() {
         unset($_SESSION['user']);
@@ -120,7 +124,9 @@ class AuthController {
     }
     // 6. HIỂN THỊ FORM NHẬP EMAIL (QUÊN MẬT KHẨU)
     public function forgotPassword() {
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/auth/forgot_password.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 7. XỬ LÝ GỬI MAIL RESET
@@ -158,7 +164,9 @@ class AuthController {
             exit;
         }
 
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/auth/reset_password.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 9. XỬ LÝ LƯU MẬT KHẨU MỚI

@@ -68,7 +68,9 @@ class CheckoutController {
             ];
         }
 
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/checkout/index.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 2. XỬ LÝ ĐẶT HÀNG (SUBMIT)
@@ -343,7 +345,9 @@ class CheckoutController {
             header("Location: index.php");
             exit;
         }
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/checkout/success.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 }
 ?>

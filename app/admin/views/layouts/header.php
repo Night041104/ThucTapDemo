@@ -285,8 +285,7 @@
                     <img src="<?= htmlspecialchars($adminAvt) ?>" class="admin-avatar" onerror="this.src='public/uploads/default/default_avt.png'">
                 </div>
                 <ul class="dropdown-menu dropdown-menu-end border-0 shadow mt-3 animate__animated animate__fadeIn">
-                    <li><a class="dropdown-item py-2" href="#"><i class="fa fa-user me-2 text-muted"></i> Hồ sơ cá nhân</a></li>
-                    <li><hr class="dropdown-divider"></li>
+                   
                     <li><a class="dropdown-item py-2 text-danger" href="index.php?module=client&controller=auth&action=logout"><i class="fa fa-sign-out-alt me-2"></i> Đăng xuất</a></li>
                 </ul>
             </div>

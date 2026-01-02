@@ -20,7 +20,9 @@ class AccountController {
         $userId = $_SESSION['user']['id'];
         $user = $this->userModel->getUserById($userId);
 
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/account/profile.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 2. XỬ LÝ CẬP NHẬT (POST)
@@ -171,7 +173,9 @@ class AccountController {
 
         // Load View
         $user = $_SESSION['user']; // Lấy thông tin user để hiển thị Sidebar
+        require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/account/change_password.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 }
 ?>
