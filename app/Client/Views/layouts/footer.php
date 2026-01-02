@@ -98,17 +98,17 @@
                     <p><i class="fa fa-map-marker-alt text-danger me-2" style="width:15px"></i> 261 Khánh Hội, P2, Q4, TP.HCM</p>
                     <p><i class="fa fa-phone text-danger me-2" style="width:15px"></i> 1800 6601 (Miễn phí)</p>
                     <p><i class="fa fa-envelope text-danger me-2" style="width:15px"></i> cskh@fptshop.com.vn</p>
+                    <p><i class="fa-solid fa-comment-dots text-danger me-2" style="width:15px"></i> Góp ý, khiếu nại và tiếp nhận cảnh báo vi phạm 1800 6601 (8h00 - 22h00)</p>
                 </div>
             </div>
 
             <div class="col-lg-4 col-md-6 mb-4">
                 <h5 class="footer-heading">Hỗ trợ khách hàng</h5>
                 <ul class="footer-list">
-                    <li><a href="#" class="footer-link">Hướng dẫn mua hàng online</a></li>
-                    <li><a href="#" class="footer-link">Chính sách bảo hành & Đổi trả</a></li>
-                    <li><a href="#" class="footer-link">Phương thức thanh toán</a></li>
-                    <li><a href="#" class="footer-link">Tra cứu đơn hàng</a></li>
-                    <li><a href="#" class="footer-link">Góp ý, khiếu nại</a></li>
+                    <li><a href="index.php?module=client&controller=about&action=guide" class="footer-link">Hướng dẫn mua hàng online</a></li>
+                    <li><a href="index.php?module=client&controller=about&action=warranty" class="footer-link">Chính sách bảo hành & Đổi trả</a></li>
+                    <li><a href="index.php?module=client&controller=about&action=payment" class="footer-link">Phương thức thanh toán</a></li>
+                    <li><a href="index.php?controller=order&action=history" class="footer-link">Tra cứu đơn hàng</a></li>
                 </ul>
             </div>
 

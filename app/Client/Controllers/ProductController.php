@@ -151,6 +151,8 @@ class ProductController {
     require __DIR__ . '/../views/product/search_results.php';
     }
 
+    
+
 
 }
 ?>

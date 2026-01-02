@@ -58,5 +58,29 @@ class CategoryModel extends BaseModel {
         $id = $this->escape($id);
         return $this->_query("DELETE FROM categories WHERE id = '$id'");
     }
+
+    public function getAttributesByCategory($cateId) {
+        $cateId = $this->escape($cateId);
+        // Lấy các thuộc tính thuộc về danh mục này
+        $sql = "SELECT a.* FROM attributes a 
+                JOIN category_attribute ca ON a.id = ca.attribute_id 
+                WHERE ca.category_id = '$cateId'
+                ORDER BY a.name ASC";
+        $result = $this->_query($sql);
+        $attributes = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+
+        // Với mỗi thuộc tính, lấy các giá trị (options) hiện có để khách hàng tích chọn
+        foreach ($attributes as &$attr) {
+            $attrId = $attr['id'];
+            $sqlOption = "SELECT DISTINCT ao.* FROM attribute_options ao
+                        JOIN product_attribute_values pav ON ao.id = pav.option_id
+                        JOIN products p ON pav.product_id = p.id
+                        WHERE ao.attribute_id = '$attrId' AND p.category_id = '$cateId'";
+            $resOption = $this->_query($sqlOption);
+            $attr['options'] = $resOption ? mysqli_fetch_all($resOption, MYSQLI_ASSOC) : [];
+        }
+
+        return $attributes;
+    }
 }
 ?>

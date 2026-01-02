@@ -257,9 +257,9 @@ function getIconBySlug($slug) {
     <div class="container d-flex justify-content-between">
         <span class="fw-bold"><i class="fa fa-star text-warning me-1"></i> FPT Shop Clone System - Uy tín, Chất lượng</span>
         <div>
-            <a href="#">Giới thiệu</a>
-            <a href="#">Trung tâm bảo hành</a>
-            <a href="#">Tuyển dụng</a>
+            <a href="index.php?module=client&controller=about">Giới thiệu</a>
+            <a href="index.php?module=client&controller=about&action=warranty">Chính sách bảo hành</a>
+
         </div>
     </div>
 </div>

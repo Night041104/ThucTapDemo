@@ -493,5 +493,18 @@ class ProductModel extends BaseModel {
             'max' => (int)($row['max_price'] ?? 0)
         ];
     }
+    // Thêm vào trong class ProductModel
+    public function getByBrandName($brandName) {
+        $brandName = $this->escape($brandName);
+        // Join với bảng brands để lọc theo tên
+        $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE b.name LIKE '%$brandName%' AND p.status = 1
+                ORDER BY p.id DESC";
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
 }
 ?>
