@@ -1,17 +1,63 @@
 <?php
 session_start();
-// FILE: index.php (Tại thư mục gốc)
+// Require file kết nối CSDL nếu cần thiết cho toàn bộ project
+// require_once 'config/database.php'; 
 
-// 1. Lấy tham số từ URL
-$module = $_GET['module'] ?? 'client'; // Mặc định là client
+// FILE: index.php
+
+// --- [PHẦN 1: CẤU HÌNH ROUTING TĨNH] ---
+// Lấy đường dẫn từ .htaccess (nếu có rewrite)
+$url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '/';
+
+// Định nghĩa các đường dẫn "đẹp" trỏ về Controller/Action cụ thể
+$staticRoutes = [
+    // URL hiển thị      => ['Controller', 'Action']
+    'trang-chu'          => ['home', 'index'],
+    'dang-nhap'          => ['auth', 'login'],
+    'dang-ky'            => ['auth', 'register'],
+    'dang-xuat'          => ['auth', 'logout'],
+    'tai-khoan'          => ['account', 'profile'],
+    'doi-mat-khau'       => ['account', 'changePassword'],
+    'gio-hang'           => ['cart', 'index'],
+    'thanh-toan'         => ['cart', 'checkout'],
+    'lich-su-don'        => ['cart', 'history'],
+    'tim-kiem'           => ['product', 'search'], 
+];
+
+// --- [PHẦN 2: XỬ LÝ LOGIC ĐỂ TÌM CONTROLLER] ---
+
+// Mặc định ban đầu
+$module = $_GET['module'] ?? 'client';
 $controllerName = $_GET['controller'] ?? 'home';
 $actionName = $_GET['action'] ?? 'index';
 
-// 2. Chuẩn hóa tên Class Controller (Ví dụ: product -> ProductController)
-// Lưu ý: Tên file Controller bắt buộc phải viết Hoa chữ cái đầu (ProductController.php)
+// A. Kiểm tra xem URL có nằm trong danh sách định nghĩa cứng không?
+if (array_key_exists($url, $staticRoutes)) {
+    $module = 'client'; // Các trang đẹp này đều thuộc Client
+    $controllerName = $staticRoutes[$url][0];
+    $actionName = $staticRoutes[$url][1];
+} 
+// B. Nếu không phải link đẹp, kiểm tra xem có phải link Admin không
+elseif (strpos($url, 'admin') === 0) {
+    // Xử lý link dạng: domain.com/admin/product/index
+    $parts = explode('/', $url);
+    $module = 'admin';
+    $controllerName = $parts[1] ?? 'dashboard';
+    $actionName = $parts[2] ?? 'index';
+}
+// C. Fallback: Nếu user nhập tay tham số ?controller=... (Logic cũ của bạn)
+elseif (isset($_GET['controller'])) {
+    $module = $_GET['module'] ?? 'client';
+    $controllerName = $_GET['controller'];
+    $actionName = $_GET['action'] ?? 'index';
+}
+
+// --- [PHẦN 3: CHUẨN HÓA VÀ GỌI FILE (LOGIC CŨ CỦA BẠN)] ---
+
+// Chuẩn hóa tên Class Controller (Ví dụ: product -> ProductController)
 $className = ucfirst($controllerName) . 'Controller';
 
-// 3. XÁC ĐỊNH ĐƯỜNG DẪN (QUAN TRỌNG)
+// Xác định đường dẫn file
 $path = "";
 
 if ($module === 'admin') {
@@ -22,7 +68,7 @@ if ($module === 'admin') {
     $path = __DIR__ . "/app/Client/Controllers/{$className}.php";
 }
 
-// 4. Kiểm tra và chạy
+// Kiểm tra và chạy
 if (file_exists($path)) {
     require_once $path;
 
@@ -30,14 +76,16 @@ if (file_exists($path)) {
         $object = new $className();
         
         if (method_exists($object, $actionName)) {
+            // Chạy Action
             $object->$actionName();
         } else {
-            die("Lỗi 404: Không tìm thấy hàm '{$actionName}'");
+            die("Lỗi 404: Không tìm thấy hàm '{$actionName}' trong class '{$className}'");
         }
     } else {
         die("Lỗi 500: Không tìm thấy class '{$className}'");
     }
 } else {
+    // Debug đường dẫn để bạn dễ sửa lỗi nếu sai folder
     die("Lỗi 404: File không tồn tại tại đường dẫn: <br>" . $path);
 }
 ?>

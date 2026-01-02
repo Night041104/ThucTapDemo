@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# [QUAN TRỌNG] Thiết lập thư mục gốc đúng với URL của bạn
+RewriteBase /baitapPhP/ThucTapDemo/
+
+# Nếu là file thật (ảnh, css, js) thì không viết lại
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Chuyển tất cả request ảo vào index.php
+RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
