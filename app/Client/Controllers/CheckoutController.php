@@ -75,7 +75,7 @@ class CheckoutController {
     }
 
     // 2. XỬ LÝ ĐẶT HÀNG (SUBMIT)
-    // XỬ LÝ KHI BẤM NÚT "XÁC NHẬN ĐẶT HÀNG"
+    // 2. XỬ LÝ ĐẶT HÀNG (SUBMIT)
     public function submit() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
@@ -83,29 +83,26 @@ class CheckoutController {
             $fullname = trim($_POST['fullname'] ?? '');
             $email    = trim($_POST['email'] ?? '');
             $phone    = trim($_POST['phone'] ?? '');
-            // [SỬA] Lấy các thành phần địa chỉ và gộp lại
-            $street   = trim($_POST['street_address'] ?? ''); // Tên input số nhà
-            $ward     = trim($_POST['ward'] ?? '');           // Tên phường/xã
-            $district = trim($_POST['district'] ?? '');       // Tên quận/huyện
-            $city     = trim($_POST['city'] ?? '');           // Tên tỉnh/thành phố
+            // Gộp địa chỉ
+            $street   = trim($_POST['street_address'] ?? '');
+            $ward     = trim($_POST['ward'] ?? '');
+            $district = trim($_POST['district'] ?? '');
+            $city     = trim($_POST['city'] ?? '');
 
-            // Gộp thành 1 chuỗi duy nhất để lưu vào Database
             $address = $street;
             if (!empty($ward))     $address .= ", " . $ward;
             if (!empty($district)) $address .= ", " . $district;
             if (!empty($city))     $address .= ", " . $city;
+            
             $note     = trim($_POST['note'] ?? '');
             $paymentMethod = $_POST['payment_method'] ?? 'COD'; 
 
-            // 2. Validate cơ bản
+            // Validate cơ bản
             if (empty($fullname) || empty($email) || empty($phone) || empty($address)) {
-                die("❌ Vui lòng điền đầy đủ Họ tên, Email, SĐT và Địa chỉ!");
+                die("❌ Vui lòng điền đầy đủ thông tin!");
             }
 
-            // 3. Chuẩn bị dữ liệu
-            $cartItems = $_SESSION['cart'];
-            $userId = isset($_SESSION['user']) ? $_SESSION['user']['id'] : null;
-
+            // Chuẩn bị dữ liệu khách hàng
             $customerData = [
                 'fullname' => $fullname,
                 'email'    => $email,
@@ -115,64 +112,246 @@ class CheckoutController {
                 'payment_method' => $paymentMethod
             ];
 
-            // [MỚI] Lấy thông tin Coupon từ Session (Nếu có)
+            // Lấy Coupon nếu có
             $couponCode = null;
             $discountMoney = 0;
-            
             if (isset($_SESSION['coupon'])) {
                 $couponCode = $_SESSION['coupon']['code'];
                 $discountMoney = $_SESSION['coupon']['discount_amount'];
             }
 
-            // 4. Gọi Model tạo đơn hàng
-            // Truyền thêm $couponCode và $discountMoney
-            $orderCode = $this->orderModel->createOrder($userId, $customerData, $cartItems, $couponCode, $discountMoney);
+            // --- PHÂN LUỒNG XỬ LÝ ---
 
-            if ($orderCode) {
-                // --- ĐẶT HÀNG THÀNH CÔNG ---
-                // --- [MỚI] XỬ LÝ LƯU LOG COUPON ---
-    if (isset($_SESSION['coupon']) && isset($_SESSION['user'])) {
-        $couponId = $_SESSION['coupon']['id'];
-        $discountUsed = $_SESSION['coupon']['discount_amount'];
-        $userIdCurrent = $_SESSION['user']['id'];
-        
-        // Bạn cần lấy ID thực của đơn hàng (int id) chứ không phải Order Code (string)
-        // Gọi model lấy ID từ Code nếu cần thiết
-        $createdOrder = $this->orderModel->getOrderByCode($orderCode);
-        $realOrderId = $createdOrder['info']['id']; 
+            // TRƯỜNG HỢP 1: THANH TOÁN VNPAY (Chưa lưu DB, chỉ lưu Session tạm)
+            if ($paymentMethod == 'VNPAY') {
+                // Tính tổng tiền cần thanh toán để gửi sang VNPAY
+                $cartItems = $_SESSION['cart'];
+                $cartTotal = $this->calculateTotal($cartItems);
+                $finalPayment = $cartTotal - $discountMoney;
+                if ($finalPayment < 0) $finalPayment = 0;
 
-        $couponModel = new CouponModel();
-        // Gọi hàm logUsage mới viết ở Bước 1
-        $couponModel->logCouponUsage($couponId, $userIdCurrent, $realOrderId, $discountUsed);
-    }
-                
-                // Xóa giỏ hàng và Coupon ngay lập tức
-                unset($_SESSION['cart']);
-                unset($_SESSION['coupon']); // <--- Quan trọng: Xóa mã để không bị lưu cho đơn sau
+                // Tạo một mã giao dịch tạm (Ref) để gửi sang VNPAY
+                $tempOrderRef = "TEMP" . date("ymdHis") . rand(100,999);
 
-                // --- PHÂN LUỒNG THANH TOÁN ---
-                if ($paymentMethod == 'VNPAY') {
-                    // ==> NẾU CHỌN VNPAY:
-                    // 1. Tính tổng tiền hàng gốc
-                    $cartTotal = $this->calculateTotal($cartItems);
-                    
-                    // 2. Trừ đi tiền giảm giá (Để gửi sang VNPAY số tiền thực phải trả)
-                    $finalPayment = $cartTotal - $discountMoney;
-                    if ($finalPayment < 0) $finalPayment = 0; // Không để âm tiền
+                // LƯU TẠM VÀO SESSION (Để dùng lại khi VNPAY trả về)
+                $_SESSION['vnpay_holding'] = [
+                    'customer_data' => $customerData,
+                    'coupon_code'   => $couponCode,
+                    'discount_money'=> $discountMoney,
+                    'final_payment' => $finalPayment,
+                    'temp_code'     => $tempOrderRef
+                ];
 
-                    // 3. Chuyển hướng
-                    $this->redirectToVnPay($orderCode, $finalPayment);
-                    
-                } else {
-                    // ==> NẾU CHỌN COD: Gửi mail và Kết thúc
+                // Chuyển hướng sang VNPAY (KHÔNG XÓA GIỎ HÀNG LÚC NÀY)
+                $this->redirectToVnPay($tempOrderRef, $finalPayment);
+                exit; 
+            }
+
+            // TRƯỜNG HỢP 2: THANH TOÁN COD (Lưu DB ngay)
+            else {
+                $userId = isset($_SESSION['user']) ? $_SESSION['user']['id'] : null;
+                $cartItems = $_SESSION['cart'];
+
+                // Gọi Model tạo đơn hàng
+                $orderCode = $this->orderModel->createOrder($userId, $customerData, $cartItems, $couponCode, $discountMoney);
+
+                if ($orderCode) {
+                    // Xử lý lưu log coupon
+                    $this->logCouponUsageIfAny($orderCode, $discountMoney);
+
+                    // Xóa giỏ hàng và Coupon
+                    unset($_SESSION['cart']);
+                    unset($_SESSION['coupon']);
+
+                    // Gửi mail và hoàn tất
                     $this->sendMailAndFinish($email, $fullname, $orderCode, $cartItems);
+                } else {
+                    echo "<script>alert('❌ Đặt hàng thất bại! Có thể sản phẩm vừa hết hàng.'); window.location.href='index.php?controller=cart';</script>";
                 }
-
-            } else {
-                // --- THẤT BẠI ---
-                echo "<script>alert('❌ Đặt hàng thất bại! Có thể sản phẩm vừa hết hàng hoặc hệ thống bận.'); window.location.href='index.php?controller=cart';</script>";
             }
         }
+    }
+
+    // [VNPAY] Xử lý kết quả trả về (ĐÃ SỬA LOGIC)
+    public function vnpay_return() {
+        require_once __DIR__ . '/../../../config/vnpay_config.php';
+        
+        $inputData = array();
+        foreach ($_GET as $key => $value) {
+            if (substr($key, 0, 4) == "vnp_") {
+                $inputData[$key] = $value;
+            }
+        }
+        $vnp_SecureHash = $inputData['vnp_SecureHash'];
+        unset($inputData['vnp_SecureHash']);
+        ksort($inputData);
+        $i = 0;
+        $hashData = "";
+        foreach ($inputData as $key => $value) {
+            if ($i == 1) {
+                $hashData = $hashData . '&' . urlencode($key) . "=" . urlencode($value);
+            } else {
+                $hashData = $hashData . urlencode($key) . "=" . urlencode($value);
+                $i = 1;
+            }
+        }
+        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
+
+        // KIỂM TRA CHỮ KÝ HỢP LỆ
+        if ($secureHash == $vnp_SecureHash) {
+            
+            // --- THANH TOÁN THÀNH CÔNG ---
+            if ($_GET['vnp_ResponseCode'] == '00') {
+                
+                // Kiểm tra xem có dữ liệu tạm trong Session không
+                if (isset($_SESSION['vnpay_holding'])) {
+                    $holding = $_SESSION['vnpay_holding'];
+
+                    // Lấy lại dữ liệu từ Session
+                    $userId = isset($_SESSION['user']) ? $_SESSION['user']['id'] : null;
+                    $customerData = $holding['customer_data'];
+                    $couponCode = $holding['coupon_code'];
+                    $discountMoney = $holding['discount_money'];
+                    $cartItems = $_SESSION['cart']; // Giỏ hàng vẫn còn nguyên
+
+                    // BÂY GIỜ MỚI GỌI MODEL ĐỂ LƯU ĐƠN HÀNG VÀO DATABASE
+                    // Vì tạo lúc này nên đảm bảo status mặc định là 1 (chờ xử lý) hoặc bạn có thể set luôn là 2 (đã thanh toán)
+                    $orderCode = $this->orderModel->createOrder($userId, $customerData, $cartItems, $couponCode, $discountMoney);
+
+                    if ($orderCode) {
+                        // Cập nhật trạng thái thành Đã thanh toán (Status = 2)
+                        $this->orderModel->updateStatusByCode($orderCode, 2);
+
+                        // Lưu log coupon
+                        $this->logCouponUsageIfAny($orderCode, $discountMoney);
+
+                        // GỬI MAIL
+                        require_once __DIR__ . '/../../Helpers/MailHelper.php';
+                        $this->sendMailHelper($holding['customer_data']['email'], $holding['customer_data']['fullname'], $orderCode, $cartItems);
+
+                        // XÓA SESSION TẠM & GIỎ HÀNG
+                        unset($_SESSION['cart']);
+                        unset($_SESSION['coupon']);
+                        unset($_SESSION['vnpay_holding']);
+
+                        // Chuyển hướng trang thành công
+                        header("Location: index.php?controller=checkout&action=success&code=$orderCode&payment=vnpay");
+                        exit;
+                    } else {
+                        echo "Lỗi tạo đơn hàng vào hệ thống (Có thể hết hàng trong lúc bạn thanh toán). Vui lòng liên hệ Admin để được hoàn tiền.";
+                    }
+                } else {
+                    echo "Lỗi: Không tìm thấy thông tin đơn hàng tạm.";
+                }
+
+            } 
+            // --- THANH TOÁN THẤT BẠI / HỦY ---
+            // --- THANH TOÁN THẤT BẠI / HỦY ---
+            else {
+                // Chỉ xóa session tạm (Giỏ hàng vẫn giữ nguyên để khách mua lại)
+                unset($_SESSION['vnpay_holding']);
+                
+                // 1. Lấy mã lỗi từ VNPAY để thông báo chi tiết hơn
+                $vnp_ResponseCode = $_GET['vnp_ResponseCode'] ?? '99';
+                $message = "Giao dịch không thành công do lỗi không xác định.";
+                
+                // Mapping mã lỗi phổ biến của VNPAY
+                switch ($vnp_ResponseCode) {
+                    case '24':
+                        $message = "Bạn đã hủy giao dịch thanh toán.";
+                        break;
+                    case '51':
+                        $message = "Tài khoản của bạn không đủ số dư.";
+                        break;
+                    case '11':
+                        $message = "Đã hết hạn chờ thanh toán. Vui lòng thử lại.";
+                        break;
+                    case '75':
+                        $message = "Ngân hàng thanh toán đang bảo trì.";
+                        break;
+                    default:
+                        $message = "Giao dịch thất bại (Mã lỗi: $vnp_ResponseCode). Vui lòng thử lại.";
+                        break;
+                }
+
+                // 2. Hiển thị thông báo đẹp bằng SweetAlert2
+                // Chúng ta echo ra một trang HTML nhỏ chỉ để hiện popup rồi redirect
+                echo '<!DOCTYPE html>
+                <html lang="vi">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Thanh toán thất bại</title>
+                    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+                    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: "Roboto", sans-serif; background: #f4f4f4; }
+                    </style>
+                </head>
+                <body>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            Swal.fire({
+                                icon: "error",
+                                title: "Thanh toán thất bại!",
+                                text: "' . $message . '",
+                                confirmButtonText: "Quay lại trang thanh toán",
+                                confirmButtonColor: "#cd1818", // Màu đỏ FPT
+                                allowOutsideClick: false,
+                                allowEscapeKey: false
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    // Bấm nút thì quay về trang checkout
+                                    window.location.href = "index.php?controller=checkout";
+                                }
+                            });
+                        });
+                    </script>
+                </body>
+                </html>';
+                exit; // Dừng code tại đây
+            }
+        } else {
+            echo "Chữ ký không hợp lệ!";
+        }
+    }
+
+    // [HELPER MỚI] Hàm tách riêng để xử lý log coupon cho gọn
+    private function logCouponUsageIfAny($orderCode, $discountMoney) {
+        if (isset($_SESSION['coupon']) && isset($_SESSION['user'])) {
+            $couponId = $_SESSION['coupon']['id'];
+            $userIdCurrent = $_SESSION['user']['id'];
+            
+            $createdOrder = $this->orderModel->getOrderByCode($orderCode);
+            if ($createdOrder) {
+                $realOrderId = $createdOrder['info']['id']; 
+                $couponModel = new CouponModel();
+                $couponModel->logCouponUsage($couponId, $userIdCurrent, $realOrderId, $discountMoney);
+            }
+        }
+    }
+    
+    // [HELPER MỚI] Tách hàm gửi mail để tái sử dụng
+    private function sendMailHelper($email, $fullname, $orderCode, $cartItems) {
+        require_once __DIR__ . '/../../models/ProductModel.php'; // Đảm bảo đã load model
+        $ids = array_keys($cartItems);
+        $products = $this->productModel->getProductsByIds($ids);
+        
+        $totalMoney = 0;
+        $mailItems = [];
+        foreach ($products as $p) {
+            $qty = $cartItems[$p['id']];
+            $totalMoney += $p['price'] * $qty;
+            $mailItems[] = [
+                'product_name' => $p['name'],
+                'price' => $p['price'],
+                'quantity' => $qty
+            ];
+        }
+        
+        // Tính lại tổng tiền sau giảm giá (nếu cần thiết, hoặc lấy từ tham số truyền vào)
+        // Ở đây gửi totalMoney gốc, hoặc bạn có thể truyền totalMoney đã trừ coupon
+        MailHelper::sendOrderConfirmation($email, $fullname, $orderCode, $totalMoney, $mailItems);
     }
 
     // [HELPER RIÊNG] Xử lý gửi mail và chuyển trang hoàn tất (FULL CODE)
@@ -278,81 +457,7 @@ class CheckoutController {
         exit;
     }
 
-    // [VNPAY] Xử lý kết quả trả về
-    public function vnpay_return() {
-        // ... (Phần load config và check hash giữ nguyên) ...
-        require_once __DIR__ . '/../../../config/vnpay_config.php';
-        
-        // (Logic xử lý dữ liệu đầu vào giữ nguyên) ...
-        $inputData = array();
-        foreach ($_GET as $key => $value) {
-            if (substr($key, 0, 4) == "vnp_") {
-                $inputData[$key] = $value;
-            }
-        }
-        $vnp_SecureHash = $inputData['vnp_SecureHash'];
-        unset($inputData['vnp_SecureHash']);
-        ksort($inputData);
-        $i = 0;
-        $hashData = "";
-        foreach ($inputData as $key => $value) {
-            if ($i == 1) {
-                $hashData = $hashData . '&' . urlencode($key) . "=" . urlencode($value);
-            } else {
-                $hashData = $hashData . urlencode($key) . "=" . urlencode($value);
-                $i = 1;
-            }
-        }
-        $secureHash = hash_hmac('sha512', $hashData, $vnp_HashSecret);
-
-        if ($secureHash == $vnp_SecureHash) {
-            if ($_GET['vnp_ResponseCode'] == '00') {
-                // --- THANH TOÁN THÀNH CÔNG ---
-                $orderCode = $inputData['vnp_TxnRef'];
-                
-                // 1. Cập nhật trạng thái "Đã thanh toán" (Status = 2)
-                $this->orderModel->updateStatusByCode($orderCode, 2); 
-                
-                // 2. [MỚI] GỬI MAIL XÁC NHẬN
-                // Vì giỏ hàng đã xóa, phải lấy thông tin từ DB lên để gửi
-                $orderData = $this->orderModel->getOrderByCode($orderCode);
-                
-                if ($orderData) {
-                    require_once __DIR__ . '/../../Helpers/MailHelper.php';
-                    
-                    $info = $orderData['info'];
-                    $items = $orderData['items'];
-                    
-                    // Chuẩn bị dữ liệu items cho MailHelper
-                    $mailItems = [];
-                    foreach ($items as $item) {
-                        $mailItems[] = [
-                            'product_name' => $item['product_name'],
-                            'price'        => $item['price'],
-                            'quantity'     => $item['quantity']
-                        ];
-                    }
-
-                    // Gọi hàm gửi mail
-                    MailHelper::sendOrderConfirmation(
-                        $info['email'], 
-                        $info['fullname'], 
-                        $orderCode, 
-                        $info['total_money'], 
-                        $mailItems
-                    );
-                }
-
-                // 3. Chuyển hướng
-                header("Location: index.php?controller=checkout&action=success&code=$orderCode&payment=vnpay");
-            } else {
-                echo "Giao dịch không thành công. Mã lỗi: " . $_GET['vnp_ResponseCode'];
-                echo "<br><a href='index.php'>Về trang chủ</a>";
-            }
-        } else {
-            echo "Chữ ký không hợp lệ!";
-        }
-    }
+    
 
     // 3. TRANG THÀNH CÔNG
     public function success() {
