@@ -312,85 +312,112 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
     // Trong file CartController.php
 
 public function updateAjax() {
-    // 1. Chỉ nhận request POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid request']);
-        exit;
-    }
-
-    // 2. Lấy dữ liệu từ JS gửi lên
-    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-    $qty = isset($_POST['qty']) ? (int)$_POST['qty'] : 1;
-
-    if ($qty < 1) $qty = 1; // Đảm bảo số lượng tối thiểu là 1
-
-    // 3. Cập nhật Session giỏ hàng
-    if (isset($_SESSION['cart'][$id])) {
-        $_SESSION['cart'][$id] = $qty;
-    }
-
-    // 4. Tính toán lại toàn bộ giỏ hàng
-    require_once __DIR__ . '/../../models/ProductModel.php';
-    $productModel = new ProductModel();
-    
-    $cart = $_SESSION['cart'];
-    $ids = array_keys($cart);
-    $products = $productModel->getProductsByIds($ids);
-
-    $totalMoney = 0;
-    $itemSubtotal = 0; // Thành tiền của riêng sản phẩm vừa sửa
-
-    foreach ($products as $p) {
-        $currentQty = $cart[$p['id']];
-        $lineTotal = $p['price'] * $currentQty;
-        $totalMoney += $lineTotal;
-
-        if ($p['id'] == $id) {
-            $itemSubtotal = $lineTotal;
+        // 1. Chỉ nhận request POST
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request']);
+            exit;
         }
-    }
 
-    // 5. Tính toán lại Coupon (QUAN TRỌNG)
-    $discountAmount = 0;
-    $couponMsg = '';
-    $couponValid = false;
+        // 2. Lấy dữ liệu từ JS gửi lên
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $qty = isset($_POST['qty']) ? (int)$_POST['qty'] : 1;
 
-    if (isset($_SESSION['coupon'])) {
+        if ($qty < 1) $qty = 1; // Đảm bảo số lượng tối thiểu là 1
+
+        // 3. Cập nhật Session giỏ hàng
+        if (isset($_SESSION['cart'][$id])) {
+            $_SESSION['cart'][$id] = $qty;
+        }
+        // --- [THÊM ĐOẠN NÀY] Tính tổng số lượng sản phẩm trong giỏ ---
+        $newTotalQty = array_sum($_SESSION['cart']);
+
+        // 4. Tính toán lại toàn bộ giỏ hàng
+        require_once __DIR__ . '/../../models/ProductModel.php';
+        $productModel = new ProductModel();
+        
+        $cart = $_SESSION['cart'];
+        $ids = array_keys($cart);
+        // Nếu giỏ hàng trống thì return nhanh
+        if (empty($ids)) {
+             echo json_encode(['status' => 'success', 'total_money' => 0, 'final_total' => 0]);
+             exit;
+        }
+
+        $products = $productModel->getProductsByIds($ids);
+
+        $totalMoney = 0;
+        $itemSubtotal = 0; // Thành tiền của riêng sản phẩm vừa sửa
+
+        foreach ($products as $p) {
+            if (isset($cart[$p['id']])) {
+                $currentQty = $cart[$p['id']];
+                $lineTotal = $p['price'] * $currentQty;
+                $totalMoney += $lineTotal;
+
+                if ($p['id'] == $id) {
+                    $itemSubtotal = $lineTotal;
+                }
+            }
+        }
+
+        // --- [PHẦN MỚI QUAN TRỌNG] TẠO LẠI HTML DANH SÁCH MÃ GIẢM GIÁ ---
+        // Mục đích: Để Modal cập nhật trạng thái sáng/tối ngay lập tức theo tổng tiền mới
         require_once __DIR__ . '/../../models/CouponModel.php';
         $couponModel = new CouponModel();
-        
-        $couponCode = $_SESSION['coupon']['code'];
         $userId = isset($_SESSION['user']) ? $_SESSION['user']['id'] : null;
 
-        // Check lại điều kiện coupon với tổng tiền mới
-        $check = $couponModel->checkCoupon($couponCode, $totalMoney, $userId);
+        // Lấy danh sách coupon mới nhất (kèm số lần user đã dùng)
+        $listCoupons = $couponModel->getAllActiveCoupons($userId); 
+        
+        // Dùng Output Buffering để render file view thành chuỗi HTML
+        ob_start();
+        // Truyền biến vào view: $listCoupons và $totalMoney (để so sánh điều kiện)
+        require __DIR__ . '/../Views/cart/coupon_list.php'; 
+        $couponHtml = ob_get_clean(); 
+        // -----------------------------------------------------------------
 
-        if ($check['valid']) {
-            $discountAmount = $check['discount_amount'];
-            $_SESSION['coupon']['discount_amount'] = $discountAmount; // Cập nhật Session
-            $couponValid = true;
-        } else {
-            // Coupon không còn hợp lệ (do tổng tiền giảm xuống dưới mức tối thiểu)
-            unset($_SESSION['coupon']);
-            $discountAmount = 0;
-            $couponMsg = 'Mã giảm giá đã bị hủy do không đủ điều kiện!';
+
+        // 5. Tính toán lại Coupon ĐANG ÁP DỤNG (nếu có)
+        $discountAmount = 0;
+        $couponMsg = '';
+        $couponValid = false;
+
+        if (isset($_SESSION['coupon'])) {
+            $couponCode = $_SESSION['coupon']['code'];
+
+            // Check lại điều kiện coupon với tổng tiền mới
+            $check = $couponModel->checkCoupon($couponCode, $totalMoney, $userId);
+
+            if ($check['valid']) {
+                $discountAmount = $check['discount_amount'];
+                $_SESSION['coupon']['discount_amount'] = $discountAmount; // Cập nhật Session
+                $couponValid = true;
+            } else {
+                // Coupon không còn hợp lệ (do tổng tiền giảm xuống dưới mức tối thiểu)
+                unset($_SESSION['coupon']);
+                $discountAmount = 0;
+                $couponMsg = 'Mã giảm giá đã bị hủy do đơn hàng không đủ điều kiện!';
+            }
         }
+
+        // 6. Tính tổng cuối cùng
+        $finalTotal = $totalMoney - $discountAmount;
+        if ($finalTotal < 0) $finalTotal = 0;
+
+        // 7. Trả về JSON cho Javascript
+        echo json_encode([
+            'status' => 'success',
+            'item_subtotal'   => number_format($itemSubtotal, 0, ',', '.') . '₫',
+            'total_money'     => number_format($totalMoney, 0, ',', '.') . '₫',
+            'discount_amount' => number_format($discountAmount, 0, ',', '.') . '₫',
+            'final_total'     => number_format($finalTotal, 0, ',', '.') . '₫',
+            // --- [THÊM DÒNG NÀY] Gửi tổng số lượng mới về Client ---
+            'total_qty'       => $newTotalQty,
+            'coupon_valid'    => $couponValid,
+            'coupon_msg'      => $couponMsg,
+            'coupon_html'     => $couponHtml // <--- HTML mới của Modal
+        ]);
+        exit;
     }
-
-    $finalTotal = $totalMoney - $discountAmount;
-    if ($finalTotal < 0) $finalTotal = 0;
-
-    // 6. Trả về JSON cho Javascript
-    echo json_encode([
-        'status' => 'success',
-        'item_subtotal' => number_format($itemSubtotal, 0, ',', '.') . '₫',
-        'total_money'   => number_format($totalMoney, 0, ',', '.') . '₫',
-        'discount_amount' => number_format($discountAmount, 0, ',', '.') . '₫',
-        'final_total'   => number_format($finalTotal, 0, ',', '.') . '₫',
-        'coupon_valid'  => $couponValid,
-        'coupon_msg'    => $couponMsg
-    ]);
-    exit;
-}
 }
 ?>

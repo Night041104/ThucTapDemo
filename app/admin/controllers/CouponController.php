@@ -58,17 +58,27 @@ class CouponController {
     }
 
     // 4. Lưu dữ liệu (Chung cho Create và Update)
+    // 4. Lưu dữ liệu (Chung cho Create và Update)
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $id = $_POST['id'] ?? 0;
             
+            // --- [MỚI] Hàm helper để xóa dấu phẩy trong chuỗi tiền tệ ---
+            $cleanNumber = function($str) {
+                // Thay thế dấu phẩy bằng rỗng, sau đó ép kiểu int
+                return (int)str_replace(',', '', $str);
+            };
+
             $data = [
                 'code' => strtoupper(trim($_POST['code'])),
                 'description' => trim($_POST['description']),
                 'type' => $_POST['type'],
-                'value' => (int)$_POST['value'],
-                'max_discount_amount' => ($_POST['type'] == 'percent') ? (int)$_POST['max_discount_amount'] : 0,
-                'min_order_amount' => (int)$_POST['min_order_amount'],
+                
+                // --- [SỬA] Dùng hàm cleanNumber thay vì ép kiểu trực tiếp ---
+                'value' => $cleanNumber($_POST['value']),
+                'max_discount_amount' => ($_POST['type'] == 'percent') ? $cleanNumber($_POST['max_discount_amount']) : 0,
+                'min_order_amount' => $cleanNumber($_POST['min_order_amount']),
+                
                 'quantity' => (int)$_POST['quantity'],
                 'usage_limit_per_user' => (int)$_POST['usage_limit_per_user'],
                 'start_date' => $_POST['start_date'],
@@ -77,9 +87,11 @@ class CouponController {
             ];
 
             if ($id > 0) {
+                // Update
                 $this->couponModel->updateCoupon($id, $data);
                 $_SESSION['success'] = "Cập nhật mã thành công!";
             } else {
+                // Create
                 $this->couponModel->createCoupon($data);
                 $_SESSION['success'] = "Thêm mã mới thành công!";
             }

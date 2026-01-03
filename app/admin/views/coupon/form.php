@@ -16,7 +16,7 @@
                 <div class="col-md-7">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Mã Coupon (Code) <span class="text-danger">*</span></label>
-                        <input type="text" name="code" class="form-control text-uppercase" required 
+                        <input type="text" name="code" class="form-control text-uppercase fw-bold" required 
                                placeholder="VD: SALE50, TET2025"
                                value="<?= $isEdit ? $coupon['code'] : '' ?>">
                     </div>
@@ -38,25 +38,35 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Giá trị giảm <span class="text-danger">*</span></label>
-                            <input type="number" name="value" class="form-control" required min="1"
-                                   placeholder="Nhập số tiền hoặc số %"
-                                   value="<?= $isEdit ? $coupon['value'] : '' ?>">
+                            <div class="input-group">
+                                <input type="text" name="value" class="form-control money fw-bold text-danger" required
+                                    placeholder="Nhập số tiền hoặc %"
+                                    value="<?= $isEdit ? number_format($coupon['value']) : '' ?>">
+                                <span class="input-group-text" id="value-addon">₫</span>
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-3" id="max_discount_div" style="display: none;">
                         <label class="form-label fw-bold text-danger">Giảm tối đa (VNĐ)</label>
-                        <input type="number" name="max_discount_amount" class="form-control" 
-                               placeholder="VD: 50000 (Để 0 nếu không giới hạn)"
-                               value="<?= $isEdit ? $coupon['max_discount_amount'] : '0' ?>">
-                        <small class="text-muted">Nếu giảm 50% cho đơn 10 triệu, bạn nên giới hạn số tiền giảm tối đa (VD: 50k).</small>
+                        <div class="input-group">
+                            <input type="text" name="max_discount_amount" class="form-control money" 
+                                placeholder="VD: 50,000 (Để 0 nếu không giới hạn)"
+                                value="<?= $isEdit ? number_format($coupon['max_discount_amount']) : '0' ?>">
+                            <span class="input-group-text">₫</span>
+                        </div>
+                        <small class="text-muted">Ví dụ: Giảm 50% nhưng tối đa chỉ giảm 50.000đ.</small>
                     </div>
                 </div>
 
                 <div class="col-md-5">
                     <div class="mb-3">
                         <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
-                        <input type="number" name="min_order_amount" class="form-control" value="<?= $isEdit ? $coupon['min_order_amount'] : '0' ?>">
+                        <div class="input-group">
+                            <input type="text" name="min_order_amount" class="form-control money" 
+                                value="<?= $isEdit ? number_format($coupon['min_order_amount']) : '0' ?>">
+                            <span class="input-group-text">₫</span>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -98,19 +108,33 @@
 </div>
 
 <script>
+    // 1. Logic ẩn hiện ô Giảm tối đa & Thay đổi đơn vị
     function toggleMaxDiscount() {
         var type = document.getElementById('coupon_type').value;
         var maxDiv = document.getElementById('max_discount_div');
+        var valueAddon = document.getElementById('value-addon');
         
         if (type === 'percent') {
             maxDiv.style.display = 'block';
+            valueAddon.innerText = '%';
         } else {
             maxDiv.style.display = 'none';
+            valueAddon.innerText = '₫';
         }
     }
     
-    // Chạy ngay khi load trang để check trạng thái ban đầu
+    // 2. [MỚI] Script định dạng tiền tệ (Giống form Product)
     document.addEventListener("DOMContentLoaded", function() {
-        toggleMaxDiscount();
+        toggleMaxDiscount(); // Chạy khi load
+
+        // Format Money (Tự động thêm dấu phẩy khi gõ)
+        document.querySelectorAll('.money').forEach(inp => {
+            inp.addEventListener('keyup', function() {
+                // Xóa các ký tự không phải số
+                let n = parseInt(this.value.replace(/\D/g,''), 10);
+                // Format lại theo chuẩn US (1,000,000)
+                this.value = isNaN(n) ? '' : n.toLocaleString('en-US');
+            });
+        });
     });
 </script>

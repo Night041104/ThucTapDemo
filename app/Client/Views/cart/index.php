@@ -196,95 +196,20 @@
     <?php endif; ?>
 </div>
 
-<div class="modal fade" id="couponModal" tabindex="-1" aria-labelledby="couponModalLabel" aria-hidden="true">
+<div class="modal fade" id="couponModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="couponModalLabel">Chọn mã khuyến mãi</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h5 class="modal-title fw-bold">Chọn mã khuyến mãi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" style="background: #f5f5f5; max-height: 500px; overflow-y: auto;">
+      <div class="modal-body" id="coupon-list-container" style="background: #f5f5f5; max-height: 500px; overflow-y: auto;">
         
         <?php 
-            $listCoupons = $listCoupons ?? []; // Tránh lỗi undefined
+            // Nhúng file view con vào đây lúc load trang lần đầu
+            $listCoupons = $listCoupons ?? []; 
+            require __DIR__ . '/coupon_list.php'; 
         ?>
-
-        <?php if (empty($listCoupons)): ?>
-            <div class="text-center py-5">
-                <i class="fa fa-ticket-alt text-muted" style="font-size: 40px; margin-bottom: 10px;"></i>
-                <p class="text-muted">Hiện không có mã giảm giá nào khả dụng.</p>
-            </div>
-        <?php else: ?>
-            <?php foreach ($listCoupons as $coupon): ?>
-                <?php 
-                    $isEligible = true;
-                    $conditionMsg = "";
-                    
-                    // 1. CHECK SỐ TIỀN TỐI THIỂU
-                    if ($totalMoney < $coupon['min_order_amount']) {
-                        $isEligible = false;
-                        $missing = number_format($coupon['min_order_amount'] - $totalMoney, 0, ',', '.');
-                        $conditionMsg = "Mua thêm $missing ₫ để sử dụng";
-                    } 
-                    // 2. CHECK GIỚI HẠN SỬ DỤNG CỦA USER (Nếu limit > 0)
-                    elseif ($coupon['usage_limit_per_user'] > 0 && $coupon['user_used_count'] >= $coupon['usage_limit_per_user']) {
-                        $isEligible = false;
-                        $conditionMsg = "Bạn đã hết lượt sử dụng mã này";
-                    }
-                    else {
-                        // Thỏa mãn hết
-                        $minFmt = number_format($coupon['min_order_amount'], 0, ',', '.');
-                        $conditionMsg = "Đơn tối thiểu $minFmt ₫";
-                    }
-
-                    // Format Text hiển thị giá trị
-                    $valueText = "";
-                    if($coupon['type'] == 'percent') {
-                        $valueText = "Giảm " . $coupon['value'] . "%";
-                        if($coupon['max_discount_amount'] > 0) {
-                            $valueText .= " (Tối đa " . number_format($coupon['max_discount_amount']/1000) . "k)";
-                        }
-                    } else {
-                        $valueText = "Giảm " . number_format($coupon['value'], 0, ',', '.') . "₫";
-                    }
-                ?>
-
-                <div class="coupon-item <?= !$isEligible ? 'coupon-disabled' : '' ?>" 
-                     onclick="<?= $isEligible ? "selectCoupon('{$coupon['code']}')" : "" ?>">
-                    
-                    <div style="background: <?= $isEligible ? '#cd1818' : '#999' ?>; color: white; width: 80px; height: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 4px; margin-right: 15px;">
-                        <span style="font-weight: bold; font-size: 16px;">SALE</span>
-                    </div>
-
-                    <div style="flex: 1;">
-                        <div class="coupon-code-text" style="color: <?= $isEligible ? '#cd1818' : '#666' ?>">
-                            <?= $coupon['code'] ?>
-                        </div>
-                        <div style="font-weight: 600; color: #333; font-size: 15px;"><?= $valueText ?></div>
-                        <div class="coupon-desc"><?= !empty($coupon['description']) ? $coupon['description'] : 'Áp dụng cho toàn bộ sản phẩm' ?></div>
-                        
-                        <small class="<?= $isEligible ? 'text-success' : 'text-danger fw-bold' ?>">
-                            <i class="fa <?= $isEligible ? 'fa-check-circle' : 'fa-exclamation-circle' ?> me-1"></i><?= $conditionMsg ?>
-                        </small>
-                        
-                        <div style="font-size: 11px; color: #999; margin-top: 2px;">
-                            HSD: <?= date('d/m/Y', strtotime($coupon['end_date'])) ?>
-                        </div>
-                    </div>
-
-                    <div>
-                        <?php if ($isEligible): ?>
-                            <button class="btn-select-coupon">Dùng ngay</button>
-                        <?php else: ?>
-                            <button class="btn-select-coupon disabled" disabled>
-                                <?= ($coupon['usage_limit_per_user'] > 0 && $coupon['user_used_count'] >= $coupon['usage_limit_per_user']) ? 'Hết lượt' : 'Chưa đủ ĐK' ?>
-                            </button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-            <?php endforeach; ?>
-        <?php endif; ?>
 
       </div>
     </div>
@@ -319,30 +244,50 @@ $(document).ready(function() {
             method: 'POST',
             data: { id: productId, qty: newQty },
             dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Cập nhật các con số
-                    $('#subtotal-' + productId).text(response.item_subtotal);
-                    $('#cart-total-money').text(response.total_money);
-                    $('#cart-final-total').text(response.final_total);
+            // Trong app/Client/Views/cart/index.php
 
-                    // Xử lý Coupon logic
-                    if (response.coupon_valid) {
-                        $('#coupon-row').show();
-                        $('#cart-discount').text('-' + response.discount_amount);
-                        $('#coupon-error-msg').text('');
-                        
-                        // Nếu cần cập nhật mã trên UI
-                        // $('#coupon-code-display').text(response.coupon_code); 
-                    } else {
-                        // Nếu coupon bị hủy
-                        if ($('#coupon-row').is(':visible')) {
-                            $('#coupon-row').hide();
-                            $('#coupon-error-msg').text(response.coupon_msg);
-                        }
-                    }
-                }
-            },
+// Trong file app/Client/Views/cart/index.php
+
+success: function(response) {
+    if (response.status === 'success') {
+        // 1. Cập nhật tiền (Code cũ)
+        $('#subtotal-' + productId).text(response.item_subtotal);
+        $('#cart-total-money').text(response.total_money);
+        $('#cart-final-total').text(response.final_total);
+
+        // --- [MỚI] Cập nhật số lượng trên Header ---
+        // Lấy thẻ hiển thị số lượng trên header
+        var cartBadge = $('#cart-total-count'); 
+        
+        // Cập nhật số mới
+        cartBadge.text(response.total_qty);
+        
+        // Ẩn/Hiện badge tùy theo số lượng
+        if (response.total_qty > 0) {
+            cartBadge.show(); // Hoặc cartBadge.css('display', 'inline-block');
+        } else {
+            cartBadge.hide();
+        }
+        // ------------------------------------------
+
+        // 2. Cập nhật HTML Coupon (Code cũ)
+        if (response.coupon_html) {
+             $('#coupon-list-container').html(response.coupon_html);
+        }
+
+        // 3. Logic Coupon (Code cũ)
+        if (response.coupon_valid) {
+            $('#coupon-row').show();
+            $('#cart-discount').text('-' + response.discount_amount);
+            $('#coupon-error-msg').text('');
+        } else {
+            if ($('#coupon-row').is(':visible')) {
+                $('#coupon-row').hide();
+                $('#coupon-error-msg').text(response.coupon_msg);
+            }
+        }
+    }
+},
             error: function() {
                 console.log('Lỗi kết nối cập nhật giỏ hàng');
             }
