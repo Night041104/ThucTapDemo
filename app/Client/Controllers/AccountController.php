@@ -50,6 +50,8 @@ class AccountController {
             $city     = trim($_POST['city']);
             $district = trim($_POST['district']);
             $ward     = trim($_POST['ward']);
+            $districtId = isset($_POST['district_id']) ? (int)$_POST['district_id'] : 0;
+            $wardCode   = isset($_POST['ward_code']) ? trim($_POST['ward_code']) : '';
 
             $avatarName = ''; 
 
@@ -102,6 +104,8 @@ class AccountController {
                 'city' => $city,
                 'district' => $district,
                 'ward' => $ward,
+                'district_id' => $districtId,
+                'ward_code'   => $wardCode,
                 'avatar' => $avatarName
             ];
 
@@ -114,6 +118,8 @@ class AccountController {
                 $_SESSION['user']['city'] = $city;
                 $_SESSION['user']['district'] = $district;
                 $_SESSION['user']['ward'] = $ward;
+                $_SESSION['user']['district_id'] = $districtId;
+                $_SESSION['user']['ward_code']   = $wardCode;
                 
                 $_SESSION['success'] = "Cập nhật thông tin thành công!";
             } else {

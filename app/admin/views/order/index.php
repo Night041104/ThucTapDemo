@@ -61,7 +61,7 @@
                     <tr>
                         <th class="ps-4 py-3">Mã đơn</th>
                         <th>Khách hàng</th>
-                        <th>Ngày đặt</th>
+                        <th>Vận đơn</th> <th>Ngày đặt</th>
                         <th>Tổng tiền</th>
                         <th>PTTT</th>
                         <th>Trạng thái</th>
@@ -70,7 +70,7 @@
                 </thead>
                 <tbody id="orderTableBody">
                     <?php if (empty($orders)): ?>
-                        <tr><td colspan="7" class="text-center py-5 text-muted">Không tìm thấy đơn hàng nào.</td></tr>
+                        <tr><td colspan="8" class="text-center py-5 text-muted">Không tìm thấy đơn hàng nào.</td></tr>
                     <?php else: ?>
                         <?php foreach ($orders as $row): ?>
                             <tr>
@@ -88,6 +88,25 @@
                                         </div>
                                     </div>
                                 </td>
+                                
+                                <td>
+                                    <?php if (!empty($row['tracking_code'])): ?>
+                                        <div class="d-flex flex-column">
+                                            <strong class="text-success small mb-1">
+                                                <i class="fa fa-barcode me-1"></i><?= htmlspecialchars($row['tracking_code']) ?>
+                                            </strong>
+                                            <a href="https://tracking.ghn.dev/?order_code=<?= $row['tracking_code'] ?>" 
+                                               target="_blank" 
+                                               class="text-decoration-underline text-primary" 
+                                               style="font-size: 11px;">
+                                                Tra cứu
+                                            </a>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted small">-</span>
+                                    <?php endif; ?>
+                                </td>
+
                                 <td class="small text-muted">
                                     <?= date('d/m/Y', strtotime($row['created_at'])) ?><br>
                                     <?= date('H:i', strtotime($row['created_at'])) ?>
