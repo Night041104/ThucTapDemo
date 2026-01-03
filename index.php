@@ -4,7 +4,7 @@ session_start();
 // require_once 'config/database.php'; 
 
 // FILE: index.php
-
+date_default_timezone_set('Asia/Ho_Chi_Minh');
 // --- [PHẦN 1: CẤU HÌNH ROUTING TĨNH] ---
 // Lấy đường dẫn từ .htaccess (nếu có rewrite)
 $url = isset($_GET['url']) ? rtrim($_GET['url'], '/') : '/';

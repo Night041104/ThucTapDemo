@@ -232,6 +232,10 @@
                        href="index.php?module=admin&controller=user&action=index">
                        <i class="fa-solid fa-users me-2"></i> Thành viên
                     </a>
+                    <a class="collapse-item <?= ($ctrl == 'coupon') ? 'active' : '' ?>" 
+                        href="index.php?module=admin&controller=coupon&action=index">
+                        <i class="fa-solid fa-ticket me-2"></i> Mã giảm giá
+                    </a>
                 </div>
             </div>
 

@@ -9,9 +9,6 @@
         <button class="btn btn-white shadow-sm border" onclick="window.location.reload()">
             <i class="fa fa-sync-alt text-primary"></i>
         </button>
-        <button class="btn btn-primary shadow-sm">
-            <i class="fa fa-file-export me-1"></i> Xuất Excel
-        </button>
     </div>
 </div>
 

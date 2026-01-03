@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../../models/OrderModel.php';
 require_once __DIR__ . '/../../models/ProductModel.php';
 // require_once __DIR__ . '/../../Helpers/MailHelper.php'; // Đã gọi trong hàm helper bên dưới
+require_once __DIR__ . '/../../models/CouponModel.php';
 
 class CheckoutController {
     private $orderModel;
@@ -129,6 +130,21 @@ class CheckoutController {
 
             if ($orderCode) {
                 // --- ĐẶT HÀNG THÀNH CÔNG ---
+                // --- [MỚI] XỬ LÝ LƯU LOG COUPON ---
+    if (isset($_SESSION['coupon']) && isset($_SESSION['user'])) {
+        $couponId = $_SESSION['coupon']['id'];
+        $discountUsed = $_SESSION['coupon']['discount_amount'];
+        $userIdCurrent = $_SESSION['user']['id'];
+        
+        // Bạn cần lấy ID thực của đơn hàng (int id) chứ không phải Order Code (string)
+        // Gọi model lấy ID từ Code nếu cần thiết
+        $createdOrder = $this->orderModel->getOrderByCode($orderCode);
+        $realOrderId = $createdOrder['info']['id']; 
+
+        $couponModel = new CouponModel();
+        // Gọi hàm logUsage mới viết ở Bước 1
+        $couponModel->logCouponUsage($couponId, $userIdCurrent, $realOrderId, $discountUsed);
+    }
                 
                 // Xóa giỏ hàng và Coupon ngay lập tức
                 unset($_SESSION['cart']);

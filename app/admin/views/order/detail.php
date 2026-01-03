@@ -139,7 +139,7 @@
         <div class="row mb-4 border-bottom pb-3">
             <div class="col-6">
                 <h2 class="fw-bold text-uppercase mb-1">FPT SHOP</h2>
-                <p class="mb-0 small">Địa chỉ: 261 Khánh Hội, P2, Q4, TP.HCM</p>
+                <p class="mb-0 small">Địa chỉ: 123 Nguyễn Trãi, Bắc Nha Trang, Nha Trang, Khánh Hòa</p>
                 <p class="mb-0 small">Hotline: 1800 6601</p>
             </div>
             <div class="col-6 text-end">
@@ -245,14 +245,20 @@
 </script>
 
 <style>
+    /* 1. Tắt Header/Footer mặc định của trình duyệt */
+    @page {
+        size: auto;
+        margin: 0mm; /* Đặt lề trang in về 0 để ẩn tiêu đề và URL */
+    }
+
     @media print {
         /* Ẩn tất cả mọi thứ mặc định */
         body * {
             visibility: hidden;
         }
         
-        /* Ẩn Sidebar, Topbar, Header layout nếu chúng nằm ngoài body */
-        .sidebar, .topbar, footer { display: none !important; }
+        /* Ẩn Sidebar, Topbar, Header layout, nút in */
+        .sidebar, .topbar, footer, .d-print-none { display: none !important; }
 
         /* Chỉ hiển thị vùng hóa đơn */
         #invoice-template, #invoice-template * {
@@ -266,14 +272,19 @@
             top: 0;
             width: 100%;
             margin: 0;
-            padding: 0;
+            padding: 20px; /* Thêm padding để nội dung không bị sát mép giấy quá */
             background: white;
-            color: black !important; /* Đảm bảo chữ đen khi in */
+            color: black !important;
         }
         
         /* Reset các style của Bootstrap gây ảnh hưởng khi in */
         .badge { border: 1px solid #000 !important; color: #000 !important; background: none !important; }
-        .bg-light { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+        .bg-light { background-color: #fff !important; } /* Đổi nền xám thành trắng cho sạch */
+        
+        /* Ẩn các đường link (href) hiển thị bên cạnh chữ */
+        a[href]:after {
+            content: none !important;
+        }
     }
 </style>
 
