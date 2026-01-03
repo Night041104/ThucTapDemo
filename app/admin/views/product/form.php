@@ -85,11 +85,7 @@
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Danh mục</label>
-                            <input type="text" class="form-control bg-light text-muted" 
-                                   value="<?= $isEdit ? $rowProd['category_id'] : $selectedCateId ?>" readonly>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
