@@ -3,12 +3,21 @@ require_once __DIR__ . '/../../models/AttributeModel.php';
 
 class AttributeController {
     private $attrModel;
+    private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
+        // 1. Tính toán Base URL
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']);
+        $this->baseUrl = $protocol . $domainName . $path;
+
+        // 2. Kiểm tra quyền Admin
         if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
-        header("Location: index.php?module=client&controller=auth&action=login");
-        exit;
-    }
+            // [FIX URL] Chuyển về trang đăng nhập
+            header("Location: " . $this->baseUrl . "dang-nhap");
+            exit;
+        }
         $this->attrModel = new AttributeModel();
     }
 
@@ -37,7 +46,8 @@ class AttributeController {
             $currentData = $data; // Model đã gộp options thành chuỗi options_str
             require __DIR__ . '/../views/attribute/form.php';
         } else {
-            header("Location: index.php?module=admin&controller=attribute&action=index");
+            // [FIX URL] Về danh sách
+            header("Location: " . $this->baseUrl . "admin/attribute");
             exit;
         }
     }
@@ -84,7 +94,8 @@ class AttributeController {
                 $msg = "created";
             }
 
-            header("Location: index.php?module=admin&controller=attribute&action=index&msg=$msg");
+            // [FIX URL] Chuyển hướng kèm thông báo
+            header("Location: " . $this->baseUrl . "admin/attribute?msg=$msg");
             exit;
         }
     }
@@ -95,7 +106,8 @@ class AttributeController {
             $this->attrModel->delete($_GET['id']);
             $msg = "deleted";
         }
-        header("Location: index.php?module=admin&controller=attribute&action=index&msg=deleted");
+        // [FIX URL]
+        header("Location: " . $this->baseUrl . "admin/attribute?msg=deleted");
         exit;
     }
 }

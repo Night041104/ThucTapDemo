@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
     <div>
         <div class="d-flex align-items-center gap-2">
-            <a href="index.php?module=admin&controller=order&action=index" class="btn btn-outline-secondary btn-sm rounded-circle">
+            <a href="admin/order" class="btn btn-outline-secondary btn-sm rounded-circle">
                 <i class="fa fa-arrow-left"></i>
             </a>
             <h3 class="fw-bold text-dark mb-0">Đơn hàng #<?= $order['order_code'] ?></h3>
@@ -223,7 +223,8 @@
             didOpen: () => { Swal.showLoading() }
         });
 
-        fetch('index.php?module=admin&controller=order&action=update_status', {
+        // [FIX AJAX] Gọi về URL admin/order/update_status
+        fetch('admin/order/update_status', {
             method: 'POST',
             body: formData,
             headers: {'X-Requested-With': 'XMLHttpRequest'}
@@ -245,46 +246,18 @@
 </script>
 
 <style>
-    /* 1. Tắt Header/Footer mặc định của trình duyệt */
-    @page {
-        size: auto;
-        margin: 0mm; /* Đặt lề trang in về 0 để ẩn tiêu đề và URL */
-    }
-
+    @page { size: auto; margin: 0mm; }
     @media print {
-        /* Ẩn tất cả mọi thứ mặc định */
-        body * {
-            visibility: hidden;
-        }
-        
-        /* Ẩn Sidebar, Topbar, Header layout, nút in */
+        body * { visibility: hidden; }
         .sidebar, .topbar, footer, .d-print-none { display: none !important; }
-
-        /* Chỉ hiển thị vùng hóa đơn */
-        #invoice-template, #invoice-template * {
-            visibility: visible;
-        }
-
-        /* Định vị hóa đơn full màn hình trắng */
+        #invoice-template, #invoice-template * { visibility: visible; }
         #invoice-template {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            margin: 0;
-            padding: 20px; /* Thêm padding để nội dung không bị sát mép giấy quá */
-            background: white;
-            color: black !important;
+            position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px;
+            background: white; color: black !important;
         }
-        
-        /* Reset các style của Bootstrap gây ảnh hưởng khi in */
         .badge { border: 1px solid #000 !important; color: #000 !important; background: none !important; }
-        .bg-light { background-color: #fff !important; } /* Đổi nền xám thành trắng cho sạch */
-        
-        /* Ẩn các đường link (href) hiển thị bên cạnh chữ */
-        a[href]:after {
-            content: none !important;
-        }
+        .bg-light { background-color: #fff !important; }
+        a[href]:after { content: none !important; }
     }
 </style>
 

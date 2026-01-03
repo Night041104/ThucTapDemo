@@ -3,28 +3,31 @@ require_once __DIR__ . '/../../models/CouponModel.php';
 
 class CouponController {
     private $couponModel;
+    private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
         $this->couponModel = new CouponModel();
 
+        // 1. Tính toán Base URL
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']);
+        $this->baseUrl = $protocol . $domainName . $path;
+
         // --- BẢO MẬT: KIỂM TRA QUYỀN ADMIN ---
-        // 1. Kiểm tra đã đăng nhập chưa? (isset $_SESSION['user'])
-        // 2. Kiểm tra có phải Admin không? (role_id == 1)
         if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
-            // Nếu không thỏa mãn, đá về trang đăng nhập ngay lập tức
-            header("Location: index.php?module=client&controller=auth&action=login");
+            // [FIX URL] Về trang đăng nhập
+            header("Location: " . $this->baseUrl . "dang-nhap");
             exit;
         }
     }
 
     // 1. Danh sách (CÓ LỌC)
     public function index() {
-        // Lấy tham số bộ lọc
         $keyword = $_GET['keyword'] ?? '';
         $status  = $_GET['status'] ?? '';
         $type    = $_GET['type'] ?? '';
 
-        // Gọi Model
         $coupons = $this->couponModel->getAllCoupons($keyword, $status, $type);
         
         require_once __DIR__ . '/../Views/layouts/header.php';
@@ -47,7 +50,8 @@ class CouponController {
 
         if (!$coupon) {
             $_SESSION['error'] = "Không tìm thấy mã giảm giá!";
-            header("Location: index.php?module=admin&controller=coupon");
+            // [FIX URL] Về danh sách
+            header("Location: " . $this->baseUrl . "admin/coupon");
             exit;
         }
 
@@ -57,15 +61,13 @@ class CouponController {
         require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
-    // 4. Lưu dữ liệu (Chung cho Create và Update)
-    // 4. Lưu dữ liệu (Chung cho Create và Update)
+    // 4. Lưu dữ liệu
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $id = $_POST['id'] ?? 0;
             
-            // --- [MỚI] Hàm helper để xóa dấu phẩy trong chuỗi tiền tệ ---
+            // Hàm helper để xóa dấu phẩy trong chuỗi tiền tệ (Giữ nguyên logic của bạn)
             $cleanNumber = function($str) {
-                // Thay thế dấu phẩy bằng rỗng, sau đó ép kiểu int
                 return (int)str_replace(',', '', $str);
             };
 
@@ -74,7 +76,6 @@ class CouponController {
                 'description' => trim($_POST['description']),
                 'type' => $_POST['type'],
                 
-                // --- [SỬA] Dùng hàm cleanNumber thay vì ép kiểu trực tiếp ---
                 'value' => $cleanNumber($_POST['value']),
                 'max_discount_amount' => ($_POST['type'] == 'percent') ? $cleanNumber($_POST['max_discount_amount']) : 0,
                 'min_order_amount' => $cleanNumber($_POST['min_order_amount']),
@@ -87,16 +88,15 @@ class CouponController {
             ];
 
             if ($id > 0) {
-                // Update
                 $this->couponModel->updateCoupon($id, $data);
                 $_SESSION['success'] = "Cập nhật mã thành công!";
             } else {
-                // Create
                 $this->couponModel->createCoupon($data);
                 $_SESSION['success'] = "Thêm mã mới thành công!";
             }
 
-            header("Location: index.php?module=admin&controller=coupon");
+            // [FIX URL] Về danh sách
+            header("Location: " . $this->baseUrl . "admin/coupon");
             exit;
         }
     }
@@ -106,7 +106,8 @@ class CouponController {
         $id = $_GET['id'] ?? 0;
         $this->couponModel->deleteCoupon($id);
         $_SESSION['success'] = "Đã xóa mã giảm giá!";
-        header("Location: index.php?module=admin&controller=coupon");
+        // [FIX URL] Về danh sách
+        header("Location: " . $this->baseUrl . "admin/coupon");
         exit;
     }
 }

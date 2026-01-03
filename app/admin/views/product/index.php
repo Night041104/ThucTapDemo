@@ -50,7 +50,7 @@
         <h4 class="fw-bold text-dark mb-1">Kho hàng tổng hợp</h4>
         <p class="text-muted small mb-0">Quản lý Master Product và các biến thể (SKU)</p>
     </div>
-    <a href="index.php?module=admin&controller=product&action=create" class="btn btn-primary shadow-sm px-3">
+    <a href="admin/product/create" class="btn btn-primary shadow-sm px-3">
         <i class="fa fa-plus-circle me-2"></i>Tạo Sản Phẩm Mới
     </a>
 </div>
@@ -71,10 +71,7 @@
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3 border-bottom-0">
         <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
-            <input type="hidden" name="module" value="admin">
-            <input type="hidden" name="controller" value="product">
-            <input type="hidden" name="action" value="index">
-
+            
             <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
@@ -99,7 +96,7 @@
             <div class="col-md-auto d-flex align-items-center gap-2">
                 <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
                 
-                <a href="index.php?module=admin&controller=product&action=index" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
+                <a href="admin/product" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
                     <i class="fa fa-times"></i>
                 </a>
             </div>
@@ -157,7 +154,7 @@
                                     <div class="d-flex">
                                         <?php if($isChild): ?><div class="text-muted me-2" style="font-size: 1.2rem; opacity: 0.5;">↳</div><?php endif; ?>
                                         <div>
-                                            <a href="index.php?module=admin&controller=product&action=edit&id=<?= $row['id'] ?>" class="fw-bold text-dark text-decoration-none">
+                                            <a href="admin/product/edit?id=<?= $row['id'] ?>" class="fw-bold text-dark text-decoration-none">
                                                 <?= $row['name'] ?>
                                             </a>
                                             <div class="d-flex align-items-center mt-1">
@@ -196,11 +193,11 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
                                             <?php $historyId = ($row['parent_id'] > 0) ? $row['parent_id'] : $row['id']; ?>
-                                            <li><a class="dropdown-item" href="index.php?module=admin&controller=product&action=edit&id=<?= $row['id'] ?>"><i class="fa fa-pen text-primary me-2"></i> Chỉnh sửa</a></li>
-                                            <li><a class="dropdown-item" href="index.php?module=admin&controller=product&action=history&master_id=<?= $historyId ?>"><i class="fa fa-history text-info me-2"></i> Xem lịch sử</a></li>
-                                            <li><a class="dropdown-item" href="index.php?module=admin&controller=product&action=clone&id=<?= $row['id'] ?>"><i class="fa fa-copy text-warning me-2"></i> Nhân bản</a></li>
+                                            <li><a class="dropdown-item" href="admin/product/edit?id=<?= $row['id'] ?>"><i class="fa fa-pen text-primary me-2"></i> Chỉnh sửa</a></li>
+                                            <li><a class="dropdown-item" href="admin/product/history?master_id=<?= $historyId ?>"><i class="fa fa-history text-info me-2"></i> Xem lịch sử</a></li>
+                                            <li><a class="dropdown-item" href="admin/product/clone?id=<?= $row['id'] ?>"><i class="fa fa-copy text-warning me-2"></i> Nhân bản</a></li>
                                             <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="index.php?module=admin&controller=product&action=delete&id=<?= $row['id'] ?>" onclick="return confirm('Bạn có chắc chắn muốn xóa?')"><i class="fa fa-trash me-2"></i> Xóa sản phẩm</a></li>
+                                            <li><a class="dropdown-item text-danger" href="admin/product/delete?id=<?= $row['id'] ?>" onclick="return confirm('Bạn có chắc chắn muốn xóa?')"><i class="fa fa-trash me-2"></i> Xóa sản phẩm</a></li>
                                         </ul>
                                     </div>
                                 </td>
@@ -247,17 +244,15 @@
             const formData = new FormData(form);
             const params = new URLSearchParams(formData);
             
-            // 2. Gọi về chính trang index này (Controller vẫn xử lý bình thường)
-            fetch('index.php?' + params.toString())
+            // 2. [FIX AJAX] Gọi về admin/product (dùng đường dẫn tương đối hoặc tuyệt đối có Base URL)
+            fetch('admin/product?' + params.toString())
                 .then(response => response.text())
                 .then(html => {
-                    // 3. Phân tích HTML trả về để lấy phần <tbody> mới
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     const newTbody = doc.getElementById('productTableBody');
                     
                     if(newTbody) {
-                        // 4. Thay thế nội dung bảng cũ
                         tableBody.innerHTML = newTbody.innerHTML;
                     }
                 })
@@ -268,14 +263,12 @@
         }
 
         inputs.forEach(input => {
-            // Sự kiện gõ phím (có delay 400ms để tránh gọi liên tục)
             if (input.type === 'text') {
                 input.addEventListener('input', () => {
                     clearTimeout(timeout);
                     timeout = setTimeout(fetchProducts, 400); 
                 });
             }
-            // Sự kiện chọn Select box
             if (input.tagName === 'SELECT') {
                 input.addEventListener('change', fetchProducts);
             }

@@ -13,16 +13,16 @@
                     <h6 class="mb-0 fw-bold"><?= htmlspecialchars($u['lname'] . ' ' . $u['fname']) ?></h6>
                 </div>
                 <div class="list-group list-group-flush py-2">
-                    <a href="index.php?controller=account&action=profile" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
+                    <a href="tai-khoan" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
                         <i class="fa fa-user-circle me-2"></i> Thông tin tài khoản
                     </a>
-                    <a href="index.php?controller=order&action=history" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-danger bg-light border-start border-4 border-danger">
+                    <a href="lich-su-don" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-danger bg-light border-start border-4 border-danger">
                         <i class="fa fa-shopping-bag me-2"></i> Quản lý đơn hàng
                     </a>
-                    <a href="index.php?controller=account&action=changePassword" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
+                    <a href="doi-mat-khau" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
                         <i class="fa fa-lock me-2"></i> Đổi mật khẩu
                     </a>
-                    <a href="index.php?module=client&controller=auth&action=logout" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
+                    <a href="dang-xuat" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
                         <i class="fa fa-sign-out-alt me-2"></i> Đăng xuất
                     </a>
                 </div>
@@ -34,7 +34,7 @@
                 
                 <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
                     <div>
-                        <a href="index.php?controller=order&action=history" class="text-decoration-none text-muted mb-1 d-block small">
+                        <a href="lich-su-don" class="text-decoration-none text-muted mb-1 d-block small">
                             <i class="fa fa-arrow-left"></i> Quay lại
                         </a>
                         <h4 class="mb-0">Đơn hàng #<?= $order['order_code'] ?></h4>

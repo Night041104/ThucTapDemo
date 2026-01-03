@@ -5,12 +5,21 @@ require_once __DIR__ . '/../../models/AttributeModel.php';
 class CategoryController {
     private $cateModel;
     private $attrModel;
+    private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
+        // 1. Tính toán Base URL
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']);
+        $this->baseUrl = $protocol . $domainName . $path;
+
+        // 2. Kiểm tra quyền Admin
         if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
-        header("Location: index.php?module=client&controller=auth&action=login");
-        exit;
-    }
+            // [FIX URL]
+            header("Location: " . $this->baseUrl . "dang-nhap");
+            exit;
+        }
         $this->cateModel = new CategoryModel();
         $this->attrModel = new AttributeModel();
     }
@@ -42,7 +51,8 @@ class CategoryController {
             $attrs = $this->attrModel->getAll();
             require __DIR__ . '/../views/category/form.php';
         } else {
-            header("Location: index.php?module=admin&controller=category&action=index");
+            // [FIX URL] Về danh sách
+            header("Location: " . $this->baseUrl . "admin/category");
             exit;
         }
     }
@@ -65,13 +75,12 @@ class CategoryController {
             // --- 2. VALIDATION TEMPLATE (Check trùng lặp) ---
             $template = []; 
             if (!$error && isset($_POST['groups']) && is_array($_POST['groups'])) {
-                $seenGroups = []; // Mảng check trùng tên nhóm
+                $seenGroups = []; 
 
                 foreach ($_POST['groups'] as $gIndex => $groupName) {
                     $groupName = trim($groupName);
                     if ($groupName === '') continue;
 
-                    // Check trùng tên nhóm (VD: Không được có 2 nhóm "Màn hình")
                     $groupNameLower = mb_strtolower($groupName, 'UTF-8');
                     if (in_array($groupNameLower, $seenGroups)) {
                         $error = "❌ Tên nhóm thông số '$groupName' bị lặp lại!"; break;
@@ -79,14 +88,13 @@ class CategoryController {
                     $seenGroups[] = $groupNameLower;
 
                     $items = [];
-                    $seenItems = []; // Mảng check trùng tên thông số TRONG 1 nhóm
+                    $seenItems = []; 
 
                     if (isset($_POST['items'][$gIndex]['name'])) {
                         foreach ($_POST['items'][$gIndex]['name'] as $iIndex => $itemName) {
                             $itemName = trim($itemName);
                             if ($itemName === '') continue;
 
-                            // Check trùng tên item (VD: Trong nhóm "Màn hình" không được có 2 dòng "Độ phân giải")
                             $itemNameLower = mb_strtolower($itemName, 'UTF-8');
                             if (in_array($itemNameLower, $seenItems)) {
                                 $error = "❌ Trong nhóm '$groupName', thông số '$itemName' bị nhập 2 lần!"; break 2;
@@ -97,7 +105,6 @@ class CategoryController {
                             $attrId = $_POST['items'][$gIndex]['attr_id'][$iIndex] ?? null;
                             
                             $itemData = ['name' => $itemName, 'type' => $type];
-                            // Nếu chọn Attribute, lưu lại ID để Product dùng
                             if ($type == 'attribute' && $attrId) $itemData['attribute_id'] = (int)$attrId;
                             
                             $items[] = $itemData;
@@ -109,15 +116,15 @@ class CategoryController {
 
             // --- 3. XỬ LÝ KẾT QUẢ ---
             if ($error) {
-                // [STICKY FORM] Có lỗi -> Load lại form kèm dữ liệu cũ + thông báo
+                // [STICKY FORM]
                 $attrs = $this->attrModel->getAll();
                 $currentData = [
                     'id' => $id,
                     'name' => $name,
                     'slug' => $slug,
-                    'template' => $template // Load lại template vừa nhập dở
+                    'template' => $template 
                 ];
-                $msg = $error; // Truyền biến $msg sang View
+                $msg = $error; 
                 require __DIR__ . '/../views/category/form.php';
                 exit;
             }
@@ -133,7 +140,8 @@ class CategoryController {
                 $msg = "created";
             }
 
-            header("Location: index.php?module=admin&controller=category&action=index&msg=$msg");
+            // [FIX URL] Về danh sách
+            header("Location: " . $this->baseUrl . "admin/category?msg=$msg");
             exit;
         }
     }
@@ -142,17 +150,20 @@ class CategoryController {
         if (isset($_GET['id'])) {
             $id = $_GET['id'];
             
-            // [AN TOÀN] Kiểm tra xem có sản phẩm nào thuộc danh mục này không?
+            // [AN TOÀN]
             $count = $this->cateModel->countProducts($id);
             if ($count > 0) {
-                header("Location: index.php?module=admin&controller=category&action=index&msg=" . urlencode("❌ Không thể xóa! Danh mục này đang chứa $count sản phẩm."));
+                // [FIX URL]
+                header("Location: " . $this->baseUrl . "admin/category?msg=" . urlencode("❌ Không thể xóa! Danh mục này đang chứa $count sản phẩm."));
                 exit;
             }
 
             $this->cateModel->delete($id);
-            header("Location: index.php?module=admin&controller=category&action=index&msg=deleted");
+            // [FIX URL]
+            header("Location: " . $this->baseUrl . "admin/category?msg=deleted");
         } else {
-            header("Location: index.php?module=admin&controller=category&action=index");
+            // [FIX URL]
+            header("Location: " . $this->baseUrl . "admin/category");
         }
         exit;
     }

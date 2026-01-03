@@ -1,12 +1,5 @@
 <style>
-    .auth-wrapper {
-        background-color: #f0f2f5;
-        min-height: 80vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 40px 0;
-    }
+    .auth-wrapper { background-color: #f0f2f5; min-height: 80vh; display: flex; justify-content: center; align-items: center; padding: 40px 0; }
     .auth-container { background: white; width: 400px; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .input-group { position: relative; margin-bottom: 15px; }
     .input-group input { width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }

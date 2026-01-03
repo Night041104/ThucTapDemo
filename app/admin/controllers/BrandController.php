@@ -1,18 +1,26 @@
 <?php
 require_once __DIR__ . '/../../models/BrandModel.php';
-// [MỚI] Cần Model Category để lấy danh sách hiển thị
 require_once __DIR__ . '/../../models/CategoryModel.php'; 
 
 class BrandController {
     private $brandModel;
     private $cateModel;
     private $uploadDir = 'uploads/brands/';
+    private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
+        // 1. Tính toán Base URL
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']);
+        $this->baseUrl = $protocol . $domainName . $path;
+
+        // 2. Kiểm tra quyền Admin
         if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
-        header("Location: index.php?module=client&controller=auth&action=login");
-        exit;
-    }
+            // [FIX URL] Về trang đăng nhập
+            header("Location: " . $this->baseUrl . "dang-nhap");
+            exit;
+        }
         $this->brandModel = new BrandModel();
         $this->cateModel = new CategoryModel();
         
@@ -28,8 +36,8 @@ class BrandController {
 
     public function create() {
         $currentData = ['id' => '', 'name' => '', 'logo_url' => ''];
-        $selectedCats = []; // Mảng chứa ID danh mục đã chọn
-        $allCats = $this->cateModel->getAll(); // Lấy tất cả danh mục để hiện checkbox
+        $selectedCats = []; 
+        $allCats = $this->cateModel->getAll(); 
         require __DIR__ . '/../views/brand/form.php';
     }
 
@@ -39,12 +47,12 @@ class BrandController {
         
         if ($data) {
             $currentData = $data;
-            // [MỚI] Lấy các danh mục đã chọn
             $selectedCats = $this->brandModel->getCategoryIds($id);
             $allCats = $this->cateModel->getAll();
             require __DIR__ . '/../views/brand/form.php';
         } else {
-            header("Location: index.php?module=admin&controller=brand&action=index");
+            // [FIX URL] Về trang danh sách
+            header("Location: " . $this->baseUrl . "admin/brand");
             exit;
         }
     }
@@ -53,7 +61,6 @@ class BrandController {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $id = $_POST['id'] ?? '';
             $name = trim($_POST['name']);
-            // Lấy mảng danh mục từ form
             $postedCats = isset($_POST['categories']) ? $_POST['categories'] : [];
 
             $error = null;
@@ -63,7 +70,7 @@ class BrandController {
                 $error = "❌ Tên thương hiệu '$name' đã tồn tại!";
             }
 
-            // Upload Logo
+            // Logic Upload
             $logoPath = "";
             if ($id) {
                 $oldBrand = $this->brandModel->getById($id);
@@ -75,9 +82,8 @@ class BrandController {
                 $targetFile = $this->uploadDir . $fileName;
                 if (move_uploaded_file($_FILES['logo']['tmp_name'], $targetFile)) {
                     if ($logoPath) {
-                        // Unlink logic
                         $rootPath = dirname(__DIR__, 2);
-                        $delPath = $rootPath . DIRECTORY_SEPARATOR . ltrim($logoPath, '/'); // Fix path
+                        $delPath = $rootPath . DIRECTORY_SEPARATOR . ltrim($logoPath, '/'); 
                         if (file_exists($delPath)) unlink($delPath);
                     }
                     $logoPath = $targetFile;
@@ -86,7 +92,7 @@ class BrandController {
 
             if ($error) {
                 $currentData = ['id' => $id, 'name' => $name, 'logo_url' => $logoPath];
-                $selectedCats = $postedCats; // Giữ lại lựa chọn khi lỗi
+                $selectedCats = $postedCats; 
                 $allCats = $this->cateModel->getAll();
                 $msg = $error;
                 require __DIR__ . '/../views/brand/form.php';
@@ -95,17 +101,18 @@ class BrandController {
 
             if ($id) {
                 $this->brandModel->update($id, $name, $logoPath);
-                $this->brandModel->updateCategories($id, $postedCats); // [MỚI]
+                $this->brandModel->updateCategories($id, $postedCats); 
                 $msg = "updated";
             } else {
                 $newId = $this->brandModel->create($name, $logoPath);
                 if ($newId) {
-                    $this->brandModel->updateCategories($newId, $postedCats); // [MỚI]
+                    $this->brandModel->updateCategories($newId, $postedCats); 
                 }
                 $msg = "created";
             }
 
-            header("Location: index.php?module=admin&controller=brand&action=index&msg=$msg");
+            // [FIX URL] Redirect về danh sách kèm thông báo
+            header("Location: " . $this->baseUrl . "admin/brand?msg=$msg");
             exit;
         }
     }
@@ -116,12 +123,14 @@ class BrandController {
             $count = $this->brandModel->countProducts($id);
             if ($count > 0) {
                 $msg = urlencode("❌ Không thể xóa! Thương hiệu này đang gắn với $count sản phẩm.");
-                header("Location: index.php?module=admin&controller=brand&action=index&msg=$msg");
+                // [FIX URL]
+                header("Location: " . $this->baseUrl . "admin/brand?msg=$msg");
                 exit;
             }
             $this->brandModel->delete($id);
             $msg = "deleted";
-            header("Location: index.php?module=admin&controller=brand&action=index&msg=$msg");
+            // [FIX URL]
+            header("Location: " . $this->baseUrl . "admin/brand?msg=$msg");
         }
         exit;
     }
@@ -130,11 +139,10 @@ class BrandController {
         if (isset($_GET['id'])) {
             $id = $_GET['id'];
             
-            // Gọi hàm xử lý trọn gói bên Model
             $this->brandModel->removeLogo($id);
             
-            // Redirect về trang sửa
-            header("Location: index.php?module=admin&controller=brand&action=edit&id=$id&msg=updated");
+            // [FIX URL] Redirect về trang sửa
+            header("Location: " . $this->baseUrl . "admin/brand/edit?id=$id&msg=updated");
         }
         exit;
     }

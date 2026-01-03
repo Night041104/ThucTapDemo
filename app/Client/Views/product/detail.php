@@ -90,7 +90,7 @@
     .btn-add-cart:hover { background: #fff5f5; }
 
     /* =========================================
-       6. MINI SPECS & MODAL (SLIDING DRAWER)
+       6. MINI SPECS & MODAL
        ========================================= */
     .mini-specs { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 20px; }
     .mini-specs ul { padding: 0; margin: 0; list-style: none; }
@@ -147,71 +147,28 @@
     .sp-row:last-child { border-bottom: none; }
     .sp-label { width: 40%; color: #666; padding-right: 15px; }
     .sp-val { width: 60%; color: #333; font-weight: 500; }
-</style>
 
-
-<!-- Đánh giá -->
- <style>
-    /* SECTION ĐÁNH GIÁ - TỔNG THỂ */
-    .review-section { 
-        border-top: 1px solid #eee; 
-        padding: 30px 20px; 
-        background: #fff; 
-        margin-top: 20px; 
-        border-radius: 8px; 
-    }
-    
-    /* CĂN GIỮA PHẦN TỔNG QUAN */
-    .rating-summary { 
-        display: flex; 
-        flex-direction: column; /* Xếp dọc */
-        align-items: center;    /* Căn giữa tất cả thành phần bên trong */
-        gap: 25px; 
-        margin-bottom: 40px; 
-        background: #fdfdfd; 
-        padding: 25px; 
-        border-radius: 12px;
-    }
-
+    /* CSS ĐÁNH GIÁ */
+    .review-section { border-top: 1px solid #eee; padding: 30px 20px; background: #fff; margin-top: 20px; border-radius: 8px; }
+    .rating-summary { display: flex; flex-direction: column; align-items: center; gap: 25px; margin-bottom: 40px; background: #fdfdfd; padding: 25px; border-radius: 12px;}
     .avg-score { text-align: center; }
     .avg-score h2 { font-size: 56px; color: #fe2c6a; margin: 0; line-height: 1; }
     .stars { color: #ffbe00; font-size: 24px; margin: 10px 0; }
-
-    /* CĂN CHỈNH THANH PHẦN TRĂM DÀI ĐỀU NHAU */
-    .progress-bars { 
-        width: 100%; 
-        max-width: 450px; /* Giới hạn độ rộng để không bị loãng */
-    }
-    .bar-item { 
-        display: flex; 
-        align-items: center; 
-        gap: 12px; 
-        margin-bottom: 8px; 
-    }
+    .progress-bars { width: 100%; max-width: 450px; }
+    .bar-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
     .bar-bg { background: #eee; height: 10px; flex-grow: 1; border-radius: 5px; overflow: hidden; }
     .bar-fill { background: #fe2c6a; height: 100%; border-radius: 5px; }
-    
-    /* NÚT BẤM */
-    .btn-review-action {
-        background: #cd1818; 
-        color: white; 
-        border: none; 
-        padding: 12px 35px; 
-        border-radius: 25px; 
-        font-weight: bold; 
-        cursor: pointer;
-        transition: 0.3s;
-    }
+    .btn-review-action { background: #cd1818; color: white; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
     .btn-review-action:hover { background: #b71c1c; transform: scale(1.05); }
-
-    /* PHẦN DANH SÁCH REVIEW DƯỚI GIỮ NGUYÊN HOẶC CHỈNH NHẸ */
     .review-item { border-bottom: 1px solid #f1f1f1; padding: 20px 0; text-align: left; }
     .user-info { font-weight: bold; display: flex; align-items: center; gap: 10px; }
 </style>
 
 <div class="container breadcrumb">
-    <a href="index.php">Trang chủ</a> / 
-    <a href="index.php?module=client&controller=category&action=index&id=<?= $product['category_id'] ?>"><?= $category['name'] ?? 'Danh mục' ?></a> / 
+    <a href="trang-chu">Trang chủ</a> / 
+    
+    <a href="danh-muc/<?= $category['slug'] ?>"><?= $category['name'] ?? 'Danh mục' ?></a> / 
+    
     <span style="color: #333;"><?= $product['name'] ?></span>
 </div>
 
@@ -239,7 +196,7 @@
                 foreach($specs as $group) {
                     if(isset($group['items'])) {
                         foreach($group['items'] as $item) {
-                            if($count++ > 4) break 2; // Chỉ hiện 5 dòng đầu
+                            if($count++ > 4) break 2; 
                             echo "<li><strong>{$item['name']}:</strong> <span>{$item['value']}</span></li>";
                         }
                     }
@@ -280,7 +237,7 @@
                         <span class="variant-name"><?= htmlspecialchars($groupName) ?></span>
                         <div class="variant-options">
                             <?php foreach($options as $valText => $info): ?>
-                                <a href="index.php?module=client&controller=product&action=detail&id=<?= $info['product_id'] ?>" 
+                                <a href="san-pham/<?= $info['slug'] ?>.html" 
                                    class="opt-btn <?= $info['active'] ? 'active' : '' ?>">
                                     <?= htmlspecialchars($valText) ?>
                                 </a>
@@ -356,7 +313,7 @@
         </div>
     </div>
 </div>
-<!-- Đánh giá -->
+
 <div class="review-section container">
     <h3 style="text-align: center; margin-bottom: 30px; font-size: 22px;">Đánh giá sản phẩm <?= $product['name'] ?></h3>
     
@@ -383,25 +340,23 @@
             <?php endfor; ?>
         </div>
         <?php if(!$userReview): ?>
-    <button onclick="<?= isset($_SESSION['user']) ? "$('#formReview').toggle()" : "window.location.href='index.php?module=client&controller=auth&action=login'" ?>" class="btn-review-action">
-        Viết đánh giá
-    </button>
-    <?php else: ?>
-    <div style="flex: 1; text-align: center; color: #28a745; font-weight: 500;">
-        <i class="fa fa-check-circle"></i> Bạn đã đánh giá sản phẩm này
-    </div>
-    <?php endif; ?>
+        <button onclick="<?= isset($_SESSION['user']) ? "$('#formReview').toggle()" : "window.location.href='index.php?module=client&controller=auth&action=login'" ?>" class="btn-review-action">
+            Viết đánh giá
+        </button>
+        <?php else: ?>
+        <div style="flex: 1; text-align: center; color: #28a745; font-weight: 500;">
+            <i class="fa fa-check-circle"></i> Bạn đã đánh giá sản phẩm này
+        </div>
+        <?php endif; ?>
     </div>
 
     <div id="formReview" style="display:none; margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fdfdfd;">
         <?php if(isset($_SESSION['user'])): ?>
         <form action="index.php?module=client&controller=review&action=submit" method="POST">
             <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-            
             <label style="font-weight: bold; display: block; margin-bottom: 10px;">
                 <?= $userReview ? 'Chỉnh sửa đánh giá của bạn:' : 'Gửi đánh giá mới:' ?>
             </label>
-            
             <select name="rating" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px;">
                 <?php for($i=5; $i>=1; $i--): ?>
                     <option value="<?= $i ?>" <?= (isset($userReview) && $userReview['rating'] == $i) ? 'selected' : '' ?>>
@@ -409,9 +364,7 @@
                     </option>
                 <?php endfor; ?>
             </select>
-
             <textarea name="comment" required style="width: 100%; height: 100px; padding: 10px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px;" placeholder="Cảm nhận của bạn..."><?= $userReview['comment'] ?? '' ?></textarea>
-            
             <div style="display: flex; gap: 10px;">
                 <button type="submit" class="btn-review-action" style="padding: 10px 20px;">
                     <?= $userReview ? 'Cập nhật' : 'Hoàn tất' ?>
@@ -428,8 +381,8 @@
     <?php endif; ?>
 
     <?php foreach($reviews as $rev): ?>
-        <div class="review-item" style="border-bottom: 1px solid #eee; padding: 15px 0;">
-            <div class="user-info" style="font-weight:bold;">
+        <div class="review-item">
+            <div class="user-info">
                 <?= htmlspecialchars($rev['fname'] . ' ' . $rev['lname']) ?>
                 <span style="color:#ffbe00; margin-left:10px;">
                     <?= str_repeat('★', $rev['rating']) ?>
@@ -482,24 +435,22 @@
                     </form>
                 </div>
             <?php endif; ?>
-            
         </div>
     <?php endforeach; ?>
+    </div>
 </div>
 
-</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-function toggleReplyForm(id) {
-    var form = document.getElementById('reply-form-' + id);
-    if (form.style.display === "none") {
-        form.style.display = "block";
-    } else {
-        form.style.display = "none";
+    function toggleReplyForm(id) {
+        var form = document.getElementById('reply-form-' + id);
+        if (form.style.display === "none") {
+            form.style.display = "block";
+        } else {
+            form.style.display = "none";
+        }
     }
-}
-</script>
 
-<script>
     function changeImage(src) {
         document.getElementById('main-img').src = src;
         document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
@@ -525,22 +476,14 @@ function toggleReplyForm(id) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
-</script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <script>
-    $(document).ready(function() {
-        // Bắt sự kiện click nút "Thêm giỏ" (Class .btn-add-cart)
-        $('.btn-add-cart').click(function(e) {
-            e.preventDefault(); // 1. Chặn việc load lại trang
 
-            // 2. Lấy dữ liệu từ form
+    $(document).ready(function() {
+        $('.btn-add-cart').click(function(e) {
+            e.preventDefault(); 
             var form = $(this).closest('form');
             var productId = form.find('input[name="product_id"]').val();
-            var quantity = 1; // Mặc định là 1 (vì nút thêm giỏ ko có ô nhập số lượng riêng ở layout này)
-            
-            // Nếu muốn lấy số lượng chính xác thì dùng dòng dưới (nếu layout có ô input quantity)
-            // var quantity = form.find('input[name="quantity"]').val();
+            var quantity = 1;
 
-            // 3. Gửi Ajax
             $.ajax({
                 url: 'index.php?module=client&controller=cart&action=addAjax',
                 type: 'POST',
@@ -551,20 +494,12 @@ function toggleReplyForm(id) {
                 },
                 success: function(response) {
                     if (response.status === 'success') {
-                        // A. Cập nhật số lượng trên Header
                         var cartBadge = $('#cart-total-count');
                         cartBadge.text(response.totalQty);
-                        cartBadge.show(); // Hiện lên nếu đang bị ẩn
-
-                        // B. Hiệu ứng bay hoặc thông báo nhỏ (Toast)
+                        cartBadge.show(); 
                         showToast('✅ Đã thêm vào giỏ hàng thành công!');
-                        
-                        // C. Hiệu ứng rung nhẹ icon giỏ hàng cho đẹp
                         $('.fa-shopping-cart').addClass('fa-bounce');
-                        setTimeout(function(){ 
-                            $('.fa-shopping-cart').removeClass('fa-bounce'); 
-                        }, 1000);
-
+                        setTimeout(function(){ $('.fa-shopping-cart').removeClass('fa-bounce'); }, 1000);
                     } else {
                         alert('❌ ' + response.message);
                     }
@@ -575,20 +510,11 @@ function toggleReplyForm(id) {
             });
         });
 
-        // Hàm hiển thị thông báo góc màn hình (Toast Message)
         function showToast(message) {
-            // Tạo thẻ div thông báo
             var toast = $('<div style="position:fixed; top:80px; right:20px; background:#28a745; color:white; padding:15px 25px; border-radius:5px; box-shadow:0 5px 15px rgba(0,0,0,0.2); z-index:9999; animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;">' + message + '</div>');
-            
             $('body').append(toast);
-            
-            // Tự xóa sau 3 giây
-            setTimeout(function() {
-                toast.remove();
-            }, 3000);
+            setTimeout(function() { toast.remove(); }, 3000);
         }
-        
-        // CSS Animation cho Toast
         $('<style>@keyframes fadeIn {from {opacity:0; transform:translateX(20px);} to {opacity:1; transform:translateX(0);}} @keyframes fadeOut {from {opacity:1;} to {opacity:0;}}</style>').appendTo('head');
     });
 </script>

@@ -14,11 +14,8 @@
 
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3">
-        <form id="filterForm" class="row g-3 align-items-center">
-            <input type="hidden" name="module" value="admin">
-            <input type="hidden" name="controller" value="order">
-            <input type="hidden" name="action" value="index">
-
+        <form id="filterForm" class="row g-3 align-items-center" onsubmit="return false;">
+            
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
@@ -118,7 +115,7 @@
                                     <span class="badge <?= $bClass ?> rounded-pill px-3"><?= $bLabel ?></span>
                                 </td>
                                 <td class="text-end pe-4">
-                                    <a href="index.php?module=admin&controller=order&action=detail&id=<?= $row['id'] ?>" 
+                                    <a href="admin/order/detail?id=<?= $row['id'] ?>" 
                                        class="btn btn-sm btn-outline-primary border-0 rounded-pill px-3">
                                         Chi tiết <i class="fa fa-arrow-right ms-1"></i>
                                     </a>
@@ -154,8 +151,8 @@
             const formData = new FormData(form);
             const params = new URLSearchParams(formData);
             
-            // Fetch HTML về và cắt lấy phần tbody
-            fetch('index.php?' + params.toString())
+            // [FIX AJAX] Gọi về admin/order
+            fetch('admin/order?' + params.toString())
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
@@ -175,7 +172,7 @@
         inputs.forEach(input => {
             input.addEventListener('input', () => {
                 clearTimeout(timeout);
-                timeout = setTimeout(fetchOrders, 400); // Debounce 400ms
+                timeout = setTimeout(fetchOrders, 400); 
             });
             
             if(input.tagName === 'SELECT') {

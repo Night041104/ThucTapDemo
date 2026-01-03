@@ -80,7 +80,7 @@
         <div style="text-align: center; padding: 80px 20px;">
             <i class="fa fa-shopping-basket" style="font-size: 60px; color: #ddd; margin-bottom: 20px;"></i>
             <p style="font-size: 18px; color: #666; margin-bottom: 30px;">Giỏ hàng của bạn đang trống!</p>
-            <a href="index.php" class="btn-confirm" style="width: 250px; margin: 0 auto; background: #333;">Tiếp tục mua sắm</a>
+            <a href="<?= $baseUrl ?>trang-chu" class="btn-confirm" style="width: 250px; margin: 0 auto; background: #333;">Tiếp tục mua sắm</a>
         </div>
     <?php else: ?>
 
@@ -107,7 +107,7 @@
                                     <img src="<?= htmlspecialchars($p['thumbnail']) ?>" style="width: 50px; height: 50px; object-fit: contain; border: 1px solid #eee; padding: 2px;">
                                 <?php endif; ?>
                                 <div>
-                                    <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>" class="text-dark text-decoration-none">
+                                    <a href="<?= $baseUrl ?>san-pham/<?= $p['slug'] ?>.html" class="text-dark text-decoration-none">
                                         <?= htmlspecialchars($p['name']) ?>
                                     </a>
                                     <div style="font-size: 12px; color: #999; margin-top: 4px;">Mã: <?= $p['sku'] ?? $p['id'] ?></div>
@@ -123,7 +123,7 @@
                             <?= number_format($subtotal, 0, ',', '.') ?>₫
                         </td>
                         <td>
-                            <a href="index.php?controller=cart&action=delete&id=<?= $p['id'] ?>" class="btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa sản phẩm này?')" title="Xóa">
+                            <a href="<?= $baseUrl ?>index.php?controller=cart&action=delete&id=<?= $p['id'] ?>" class="btn-delete" onclick="return confirm('Bạn chắc chắn muốn xóa sản phẩm này?')" title="Xóa">
                                 <i class="fa fa-times-circle"></i>
                             </a>
                         </td>
@@ -137,7 +137,7 @@
                 <h3 style="font-size: 16px; margin-bottom: 15px; font-weight: 700; text-transform: uppercase;">🎫 Mã giảm giá / Quà tặng</h3>
                 
                 <div class="d-flex gap-2 mb-2">
-                    <form id="form-apply-coupon" action="index.php?controller=cart&action=applyCoupon" method="POST" class="d-flex flex-grow-1 gap-2">
+                    <form id="form-apply-coupon" action="<?= $baseUrl ?>index.php?controller=cart&action=applyCoupon" method="POST" class="d-flex flex-grow-1 gap-2">
                         <input type="text" id="input-coupon-code" name="code" class="input-coupon" placeholder="Nhập hoặc chọn mã" 
                                value="<?= isset($_SESSION['coupon']) ? $_SESSION['coupon']['code'] : '' ?>" required>
                         <button type="submit" class="btn-apply">Áp dụng</button>
@@ -160,7 +160,7 @@
                     </div>
                 <?php endif; ?>
                 
-                <a href="index.php" class="btn-continue mt-3"><i class="fa fa-arrow-left me-1"></i> Tiếp tục mua sắm</a>
+                <a href="<?= $baseUrl ?>trang-chu" class="btn-continue mt-3"><i class="fa fa-arrow-left me-1"></i> Tiếp tục mua sắm</a>
             </div>
 
             <div class="col-md-6">
@@ -173,7 +173,7 @@
                     <div id="coupon-row" class="row-total text-success" style="<?= isset($_SESSION['coupon']) ? '' : 'display:none;' ?>">
                         <span>
                             Mã giảm <strong id="coupon-code-display"><?= $_SESSION['coupon']['code'] ?? '' ?></strong> 
-                            <a href="index.php?controller=cart&action=removeCoupon" class="text-danger ms-2" title="Gỡ mã" style="font-size: 12px;"><i class="fa fa-times"></i></a>
+                            <a href="<?= $baseUrl ?>index.php?controller=cart&action=removeCoupon" class="text-danger ms-2" title="Gỡ mã" style="font-size: 12px;"><i class="fa fa-times"></i></a>
                         </span>
                         <span id="cart-discount">-<?= number_format($discountAmount, 0, ',', '.') ?>₫</span>
                     </div>
@@ -188,7 +188,7 @@
                     </div>
                     <div class="text-end small text-muted mb-3">(Đã bao gồm VAT nếu có)</div>
 
-                    <a href="index.php?controller=checkout" class="btn-confirm">TIẾN HÀNH THANH TOÁN <i class="fa fa-arrow-right ms-2"></i></a>
+                    <a href="<?= $baseUrl ?>thanh-toan" class="btn-confirm">TIẾN HÀNH THANH TOÁN <i class="fa fa-arrow-right ms-2"></i></a>
                 </div>
             </div>
         </div>
@@ -235,59 +235,50 @@ $(document).ready(function() {
         // Validate
         if (newQty < 1 || newQty == '') {
             newQty = 1;
-            // inputEl.val(1); // (Optional) Có thể force set lại số 1 trên UI
         }
 
         // Gọi AJAX
         $.ajax({
-            url: 'index.php?controller=cart&action=updateAjax', 
+            // [FIX URL AJAX] Thêm Base URL
+            url: '<?= $baseUrl ?>index.php?controller=cart&action=updateAjax', 
             method: 'POST',
             data: { id: productId, qty: newQty },
             dataType: 'json',
-            // Trong app/Client/Views/cart/index.php
+            success: function(response) {
+                if (response.status === 'success') {
+                    // 1. Cập nhật tiền (Code cũ)
+                    $('#subtotal-' + productId).text(response.item_subtotal);
+                    $('#cart-total-money').text(response.total_money);
+                    $('#cart-final-total').text(response.final_total);
 
-// Trong file app/Client/Views/cart/index.php
+                    // --- Cập nhật số lượng trên Header ---
+                    var cartBadge = $('#cart-total-count'); 
+                    cartBadge.text(response.total_qty);
+                    
+                    if (response.total_qty > 0) {
+                        cartBadge.show(); 
+                    } else {
+                        cartBadge.hide();
+                    }
 
-success: function(response) {
-    if (response.status === 'success') {
-        // 1. Cập nhật tiền (Code cũ)
-        $('#subtotal-' + productId).text(response.item_subtotal);
-        $('#cart-total-money').text(response.total_money);
-        $('#cart-final-total').text(response.final_total);
+                    // 2. Cập nhật HTML Coupon
+                    if (response.coupon_html) {
+                         $('#coupon-list-container').html(response.coupon_html);
+                    }
 
-        // --- [MỚI] Cập nhật số lượng trên Header ---
-        // Lấy thẻ hiển thị số lượng trên header
-        var cartBadge = $('#cart-total-count'); 
-        
-        // Cập nhật số mới
-        cartBadge.text(response.total_qty);
-        
-        // Ẩn/Hiện badge tùy theo số lượng
-        if (response.total_qty > 0) {
-            cartBadge.show(); // Hoặc cartBadge.css('display', 'inline-block');
-        } else {
-            cartBadge.hide();
-        }
-        // ------------------------------------------
-
-        // 2. Cập nhật HTML Coupon (Code cũ)
-        if (response.coupon_html) {
-             $('#coupon-list-container').html(response.coupon_html);
-        }
-
-        // 3. Logic Coupon (Code cũ)
-        if (response.coupon_valid) {
-            $('#coupon-row').show();
-            $('#cart-discount').text('-' + response.discount_amount);
-            $('#coupon-error-msg').text('');
-        } else {
-            if ($('#coupon-row').is(':visible')) {
-                $('#coupon-row').hide();
-                $('#coupon-error-msg').text(response.coupon_msg);
-            }
-        }
-    }
-},
+                    // 3. Logic Coupon
+                    if (response.coupon_valid) {
+                        $('#coupon-row').show();
+                        $('#cart-discount').text('-' + response.discount_amount);
+                        $('#coupon-error-msg').text('');
+                    } else {
+                        if ($('#coupon-row').is(':visible')) {
+                            $('#coupon-row').hide();
+                            $('#coupon-error-msg').text(response.coupon_msg);
+                        }
+                    }
+                }
+            },
             error: function() {
                 console.log('Lỗi kết nối cập nhật giỏ hàng');
             }
