@@ -5,8 +5,28 @@ require_once __DIR__ . '/../../Helpers/MailHelper.php';
 class AuthController {
     private $userModel;
 
+    // --- CẤU HÌNH GOOGLE ---
+    private $googleClientID = '814424808372-vtroocch4q3g6viseb7jolvvs5btu11k.apps.googleusercontent.com';
+    private $googleClientSecret = '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';
+    private $googleRedirectUri; // Không gán giá trị cứng ở đây nữa
+
     public function __construct() {
         $this->userModel = new UserModel();
+
+        // --- XỬ LÝ URL ĐỘNG (Dynamic URL) ---
+        // 1. Kiểm tra http hay https
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? "https://" : "http://";
+        
+        // 2. Lấy tên miền (localhost hoặc domain thật)
+        $host = $_SERVER['HTTP_HOST'];
+        
+        // 3. Lấy thư mục chứa file index.php
+        // dirname($_SERVER['SCRIPT_NAME']) trả về ví dụ: "/THUCTAPDEMO" hoặc "/baitapPHP/THUCTAPDEMO"
+        $dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $dir = rtrim($dir, '/'); // Xóa dấu gạch chéo thừa ở cuối nếu có
+
+        // 4. Tạo đường dẫn Callback đầy đủ
+        $this->googleRedirectUri = $protocol . $host . $dir . '/index.php?controller=auth&action=googleCallback';
     }
 
     // 1. XỬ LÝ ĐĂNG KÝ
@@ -20,7 +40,6 @@ class AuthController {
 
             if ($password !== $repassword) {
                 $_SESSION['error'] = "Mật khẩu nhập lại không khớp!";
-                // [FIX] Redirect về link đẹp
                 header("Location: dang-ky");
                 exit;
             }
@@ -45,7 +64,6 @@ class AuthController {
                 MailHelper::sendVerificationEmail($email, $fullName, $token);
 
                 $_SESSION['success'] = "Đăng ký thành công! Vui lòng kiểm tra Email để kích hoạt tài khoản.";
-                // [FIX] Redirect về link đẹp
                 header("Location: dang-nhap");
             } else {
                 $_SESSION['error'] = "Lỗi hệ thống, vui lòng thử lại.";
@@ -91,7 +109,6 @@ class AuthController {
 
             if ($result) {
                 $_SESSION['user'] = $result;
-                // [FIX] Redirect về trang chủ
                 header("Location: trang-chu");
             } else {
                 $_SESSION['error'] = "Email hoặc mật khẩu không đúng!";
@@ -117,7 +134,6 @@ class AuthController {
     public function logout() {
         unset($_SESSION['user']);
         session_destroy();
-        // [FIX] Redirect về đăng nhập hoặc trang chủ
         header("Location: dang-nhap");
         exit;
     }
@@ -143,7 +159,6 @@ class AuthController {
                 $_SESSION['error'] = "Email này chưa được đăng ký trong hệ thống!";
             }
             
-            // [FIX] Redirect về trang quên mật khẩu
             header("Location: quen-mat-khau");
             exit;
         }
@@ -174,7 +189,6 @@ class AuthController {
 
             if ($pass !== $repass) {
                 $_SESSION['error'] = "Mật khẩu nhập lại không khớp!";
-                // Giữ nguyên token trên URL để không bị lỗi
                 header("Location: index.php?controller=auth&action=resetPassword&token=$token");
                 exit;
             }
@@ -194,16 +208,13 @@ class AuthController {
         }
     }
 
-    // --- GOOGLE LOGIN (Giữ nguyên logic cũ vì liên quan callback URL) ---
-    private $googleClientID = '814424808372-vtroocch4q3g6viseb7jolvvs5btu11k.apps.googleusercontent.com';
-    private $googleClientSecret = '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';
-    private $googleRedirectUri = 'http://localhost/THUCTAPDEMO/index.php?controller=auth&action=googleCallback';
+    // --- GOOGLE LOGIN ---
 
     public function loginGoogle() {
         $params = [
             'response_type' => 'code',
             'client_id' => $this->googleClientID,
-            'redirect_uri' => $this->googleRedirectUri,
+            'redirect_uri' => $this->googleRedirectUri, // Sẽ tự động lấy giá trị từ __construct
             'scope' => 'email profile',
             'access_type' => 'online',
             'prompt' => 'select_account'
@@ -221,7 +232,7 @@ class AuthController {
                 'code' => $code,
                 'client_id' => $this->googleClientID,
                 'client_secret' => $this->googleClientSecret,
-                'redirect_uri' => $this->googleRedirectUri,
+                'redirect_uri' => $this->googleRedirectUri, // Sẽ tự động lấy giá trị từ __construct
                 'grant_type' => 'authorization_code'
             ];
 

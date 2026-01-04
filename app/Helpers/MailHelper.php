@@ -110,11 +110,27 @@ class MailHelper {
     }
 
     // B. Gửi mail kích hoạt tài khoản
+    // B. Gửi mail kích hoạt tài khoản
     public static function sendVerificationEmail($toEmail, $userName, $token) {
         $subject = "Kích hoạt tài khoản - FPT Shop Demo";
         
-        // Link kích hoạt (Sửa localhost thành tên miền thật nếu có)
-        $activeLink = "http://localhost/THUCTAPDEMO/index.php?controller=auth&action=verify&token=" . $token;
+        // --- ĐOẠN CODE TỰ ĐỘNG LẤY ĐƯỜNG DẪN (DYNAMIC URL) ---
+        // 1. Lấy giao thức http hay https
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? "https://" : "http://";
+        // 2. Lấy tên miền (localhost hoặc domain thật)
+        $host = $_SERVER['HTTP_HOST'];
+        // 3. Lấy thư mục gốc chứa file index.php đang chạy
+        // Ví dụ máy bạn: /THUCTAPDEMO
+        // Ví dụ máy bạn kia: /baitapPHP/THUCTAPDEMO
+        $dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $dir = rtrim($dir, '/');
+        
+        // Ghép lại thành đường dẫn gốc
+        $baseUrl = $protocol . $host . $dir;
+        // -----------------------------------------------------
+
+        // Link kích hoạt tự động theo máy
+        $activeLink = $baseUrl . "/index.php?controller=auth&action=verify&token=" . $token;
 
         $bodyContent = "
             <h3>Xin chào $userName,</h3>
@@ -135,8 +151,16 @@ class MailHelper {
     public static function sendResetPasswordEmail($toEmail, $fullname, $token) {
         $subject = "Yêu cầu đặt lại mật khẩu - FPT Shop Demo";
         
-        // Link reset
-        $link = "http://localhost/THUCTAPDEMO/index.php?controller=auth&action=resetPassword&token=$token";
+        // --- COPY LẠI ĐOẠN LOGIC TRÊN HOẶC VIẾT HÀM RIÊNG ---
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'];
+        $dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $dir = rtrim($dir, '/');
+        $baseUrl = $protocol . $host . $dir;
+        // -----------------------------------------------------
+
+        // Link reset tự động
+        $link = $baseUrl . "/index.php?controller=auth&action=resetPassword&token=$token";
 
         $bodyContent = "
             <h3>Xin chào $fullname,</h3>
