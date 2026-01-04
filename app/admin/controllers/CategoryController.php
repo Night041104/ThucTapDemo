@@ -68,7 +68,13 @@ class CategoryController {
             $error = null;
             if (empty($name)) {
                 $error = "❌ Tên danh mục không được để trống!";
-            } elseif ($this->cateModel->checkNameExists($name, $id)) {
+            } 
+            // [THÊM MỚI] Kiểm tra xem tên có phải là số không
+            elseif (is_numeric($name)) {
+                $error = "❌ Tên danh mục không được là số!";
+            }
+            // Kết thúc thêm mới
+            elseif ($this->cateModel->checkNameExists($name, $id)) {
                 $error = "❌ Tên danh mục '$name' đã tồn tại!";
             }
 

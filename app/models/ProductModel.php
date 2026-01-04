@@ -30,7 +30,7 @@ class ProductModel extends BaseModel {
     }
 
     public function getMasters(){
-        $sql = "SELECT id, name FROM products WHERE parent_id IS NULL OR parent_id = 0 ORDER BY id DESC";
+        $sql = "SELECT id, name FROM products WHERE parent_id IS NULL ORDER BY id DESC";
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : []; 
     }

@@ -209,6 +209,19 @@
             if(el) el.remove();
         }
     }
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const nameInput = document.querySelector('input[name="name"]');
+        const value = nameInput.value.trim();
+
+        // Kiểm tra nếu giá trị không rỗng VÀ là một số
+        // !isNaN(value) trả về true nếu value là số
+        if (value !== '' && !isNaN(value)) {
+            e.preventDefault(); // Chặn gửi form
+            alert('❌ Tên danh mục không được là số!');
+            nameInput.focus(); // Đưa con trỏ chuột về ô nhập
+            nameInput.style.borderColor = 'red'; // (Tùy chọn) Viền đỏ cảnh báo
+        }
+    });
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
