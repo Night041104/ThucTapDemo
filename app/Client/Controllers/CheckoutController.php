@@ -65,7 +65,10 @@ class CheckoutController {
                 'street_address' => $u['street_address'] ?? '',
                 'city'           => $u['city'] ?? '',
                 'district'       => $u['district'] ?? '',
-                'ward'           => $u['ward'] ?? ''
+                'ward'           => $u['ward'] ?? '',
+        
+                'district_id'    => $u['district_id'] ?? '', 
+                'ward_code'      => $u['ward_code'] ?? ''
             ];
         }
 
@@ -75,7 +78,6 @@ class CheckoutController {
     }
 
     // 2. XỬ LÝ ĐẶT HÀNG (SUBMIT)
-    // 2. XỬ LÝ ĐẶT HÀNG (SUBMIT)
     public function submit() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
@@ -83,36 +85,49 @@ class CheckoutController {
             $fullname = trim($_POST['fullname'] ?? '');
             $email    = trim($_POST['email'] ?? '');
             $phone    = trim($_POST['phone'] ?? '');
-            // Gộp địa chỉ
-            $street   = trim($_POST['street_address'] ?? '');
-            $ward     = trim($_POST['ward'] ?? '');
-            $district = trim($_POST['district'] ?? '');
-            $city     = trim($_POST['city'] ?? '');
+            
+            // --- [SỬA] LẤY RIÊNG TỪNG TRƯỜNG ĐỊA CHỈ ---
+            $street   = trim($_POST['street_address'] ?? ''); // Số nhà, tên đường
+            $ward     = trim($_POST['ward'] ?? '');           // Phường/Xã
+            $district = trim($_POST['district'] ?? '');       // Quận/Huyện
+            $city     = trim($_POST['city'] ?? '');           // Tỉnh/Thành phố
 
+            // Tạo chuỗi địa chỉ đầy đủ (để hiển thị)
             $address = $street;
             if (!empty($ward))     $address .= ", " . $ward;
             if (!empty($district)) $address .= ", " . $district;
             if (!empty($city))     $address .= ", " . $city;
             
+            // [QUAN TRỌNG] Lấy ID địa lý để gửi cho Giao Hàng Nhanh
+            $districtId = isset($_POST['district_id']) ? (int)$_POST['district_id'] : 0;
+            $wardCode   = isset($_POST['ward_code']) ? trim($_POST['ward_code']) : '';
+
             $note     = trim($_POST['note'] ?? '');
             $paymentMethod = $_POST['payment_method'] ?? 'COD'; 
 
-            // Validate cơ bản
-            if (empty($fullname) || empty($email) || empty($phone) || empty($address)) {
-                die("❌ Vui lòng điền đầy đủ thông tin!");
+            // 2. Validate cơ bản
+            if (empty($fullname) || empty($email) || empty($phone) || empty($street)) {
+                die("❌ Vui lòng điền đầy đủ thông tin nhận hàng!");
             }
 
-            // Chuẩn bị dữ liệu khách hàng
+            // 3. Chuẩn bị dữ liệu khách hàng
+            // [SỬA] Thêm các trường địa chỉ chi tiết vào mảng này
             $customerData = [
-                'fullname' => $fullname,
-                'email'    => $email,
-                'phone'    => $phone,
-                'address'  => $address,
-                'note'     => $note,
+                'fullname'       => $fullname,
+                'email'          => $email,
+                'phone'          => $phone,
+                'street_address' => $street,   // [MỚI] Lưu tên đường
+                'ward'           => $ward,     // [MỚI] Lưu tên phường
+                'district'       => $district, // [MỚI] Lưu tên quận
+                'city'           => $city,     // [MỚI] Lưu tên thành phố
+                'address'        => $address,  // Địa chỉ full (để hiển thị)
+                'district_id'    => $districtId,
+                'ward_code'      => $wardCode,
+                'note'           => $note,
                 'payment_method' => $paymentMethod
             ];
 
-            // Lấy Coupon nếu có
+            // 4. Lấy Coupon nếu có
             $couponCode = null;
             $discountMoney = 0;
             if (isset($_SESSION['coupon'])) {
@@ -120,34 +135,35 @@ class CheckoutController {
                 $discountMoney = $_SESSION['coupon']['discount_amount'];
             }
 
-            // --- PHÂN LUỒNG XỬ LÝ ---
+            // --- PHÂN LUỒNG XỬ LÝ THANH TOÁN ---
 
-            // TRƯỜNG HỢP 1: THANH TOÁN VNPAY (Chưa lưu DB, chỉ lưu Session tạm)
+            // TRƯỜNG HỢP A: THANH TOÁN VNPAY 
             if ($paymentMethod == 'VNPAY') {
-                // Tính tổng tiền cần thanh toán để gửi sang VNPAY
                 $cartItems = $_SESSION['cart'];
+                
+                // Tính tổng tiền cần thanh toán
                 $cartTotal = $this->calculateTotal($cartItems);
                 $finalPayment = $cartTotal - $discountMoney;
                 if ($finalPayment < 0) $finalPayment = 0;
 
-                // Tạo một mã giao dịch tạm (Ref) để gửi sang VNPAY
+                // Tạo mã tham chiếu tạm thời
                 $tempOrderRef = "TEMP" . date("ymdHis") . rand(100,999);
 
-                // LƯU TẠM VÀO SESSION (Để dùng lại khi VNPAY trả về)
+                // LƯU TẠM VÀO SESSION "HOLDING"
                 $_SESSION['vnpay_holding'] = [
-                    'customer_data' => $customerData,
+                    'customer_data' => $customerData, // Đã bao gồm đủ thông tin
                     'coupon_code'   => $couponCode,
                     'discount_money'=> $discountMoney,
                     'final_payment' => $finalPayment,
                     'temp_code'     => $tempOrderRef
                 ];
 
-                // Chuyển hướng sang VNPAY (KHÔNG XÓA GIỎ HÀNG LÚC NÀY)
+                // Chuyển hướng sang VNPAY
                 $this->redirectToVnPay($tempOrderRef, $finalPayment);
                 exit; 
             }
 
-            // TRƯỜNG HỢP 2: THANH TOÁN COD (Lưu DB ngay)
+            // TRƯỜNG HỢP B: THANH TOÁN COD
             else {
                 $userId = isset($_SESSION['user']) ? $_SESSION['user']['id'] : null;
                 $cartItems = $_SESSION['cart'];
@@ -156,14 +172,14 @@ class CheckoutController {
                 $orderCode = $this->orderModel->createOrder($userId, $customerData, $cartItems, $couponCode, $discountMoney);
 
                 if ($orderCode) {
-                    // Xử lý lưu log coupon
+                    // 1. Lưu log sử dụng mã giảm giá
                     $this->logCouponUsageIfAny($orderCode, $discountMoney);
 
-                    // Xóa giỏ hàng và Coupon
+                    // 2. Xóa giỏ hàng và Coupon
                     unset($_SESSION['cart']);
                     unset($_SESSION['coupon']);
 
-                    // Gửi mail và hoàn tất
+                    // 3. Gửi mail và Chuyển hướng
                     $this->sendMailAndFinish($email, $fullname, $orderCode, $cartItems);
                 } else {
                     echo "<script>alert('❌ Đặt hàng thất bại!'); window.location.href='gio-hang';</script>";

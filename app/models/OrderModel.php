@@ -19,54 +19,59 @@ class OrderModel extends BaseModel {
             $orderCode = "FBT" . date("ymd") . "-" . strtoupper(substr(md5(uniqid()), 0, 4));
 
             // B. Chuẩn bị dữ liệu khách hàng
-            // Xử lý User ID: Nếu có ID thì bao quanh bởi dấu nháy đơn, nếu không thì là NULL
             $uid = $userId ? "'".$this->escape($userId)."'" : 'NULL';
             
             $name    = $this->escape($customerData['fullname']);
             $email   = $this->escape($customerData['email']); 
             $phone   = $this->escape($customerData['phone']);
-            $addr    = $this->escape($customerData['address']);
             $note    = $this->escape($customerData['note']);
-            // Mặc định là COD nếu không chọn
-            $payment = isset($customerData['payment_method']) ? $this->escape($customerData['payment_method']) : 'COD';
+            
+            // --- [SỬA] LẤY 4 TRƯỜNG ĐỊA CHỈ TÁCH BIỆT ---
+            $street  = $this->escape($customerData['street_address']);
+            $city    = $this->escape($customerData['city']);
+            $dist    = $this->escape($customerData['district']);
+            $ward    = $this->escape($customerData['ward']);
+            
+            // Vẫn lưu chuỗi địa chỉ đầy đủ vào cột 'address' cũ (để hiển thị nhanh)
+            $addr    = $this->escape($customerData['address']); 
 
-            // Xử lý Coupon
+            // ID địa lý cho GHN (Đã có trong DB)
+            $distId   = isset($customerData['district_id']) ? (int)$customerData['district_id'] : 'NULL';
+            $wardCode = isset($customerData['ward_code']) ? "'".$this->escape($customerData['ward_code'])."'" : 'NULL';
+
+            // Payment & Coupon
+            $payment = isset($customerData['payment_method']) ? $this->escape($customerData['payment_method']) : 'COD';
             $cpCode  = $couponCode ? "'".$this->escape($couponCode)."'" : 'NULL';
             $dcMoney = (int)$discountMoney;
 
-            // C. Tính tổng tiền hàng & Kiểm tra tồn kho thực tế
+            // C. Tính tổng tiền & Kiểm tra kho
             $totalMoney = 0;
             $finalItems = [];
             
-            // Lấy danh sách ID sản phẩm từ giỏ
             $ids = implode(',', array_keys($cartItems));
             if(empty($ids)) throw new Exception("Giỏ hàng trống!");
 
-            // [QUAN TRỌNG] Lấy giá và tồn kho thực tế từ DB (Tránh user sửa session)
             $sqlProd = "SELECT id, name, price, quantity FROM products WHERE id IN ($ids)";
             $resProd = $this->_query($sqlProd);
             
             while ($prod = mysqli_fetch_assoc($resProd)) {
                 $buyQty = $cartItems[$prod['id']];
-                
-                // Kiểm tra tồn kho
                 if ($prod['quantity'] < $buyQty) {
                     throw new Exception("Sản phẩm '{$prod['name']}' vừa hết hàng (Chỉ còn: {$prod['quantity']}).");
                 }
-
                 $prod['buy_qty'] = $buyQty;
                 $finalItems[] = $prod;
                 $totalMoney += ($prod['price'] * $buyQty);
             }
 
-            // Tính tổng thanh toán cuối cùng (Sau khi trừ mã giảm giá)
             $finalTotal = $totalMoney - $dcMoney;
             if ($finalTotal < 0) $finalTotal = 0;
 
-            // D. INSERT vào bảng ORDERS
-            // Lưu ý: Lưu finalTotal vào total_money (số tiền khách thực trả)
-            $sqlOrder = "INSERT INTO orders (order_code, user_id, fullname, email, phone, address, note, total_money, payment_method, coupon_code, discount_money, status) 
-                         VALUES ('$orderCode', $uid, '$name', '$email', '$phone', '$addr', '$note', '$finalTotal', '$payment', $cpCode, '$dcMoney', 1)";
+            // D. INSERT vào bảng ORDERS (Đã thêm 4 cột mới)
+            $sqlOrder = "INSERT INTO orders 
+            (order_code, user_id, fullname, email, phone, street_address, city, district, ward, address, district_id, ward_code, note, total_money, payment_method, coupon_code, discount_money, status) 
+            VALUES 
+            ('$orderCode', $uid, '$name', '$email', '$phone', '$street', '$city', '$dist', '$ward', '$addr', $distId, $wardCode, '$note', '$finalTotal', '$payment', $cpCode, '$dcMoney', 1)";
             
             if (!$this->conn->query($sqlOrder)) {
                 throw new Exception("Lỗi tạo đơn: " . $this->conn->error);
@@ -80,11 +85,9 @@ class OrderModel extends BaseModel {
                 $price = $item['price'];
                 $qty = $item['buy_qty'];
 
-                // 1. Lưu chi tiết
                 $this->conn->query("INSERT INTO order_details (order_id, product_id, product_name, price, quantity) 
                                     VALUES ('$orderId', '$pid', '$pname', '$price', '$qty')");
 
-                // 2. Trừ tồn kho (Quan trọng: AND quantity >= qty để chặn âm kho)
                 $this->conn->query("UPDATE products SET quantity = quantity - $qty WHERE id = '$pid' AND quantity >= $qty");
                 
                 if ($this->conn->affected_rows == 0) {
@@ -92,18 +95,16 @@ class OrderModel extends BaseModel {
                 }
             }
 
-            // F. Trừ số lượng Mã giảm giá (Nếu có dùng)
+            // F. Trừ Coupon
             if ($couponCode) {
                 $cpCodeClean = $this->escape($couponCode);
                 $this->conn->query("UPDATE coupons SET quantity = quantity - 1 WHERE code = '$cpCodeClean'");
             }
 
-            // Mọi thứ Ok -> Commit (Lưu thật)
             $this->conn->commit();
             return $orderCode;
 
         } catch (Exception $e) {
-            // Có lỗi -> Rollback (Hoàn tác mọi thay đổi)
             $this->conn->rollback();
             return false;
         }
@@ -247,5 +248,11 @@ class OrderModel extends BaseModel {
         }
         return true;
     }
+    public function updateTrackingCode($orderId, $code) {
+    $orderId = (int)$orderId;
+    $code = $this->escape($code);
+    $sql = "UPDATE orders SET tracking_code = '$code' WHERE id = '$orderId'";
+    return $this->conn->query($sql);
+}
 }
 ?>

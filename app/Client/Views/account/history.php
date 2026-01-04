@@ -48,6 +48,7 @@
                                     <th>Ngày đặt</th>
                                     <th>Tổng tiền</th>
                                     <th>Trạng thái</th>
+                                    <th>Vận chuyển</th>
                                     <th>Thao tác</th>
                                 </tr>
                             </thead>
@@ -72,6 +73,24 @@
                                             ?>
                                             <span class="badge <?= $bClass ?> rounded-pill fw-normal px-3"><?= $bText ?></span>
                                         </td>
+                                        
+                                        <td>
+                                            <?php if (!empty($o['tracking_code'])): ?>
+                                                <div class="d-flex flex-column align-items-start">
+                                                    <span class="text-dark fw-bold small mb-1">
+                                                        <i class="fa fa-barcode me-1"></i><?= htmlspecialchars($o['tracking_code']) ?>
+                                                    </span>
+                                                    <a href="https://tracking.ghn.dev/?order_code=<?= $o['tracking_code'] ?>" 
+                                                       target="_blank" 
+                                                       class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 11px;">
+                                                        Xem hành trình
+                                                    </a>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </td>
+
                                         <td>
                                             <a href="chi-tiet-don/<?= $o['id'] ?>" class="btn btn-outline-danger btn-sm">
                                                 <i class="fa fa-eye"></i> Chi tiết

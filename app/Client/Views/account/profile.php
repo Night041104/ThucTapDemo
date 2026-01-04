@@ -113,6 +113,8 @@
                             <input type="hidden" name="city" id="city_text" value="<?= $user['city'] ?? '' ?>">
                             <input type="hidden" name="district" id="district_text" value="<?= $user['district'] ?? '' ?>">
                             <input type="hidden" name="ward" id="ward_text" value="<?= $user['ward'] ?? '' ?>">
+                            <input type="hidden" name="district_id" id="district_id" value="<?= $user['district_id'] ?? '' ?>">
+                            <input type="hidden" name="ward_code" id="ward_code" value="<?= $user['ward_code'] ?? '' ?>">
                         </div>
                     </div>
 

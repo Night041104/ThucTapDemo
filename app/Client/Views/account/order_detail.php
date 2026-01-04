@@ -63,6 +63,24 @@
                     </div>
                 <?php endif; ?>
 
+                <?php if (!empty($order['tracking_code'])): ?>
+                <div class="alert alert-success d-flex align-items-center justify-content-between mb-4 shadow-sm" style="border-left: 5px solid #198754;">
+                    <div>
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fa fa-truck-fast fs-4 me-2 text-success"></i>
+                            <strong class="text-success text-uppercase">Đơn hàng đang được vận chuyển</strong>
+                        </div>
+                        <div class="ms-4">
+                            Đơn vị vận chuyển: <strong>Giao Hàng Nhanh (GHN)</strong><br>
+                            Mã vận đơn: <strong class="text-danger fs-5"><?= htmlspecialchars($order['tracking_code']) ?></strong>
+                        </div>
+                    </div>
+                    <a href="https://tracking.ghn.dev/?order_code=<?= $order['tracking_code'] ?>" 
+                       target="_blank" class="btn btn-success fw-bold text-white px-4 py-2">
+                        <i class="fa fa-map-location-dot me-2"></i> Theo dõi đơn hàng
+                    </a>
+                </div>
+                <?php endif; ?>
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
                         <div class="bg-light p-3 rounded h-100">
@@ -104,7 +122,7 @@
                                     <td class="text-center"><?= number_format($item['price']) ?>₫</td>
                                     <td class="text-center"><?= $item['quantity'] ?></td>
                                     <td class="text-end fw-bold"><?= number_format($sub) ?>₫</td>
-                                </div>
+                                </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>

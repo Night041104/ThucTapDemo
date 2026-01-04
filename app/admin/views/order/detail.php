@@ -28,6 +28,27 @@
 
 <div class="row d-print-none">
     <div class="col-lg-8">
+        
+        <?php if (!empty($order['tracking_code'])): ?>
+            <div class="card mb-4 border-success shadow-sm" style="border-left: 5px solid #198754;">
+                <div class="card-body py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <h6 class="text-success fw-bold mb-1"><i class="fa fa-truck me-2"></i>THÔNG TIN VẬN CHUYỂN</h6>
+                            <p class="mb-0">Đơn vị: <strong>Giao Hàng Nhanh (GHN)</strong></p>
+                            <p class="mb-0">Mã vận đơn: <strong class="text-danger fs-5"><?= $order['tracking_code'] ?></strong></p>
+                        </div>
+                        <div class="col-md-5 text-end">
+                            <a href="https://tracking.ghn.dev/?order_code=<?= $order['tracking_code'] ?>" 
+                               target="_blank" 
+                               class="btn btn-outline-success fw-bold">
+                                <i class="fa fa-map-marked-alt me-1"></i> Xem hành trình
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
         <div class="card card-custom border-0 shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-bottom">
                 <h6 class="mb-0 fw-bold text-primary"><i class="fa fa-box-open me-2"></i>Chi tiết đơn hàng</h6>
