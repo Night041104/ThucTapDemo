@@ -2,7 +2,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-dark mb-0">Cập nhật thành viên</h3>
-    <a href="index.php?module=admin&controller=user&action=index" class="btn btn-outline-secondary">
+    <a href="admin/user" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>

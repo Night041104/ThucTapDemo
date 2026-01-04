@@ -40,7 +40,7 @@
         <h4 class="fw-bold text-dark mb-1">Quản lý Thương hiệu</h4>
         <p class="text-muted small mb-0">Danh sách các hãng sản xuất / nhà cung cấp</p>
     </div>
-    <a href="index.php?module=admin&controller=brand&action=create" class="btn btn-primary shadow-sm px-3">
+    <a href="admin/brand/create" class="btn btn-primary shadow-sm px-3">
         <i class="fa fa-plus-circle me-2"></i>Thêm mới
     </a>
 </div>
@@ -101,11 +101,11 @@
                                     <code class="text-muted bg-light px-2 py-1 rounded"><?= $row['slug'] ?></code>
                                 </td>
                                 <td class="text-end pe-4">
-                                    <a href="index.php?module=admin&controller=brand&action=edit&id=<?= $row['id'] ?>" 
+                                    <a href="admin/brand/edit?id=<?= $row['id'] ?>" 
                                        class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Sửa">
                                         <i class="fa fa-pen"></i>
                                     </a>
-                                    <a href="index.php?module=admin&controller=brand&action=delete&id=<?= $row['id'] ?>" 
+                                    <a href="admin/brand/delete?id=<?= $row['id'] ?>" 
                                        class="btn btn-sm btn-outline-danger border-0 rounded-circle ms-1" 
                                        onclick="return confirm('⚠️ Cảnh báo: Xóa thương hiệu này có thể ảnh hưởng đến sản phẩm liên quan.\n\nBạn có chắc chắn muốn xóa?')" title="Xóa">
                                         <i class="fa fa-trash"></i>

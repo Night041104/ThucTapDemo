@@ -4,7 +4,7 @@
     <h3 class="fw-bold text-dark mb-0">
         <?= $currentData['id'] ? "Chỉnh sửa thuộc tính" : "Tạo thuộc tính mới" ?>
     </h3>
-    <a href="index.php?module=admin&controller=attribute&action=index" class="btn btn-outline-secondary">
+    <a href="admin/attribute" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>
@@ -23,7 +23,7 @@
             </div>
             
             <div class="card-body pt-0">
-                <form method="POST" action="index.php?module=admin&controller=attribute&action=save">
+                <form method="POST" action="admin/attribute/save">
                     <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
 
                     <div class="row g-3 mb-4">

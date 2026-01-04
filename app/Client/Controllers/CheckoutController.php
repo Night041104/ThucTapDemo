@@ -19,7 +19,7 @@ class CheckoutController {
     public function index() {
         // Kiểm tra giỏ hàng
         if (empty($_SESSION['cart'])) {
-            header("Location: index.php?controller=cart&action=index");
+            header("Location: gio-hang");
             exit;
         }
 
@@ -182,7 +182,7 @@ class CheckoutController {
                     // 3. Gửi mail và Chuyển hướng
                     $this->sendMailAndFinish($email, $fullname, $orderCode, $cartItems);
                 } else {
-                    echo "<script>alert('❌ Đặt hàng thất bại! Có thể sản phẩm vừa hết hàng.'); window.location.href='index.php?controller=cart';</script>";
+                    echo "<script>alert('❌ Đặt hàng thất bại!'); window.location.href='gio-hang';</script>";
                 }
             }
         }
@@ -251,7 +251,7 @@ class CheckoutController {
                         unset($_SESSION['vnpay_holding']);
 
                         // Chuyển hướng trang thành công
-                        header("Location: index.php?controller=checkout&action=success&code=$orderCode&payment=vnpay");
+                        header("Location: dat-hang-thanh-cong?code=$orderCode&payment=vnpay");
                         exit;
                     } else {
                         echo "Lỗi tạo đơn hàng vào hệ thống (Có thể hết hàng trong lúc bạn thanh toán). Vui lòng liên hệ Admin để được hoàn tiền.";
@@ -401,7 +401,7 @@ class CheckoutController {
         MailHelper::sendOrderConfirmation($email, $name, $code, $totalMoney, $mailItems);
 
         // 5. Chuyển hướng
-        header("Location: index.php?controller=checkout&action=success&code=$code");
+        header("Location: dat-hang-thanh-cong?code=$code");
         exit;
     }
 
@@ -479,7 +479,7 @@ class CheckoutController {
     public function success() {
         $code = $_GET['code'] ?? '';
         if (!$code) {
-            header("Location: index.php");
+            header("Location: trang-chu");
             exit;
         }
         require_once __DIR__ . '/../Views/layouts/header.php';

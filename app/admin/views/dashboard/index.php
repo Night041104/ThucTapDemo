@@ -107,7 +107,7 @@
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 fw-bold text-primary">Đơn hàng mới nhất</h6>
-                <a href="index.php?module=admin&controller=order&action=index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                <a href="admin/order" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0 table-hover">
@@ -143,7 +143,7 @@
                                         <span class="badge <?= $cls ?> rounded-pill"><?= $lbl ?></span>
                                     </td>
                                     <td class="text-end pe-3">
-                                        <a href="index.php?module=admin&controller=order&action=detail&id=<?= $o['id'] ?>" class="btn btn-sm btn-light text-primary"><i class="fa fa-arrow-right"></i></a>
+                                        <a href="admin/order/detail?id=<?= $o['id'] ?>" class="btn btn-sm btn-light text-primary"><i class="fa fa-arrow-right"></i></a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -185,7 +185,7 @@
             </div>
             <?php if(!empty($lowStockProducts)): ?>
             <div class="card-footer bg-white text-center">
-                <a href="index.php?module=admin&controller=product&action=index" class="text-decoration-none small">Quản lý kho hàng <i class="fa fa-arrow-right ms-1"></i></a>
+                <a href="admin/product" class="text-decoration-none small">Quản lý kho hàng <i class="fa fa-arrow-right ms-1"></i></a>
             </div>
             <?php endif; ?>
         </div>

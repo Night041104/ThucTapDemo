@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../Helpers/GhnHelper.php'; // [QUAN TRỌNG] Load He
 
 class OrderController {
     private $orderModel;
+    private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
         // Kiểm tra quyền Admin
@@ -17,7 +18,6 @@ class OrderController {
 
     // 1. Danh sách đơn hàng
     public function index() {
-        // 1. Lấy các tham số lọc từ URL
         $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $status  = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : '';
         $payment = isset($_GET['payment']) ? $_GET['payment'] : '';

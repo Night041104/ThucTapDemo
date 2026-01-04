@@ -118,19 +118,18 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
 
                 // 4. Kiểm tra xem khách bấm nút nào?
                 if (isset($_POST['buy_now'])) {
-                    // A. Nếu bấm "MUA NGAY" -> Chuyển thẳng đến trang Thanh toán
-                    header("Location: index.php?controller=checkout");
+                    // [FIX] Chuyển hướng thanh toán
+                    header("Location: thanh-toan");
                 } else {
-                    // B. Nếu bấm "THÊM GIỎ" -> Chuyển về trang Giỏ hàng (hoặc ở lại trang cũ tùy bạn)
-                    // Ở đây tôi cho về trang Giỏ hàng để khách nhìn thấy kết quả
-                    header("Location: index.php?controller=cart");
+                    // [FIX] Chuyển hướng giỏ hàng
+                    header("Location: gio-hang");
                 }
                 exit;
             }
         }
         
         // Nếu truy cập trực tiếp link add mà không post gì cả -> Về trang chủ
-        header("Location: index.php");
+        header("Location: trang-chu");
         exit;
     }
 
@@ -149,7 +148,7 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
                 }
             }
         }
-        header("Location: index.php?controller=cart&action=index");
+        header("Location: gio-hang");
         exit;
     }
 
@@ -159,7 +158,7 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
         if ($id > 0) {
             unset($_SESSION['cart'][$id]);
         }
-        header("Location: index.php?controller=cart&action=index");
+        header("Location: gio-hang");
         exit;
     }
     // [MỚI] 1. Xử lý áp dụng mã giảm giá
@@ -167,21 +166,21 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
     public function applyCoupon() {
         // 1. Kiểm tra request
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header("Location: index.php?controller=cart");
+            header("Location: gio-hang");
             exit;
         }
 
         // 2. Kiểm tra giỏ hàng trống
         if (empty($_SESSION['cart'])) {
             $_SESSION['error'] = "Giỏ hàng đang trống, không thể áp dụng mã!";
-            header("Location: index.php?controller=cart");
+            header("Location: gio-hang");
             exit;
         }
 
         $code = trim($_POST['code'] ?? '');
         if (empty($code)) {
             $_SESSION['error'] = "Vui lòng nhập mã giảm giá!";
-            header("Location: index.php?controller=cart");
+            header("Location: gio-hang");
             exit;
         }
 
@@ -233,7 +232,7 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
         }
 
         // 6. Quay lại trang giỏ hàng
-        header("Location: index.php?controller=cart");
+        header("Location: gio-hang");
         exit;
     }
 
@@ -241,7 +240,7 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
     public function removeCoupon() {
         unset($_SESSION['coupon']);
         $_SESSION['success'] = "Đã gỡ bỏ mã giảm giá!";
-        header("Location: index.php?controller=cart");
+        header("Location: gio-hang");
         exit;
     }
 

@@ -9,8 +9,7 @@
     }
     
     $pageTitle = $isEdit ? "Sửa sản phẩm: ". htmlspecialchars($rowProd['name']) : "Tạo sản phẩm mới";
-    $formAction = $isEdit ? "index.php?module=admin&controller=product&action=update&id=".$rowProd['id'] :
-                            "index.php?module=admin&controller=product&action=store";
+    $formAction = $isEdit ? "admin/product/update?id=".$rowProd['id'] : "admin/product/store";
     
     // Nhúng Layout Header
     require_once __DIR__ . '/../layouts/header.php';
@@ -18,7 +17,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-dark mb-0"><?= $pageTitle ?></h3>
-    <a href="index.php?module=admin&controller=product&action=index" class="btn btn-outline-secondary">
+    <a href="admin/product" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>
@@ -32,10 +31,8 @@
 <?php if(!$isEdit): ?>
     <div class="card card-custom mb-4 border-0 shadow-sm">
         <div class="card-body">
-            <form method="GET" action="index.php" class="row align-items-center g-3">
-                <input type="hidden" name="module" value="admin">
-                <input type="hidden" name="controller" value="product">
-                <input type="hidden" name="action" value="create">
+            <form method="GET" action="admin/product/create" class="row align-items-center g-3">
+                
                 
                 <div class="col-auto">
                     <label class="fw-bold text-primary"><i class="fa fa-list me-2"></i>Chọn danh mục sản phẩm:</label>
@@ -217,7 +214,7 @@
                                 <?php foreach($gallery as $img): ?>
                                     <div class="position-relative border rounded overflow-hidden" style="width: 60px; height: 60px;">
                                         <img src="<?= $img['image_url'] ?>" style="width:100%; height:100%; object-fit:cover;">
-                                        <a href="index.php?module=admin&controller=product&action=deleteImage&del_img=<?= $img['id'] ?>&id=<?= $rowProd['id'] ?>" 
+                                        <a href="admin/product/deleteImage?del_img=<?= $img['id'] ?>&id=<?= $rowProd['id'] ?>" 
                                            onclick="return confirm('Xóa ảnh này?')" 
                                            class="position-absolute top-0 end-0 bg-danger text-white d-flex justify-content-center align-items-center" 
                                            style="width: 18px; height: 18px; font-size: 10px; text-decoration: none;">✕</a>

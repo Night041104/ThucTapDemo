@@ -1,17 +1,14 @@
-
-
 <?php if(!empty($products)): ?>
     <div class="products-grid">
         <?php foreach($products as $p): ?>
             <?php 
-                // Logic tính % giảm giá
                 $discountPercent = 0;
                 if (!empty($p['market_price']) && $p['market_price'] > $p['price']) {
                     $discountPercent = round((($p['market_price'] - $p['price']) / $p['market_price']) * 100);
                 }
             ?>
 
-            <a href="index.php?module=client&controller=product&action=detail&id=<?= $p['id'] ?>" class="product-card" title="<?= htmlspecialchars($p['name']) ?>">
+            <a href="san-pham/<?= $p['slug'] ?>.html" class="product-card" title="<?= htmlspecialchars($p['name']) ?>">
                 
                 <?php if($discountPercent > 0): ?>
                     <div class="discount-badge">Giảm <?= $discountPercent ?>%</div>
@@ -23,9 +20,7 @@
                 
                 <div class="prod-info">
                     <div class="prod-brand-tag"><?= htmlspecialchars($p['brand_name'] ?? '') ?></div>
-                    
                     <h3 class="prod-name"><?= htmlspecialchars($p['name']) ?></h3>
-                    
                     <div class="prod-price-box">
                         <div class="prod-price">
                             <?= number_format($p['price'], 0, ',', '.') ?>₫

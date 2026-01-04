@@ -72,7 +72,7 @@ require_once __DIR__ . '/../layouts/header.php';
             </h4>
         </div>
     </div>
-    <a href="index.php?module=admin&controller=product&action=index" class="btn btn-outline-secondary">
+    <a href="admin/product" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>

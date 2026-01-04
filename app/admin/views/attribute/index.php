@@ -41,7 +41,7 @@
         <h4 class="fw-bold text-dark mb-1">Cấu hình Thuộc tính</h4>
         <p class="text-muted small mb-0">Quản lý các đặc tính sản phẩm (Màu sắc, Size, RAM...)</p>
     </div>
-    <a href="index.php?module=admin&controller=attribute&action=create" class="btn btn-primary shadow-sm px-3">
+    <a href="admin/attribute/create" class="btn btn-primary shadow-sm px-3">
         <i class="fa fa-plus-circle me-2"></i>Thêm mới
     </a>
 </div>
@@ -115,11 +115,11 @@
                                     <?= htmlspecialchars($row['opts_list'] ?? '(Chưa có giá trị)') ?>
                                 </td>
                                 <td class="text-end pe-4">
-                                    <a href="index.php?module=admin&controller=attribute&action=edit&id=<?= $row['id'] ?>" 
+                                    <a href="admin/attribute/edit?id=<?= $row['id'] ?>" 
                                        class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Sửa">
                                         <i class="fa fa-pen"></i>
                                     </a>
-                                    <a href="index.php?module=admin&controller=attribute&action=delete&id=<?= $row['id'] ?>" 
+                                    <a href="admin/attribute/delete?id=<?= $row['id'] ?>" 
                                        class="btn btn-sm btn-outline-danger border-0 rounded-circle ms-1" 
                                        onclick="return confirm('⚠️ Cảnh báo: Xóa thuộc tính này có thể ảnh hưởng đến các sản phẩm đang sử dụng nó.\n\nBạn có chắc chắn muốn xóa?')" title="Xóa">
                                         <i class="fa fa-trash"></i>

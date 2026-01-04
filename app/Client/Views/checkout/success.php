@@ -104,12 +104,11 @@
                 (Vui lòng lưu lại mã này để tra cứu tình trạng đơn hàng)
             </div>
         </div>
-
         <div class="btn-group-custom">
-            <a href="index.php" class="btn-home">
+            <a href="trang-chu" class="btn-home">
                 <i class="fa fa-arrow-left me-2"></i> Tiếp tục mua sắm
             </a>
-            <a href="index.php?controller=order&action=history" class="btn-track">
+            <a href="lich-su-don" class="btn-track">
                 Theo dõi đơn hàng <i class="fa fa-arrow-right ms-2"></i>
             </a>
         </div>

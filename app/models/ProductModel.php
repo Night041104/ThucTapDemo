@@ -2,7 +2,12 @@
 require_once __DIR__ . '/BaseModel.php';
 
 class ProductModel extends BaseModel {
-    
+    public function getIdBySlug($slug) {
+        $slug = $this->escape($slug);
+        $result = $this->_query("SELECT id FROM products WHERE slug = '$slug'");
+        $row = mysqli_fetch_assoc($result);
+        return $row ? $row['id'] : 0;
+    }
     // --- CÁC HÀM GET (GIỮ NGUYÊN) ---
     public function getAll($filterMasterId = 0, $keyword = ''){
         $where = "1=1";
@@ -363,6 +368,7 @@ class ProductModel extends BaseModel {
         $masterId = $this->escape($masterId);
         $sql = "SELECT 
                     p.id as product_id,
+                    p.slug,  
                     p.price,
                     p.thumbnail,
                     pav.attribute_id,

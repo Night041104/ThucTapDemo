@@ -240,7 +240,7 @@
             <button type="submit" class="btn-confirm">XÁC NHẬN ĐẶT HÀNG</button>
             
             <div style="text-align: center; margin-top: 15px;">
-                <a href="index.php?controller=cart" style="text-decoration: none; color: #666; font-size: 13px; border-bottom: 1px dashed #999;">
+                <a href="gio-hang" style="text-decoration: none; color: #666; font-size: 13px; border-bottom: 1px dashed #999;">
                     <i class="fa fa-arrow-left"></i> Quay lại giỏ hàng
                 </a>
             </div>

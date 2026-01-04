@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../models/CategoryModel.php';
 require_once __DIR__ . '/../../models/AttributeModel.php';
 require_once __DIR__ . '/../../models/BrandModel.php';
 require_once __DIR__ . '/../../models/ProductLogModel.php';
+
 class ProductController {
     private $prodModel;
     private $cateModel;
@@ -11,21 +12,33 @@ class ProductController {
     private $brandModel;
     private $logModel;
     private $uploadDir = 'uploads/products/';
+    private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
+        // 1. Tính toán Base URL để dùng cho redirect
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']);
+        $this->baseUrl = $protocol . $domainName . $path;
+
+        // 2. Kiểm tra quyền Admin
         if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
-        header("Location: index.php?module=client&controller=auth&action=login");
-        exit;
-    }
+            // Redirect về trang đăng nhập Client
+            header("Location: " . $this->baseUrl . "dang-nhap");
+            exit;
+        }
+
         $this->prodModel = new ProductModel();
         $this->cateModel = new CategoryModel();
         $this->attrModel = new AttributeModel();
         $this->brandModel = new BrandModel(); 
         $this->logModel  = new ProductLogModel();
+        
         if (!is_dir($this->uploadDir)) {
             mkdir($this->uploadDir, 0777, true);
         }
     }
+
     // =======================================================
     // 1. INDEX
     // =======================================================
@@ -36,7 +49,7 @@ class ProductController {
         $products = $this->prodModel->getAll($filterMasterId, $keyword);
         $masters  = $this->prodModel->getMasters();
         
-        // [MỚI] Lấy danh sách ID thuộc tính biến thể để lọc hiển thị
+        // Lấy danh sách ID thuộc tính biến thể để lọc hiển thị
         $variantIds = $this->prodModel->getVariantAttributeIds();
 
         require __DIR__ . '/../views/product/index.php';
@@ -46,7 +59,8 @@ class ProductController {
         if (isset($_GET['id'])) {
             $this->prodModel->deleteWithInheritance($_GET['id']);
         }
-        header("Location: index.php?module=admin&controller=product&action=index&msg=deleted");
+        // [FIX URL] Về trang danh sách
+        header("Location: " . $this->baseUrl . "admin/product?msg=deleted");
         exit;
     }
 
@@ -57,17 +71,12 @@ class ProductController {
         $categories = $this->cateModel->getAll();
         $selectedCateId = $_GET['cate_id'] ?? 0;
         
-        // [THAY ĐỔI] Chỉ lấy brands thuộc danh mục đã chọn
+        // Chỉ lấy brands thuộc danh mục đã chọn
         $brands = [];
         if ($selectedCateId) {
             $brands = $this->brandModel->getByCategoryId($selectedCateId);
-        } else {
-            // Nếu chưa chọn danh mục thì ko hiện brand nào (hoặc hiện hết tùy logic của bạn)
-            // Tốt nhất là để rỗng để ép người dùng chọn danh mục trước
-            $brands = []; 
         }
         
-        $selectedCateId = $_GET['cate_id'] ?? 0;
         $template = [];
         if ($selectedCateId) {
             $cate = $this->cateModel->getById($selectedCateId);
@@ -81,25 +90,29 @@ class ProductController {
         foreach($attrs as $a) $attrConfigs[$a['id']] = $a['is_customizable'];
         $allAttributeOptions = $this->attrModel->getAllOptionsGrouped();
         $variantIds = $this->prodModel->getVariantAttributeIds();
+        
         require __DIR__ . '/../views/product/form.php';
     }
 
     public function store() {
         if (isset($_POST['btn_save_product'])) {
             $nameRaw = trim($_POST['name']);
-            //Validate  dữ liệu đầu vào
+            // Validate
             $error =  null;
             if(empty($nameRaw)) {
                 $error = "❌ Tên sản phẩm không được để trống!";
             } elseif (empty($_FILES['thumbnail']['name'])) {
                 $error = "❌ Thiếu ảnh Thumbnail";
-            } elseif  (empty($_FILES['gallery']['name'][0])){
+            } elseif (empty($_FILES['gallery']['name'][0])){
                 $error = "❌ Bắt buộc phải có ít nhất một ảnh Gallery";
             }
+            
             if($error){
-                header("Location: index.php?module=admin&controller=product&action=create&cate_id=".$_POST['cate_id']."&msg=".urlencode($error));
+                // [FIX URL] Redirect lại trang Create kèm lỗi
+                header("Location: " . $this->baseUrl . "admin/product/create?cate_id=".$_POST['cate_id']."&msg=".urlencode($error));
                 exit;
             }
+
             // 1. Slug & SKU
             $baseSlug = $this->prodModel->createSlug($nameRaw);
             $finalSlug = $baseSlug;
@@ -108,19 +121,18 @@ class ProductController {
             }
             $sku = 'SP-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
 
-            // 2. Upload Thumbnail (Dùng hàm processUpload cho gọn)
+            // 2. Upload Thumbnail
             $thumbnailPath = "";
             if (!empty($_FILES['thumbnail']['name'])) {
                 $thumbnailPath = $this->processUpload($_FILES['thumbnail'], $finalSlug, 'thumb');
             }
 
-            // 3. Xử lý Specs (Validation nằm trong này)
+            // 3. Xử lý Specs
             $specsData = $this->helperProcessSpecs($_POST);
             
-            // --> KIỂM TRA LỖI TRÙNG <--
             if (isset($specsData['error'])) {
-                if ($thumbnailPath && file_exists($thumbnailPath)) unlink($thumbnailPath); // Xóa ảnh rác
-                header("Location: index.php?module=admin&controller=product&action=create&msg=" . urlencode("❌ " . $specsData['error']));
+                if ($thumbnailPath && file_exists($thumbnailPath)) unlink($thumbnailPath); 
+                header("Location: " . $this->baseUrl . "admin/product/create?msg=" . urlencode("❌ " . $specsData['error']));
                 exit;
             }
 
@@ -138,14 +150,13 @@ class ProductController {
             $newId = $this->prodModel->create($data);
 
             if ($newId) {
-                // Save EAV
                 foreach ($specsData['eav'] as $eav) {
                     $this->prodModel->addAttributeValue($newId, $eav['attr_id'], $eav['opt_id'], $eav['val']);
                 }
-                // Upload Gallery
                 $this->helperUploadGallery($newId, $finalSlug);
 
-                header("Location: index.php?module=admin&controller=product&action=index&msg=created");
+                // [FIX URL] Về trang danh sách
+                header("Location: " . $this->baseUrl . "admin/product?msg=created");
                 exit;
             }
         }
@@ -178,6 +189,7 @@ class ProductController {
             $selectedOptions[$e['attribute_id']] = $e['option_id'];
         }
         $variantIds = $this->prodModel->getVariantAttributeIds();
+        
         require __DIR__ . '/../views/product/form.php';
     }
 
@@ -197,7 +209,6 @@ class ProductController {
                 }
             }
 
-            // [SỬA LỖI]: Không dùng unlink ở đây. Chỉ upload ảnh mới.
             $thumbnailPath = $oldProd['thumbnail'];
             if (!empty($_FILES['thumbnail']['name'])) {
                 $thumbnailPath = $this->processUpload($_FILES['thumbnail'], $finalSlug, 'thumb');
@@ -207,9 +218,10 @@ class ProductController {
 
             if (isset($specsData['error'])) {
                 if (!empty($_FILES['thumbnail']['name']) && file_exists($thumbnailPath)) {
-                    unlink($thumbnailPath); // Chỉ xóa ảnh MỚI vừa upload nếu có lỗi form
+                    unlink($thumbnailPath); 
                 }
-                header("Location: index.php?module=admin&controller=product&action=edit&id=$id&msg=" . urlencode("❌ " . $specsData['error']));
+                // [FIX URL] Redirect về trang Edit
+                header("Location: " . $this->baseUrl . "admin/product/edit?id=$id&msg=" . urlencode("❌ " . $specsData['error']));
                 exit;
             }
 
@@ -222,13 +234,8 @@ class ProductController {
                 'quantity' => $_POST['quantity'], 'status' => $_POST['status']
             ];
             
-            // 1. Cập nhật DB
             $this->prodModel->update($id, $data);
 
-            // 2. [SỬA LỖI] Dọn dẹp file cũ SAU KHI update DB
-            // Lúc này SP hiện tại đã trỏ sang ảnh mới (hoặc vẫn ảnh cũ)
-            // Nếu đã trỏ sang ảnh mới, ta check xem ảnh cũ ($oldProd['thumbnail']) còn ai dùng ko.
-            // Vì ta đã update DB xong, nên count của ảnh cũ sẽ giảm đi 1. Nếu count = 0 -> Xóa.
             if (!empty($_FILES['thumbnail']['name']) && !empty($oldProd['thumbnail'])) {
                 $this->prodModel->cleanupFile($oldProd['thumbnail']);
             }
@@ -241,7 +248,9 @@ class ProductController {
             $this->helperUploadGallery($id, $finalSlug);
             $this->prodModel->syncFamilyData($id, $oldProd['parent_id'], $data, $specsData['eav']);
             $this->logModel->logHistory($id, $oldProd, $data);
-            header("Location: index.php?module=admin&controller=product&action=edit&id=$id&msg=updated");
+            
+            // [FIX URL]
+            header("Location: " . $this->baseUrl . "admin/product/edit?id=$id&msg=updated");
             exit;
         }
     }
@@ -250,7 +259,8 @@ class ProductController {
         if (isset($_GET['del_img'])) {
             $this->prodModel->deleteImage($_GET['del_img']);
             $id = $_GET['id'];
-            header("Location: index.php?module=admin&controller=product&action=edit&id=$id");
+            // [FIX URL]
+            header("Location: " . $this->baseUrl . "admin/product/edit?id=$id");
             exit;
         }
     }
@@ -264,7 +274,6 @@ class ProductController {
             $source = $this->prodModel->getById($sourceId);
 
             if ($source) {
-                // Logic: Clone ra anh em (cùng cha) hoặc con (nếu clone từ cha)
                 $masterId = ($source['parent_id'] == 0 || $source['parent_id'] == NULL) ? $source['id'] : $source['parent_id'];
                 
                 $newName = $source['name'] . " (Copy)";
@@ -278,7 +287,7 @@ class ProductController {
                     'slug' => $newSlug,
                     'category_id' => $source['category_id'], 
                     'brand_id' => $source['brand_id'],
-                    'thumbnail' => $source['thumbnail'], // Kế thừa Thumbnail
+                    'thumbnail' => $source['thumbnail'], 
                     'specs_json' => $source['specs_json'],
                     'price' => (int)$source['price'], 
                     'market_price' => (int)$source['market_price'],
@@ -289,31 +298,28 @@ class ProductController {
                 $newId = $this->prodModel->create($data);
                 
                 if ($newId) {
-                    // 1. Copy EAV
                     $eavs = $this->prodModel->getAttributeValues($sourceId);
                     foreach($eavs as $eav) {
                         $this->prodModel->addAttributeValue($newId, $eav['attribute_id'], $eav['option_id'], $eav['value_custom']);
                     }
                     
-                    // 2. Copy Gallery (KẾ THỪA ẢNH TỪ NGUỒN)
-                    // Lấy toàn bộ ảnh của sản phẩm nguồn
                     $rsGal = $this->prodModel->getGallery($sourceId);
                     foreach($rsGal as $img) {
-                        // Thêm dòng mới vào DB cho sản phẩm mới, dùng chung URL ảnh
                         $this->prodModel->addImage($newId, $img['image_url']);
                     }
 
-                    header("Location: index.php?module=admin&controller=product&action=edit&id=$newId&msg=cloned");
+                    // [FIX URL]
+                    header("Location: " . $this->baseUrl . "admin/product/edit?id=$newId&msg=cloned");
                     exit;
                 }
             }
         }
     }
+
     // =======================================================
-    // HELPERS
+    // HELPERS (Giữ nguyên logic cũ)
     // =======================================================
 
-    // [MỚI] Hàm xử lý upload tập trung (để tránh lặp code)
     private function processUpload($file, $slug, $suffix = '') {
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $newFileName = $slug . ($suffix ? "-$suffix" : "") . "-" . time() . rand(10,99) . "." . $extension;
@@ -325,13 +331,11 @@ class ProductController {
         return "";
     }
 
-    // Helper upload Gallery (Sử dụng processUpload)
     private function helperUploadGallery($prodId, $slug) {
         if (isset($_FILES['gallery']['name'])) {
             $count = count($_FILES['gallery']['name']);
             for ($i = 0; $i < $count; $i++) {
                 if ($_FILES['gallery']['name'][$i] != '') {
-                    // Giả lập mảng file đơn
                     $fileItem = [
                         'name' => $_FILES['gallery']['name'][$i],
                         'tmp_name' => $_FILES['gallery']['tmp_name'][$i]
@@ -346,15 +350,11 @@ class ProductController {
         }
     }
 
-    // [SỬA LỖI] Helper xử lý Specs: Check trùng cả Tên và ID
-// [ĐÃ SỬA] Logic Helper Specs
     private function helperProcessSpecs($postData) {
         $specsForJson = []; 
         $eavData = [];
         
-        $seenAttributes = []; 
-        $seenNames = [];      
-
+        // (Logic xử lý Specs của bạn giữ nguyên, không thay đổi)
         if (isset($postData['spec_group'])) {
             foreach ($postData['spec_group'] as $gKey => $groupName) {
                 $groupItems = [];
@@ -363,9 +363,6 @@ class ProductController {
                         $itemName = trim($itemName);
                         if ($itemName === '') continue;
                         
-                        // ... (Giữ nguyên đoạn check trùng tên/ID) ...
-                        // (Copy lại đoạn check trùng từ code cũ của bạn vào đây)
-
                         $type = $postData['spec_item'][$gKey]['type'][$iKey];
                         $valId = $postData['spec_item'][$gKey]['value_id'][$iKey] ?? '';
                         $valCust = $postData['spec_item'][$gKey]['value_custom'][$iKey] ?? '';
@@ -378,12 +375,10 @@ class ProductController {
                             $jsonValue = $valText;
                         } 
                         elseif ($type == 'attribute') {
-                            // LOGIC MỚI:
-                            // 1. JSON Value (Hiển thị): Ưu tiên Custom Text ("Đỏ đô"). 
-                            // Nếu ko nhập custom thì mới lấy Text của Dropdown ("Đỏ")
                             if ($valCust !== '') {
                                 $jsonValue = $valCust;
                             } elseif ($valId) {
+                                // Kết nối DB thủ công để lấy giá trị option nếu cần
                                 $conn = Database::getInstance()->conn;
                                 $rO = mysqli_fetch_assoc(mysqli_query($conn, "SELECT value FROM attribute_options WHERE id=".(int)$valId));
                                 if($rO) $jsonValue = $rO['value'];
@@ -395,7 +390,6 @@ class ProductController {
                                 'name' => $itemName, 'value' => $jsonValue, 
                                 'type' => $type, 'attr_id' => $attrId
                             ];
-                            // EAV lưu ID để lọc (valId) và Text hiển thị (jsonValue)
                             if ($type == 'attribute' && ($valId || $jsonValue)) {
                                 $eavData[] = ['attr_id' => $attrId, 'opt_id' => $valId, 'val' => $jsonValue];
                             }
@@ -407,13 +401,13 @@ class ProductController {
         }
         return ['json' => $specsForJson, 'eav' => $eavData];
     }
+
     public function history() {
         $masterId = isset($_GET['master_id']) ? (int)$_GET['master_id'] : 0;
         
         $masterProd = $this->prodModel->getById($masterId);
         $logs = $this->logModel->getLogsByFamily($masterId);
 
-        // Lấy danh sách Brand/Cate để map tên
         $brands = $this->brandModel->getAll(); 
         $cates  = $this->cateModel->getAll();
 
@@ -423,7 +417,6 @@ class ProductController {
         $catesMap = [];
         if ($cates) foreach($cates as $c) $catesMap[$c['id']] = $c['name'];
 
-        // [MỚI] Lấy danh sách ID thuộc tính biến thể (Màu, ROM...) để View xử lý hiển thị
         $variantIds = $this->prodModel->getVariantAttributeIds();
 
         require __DIR__ . '/../views/product/history.php';

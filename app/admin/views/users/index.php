@@ -53,15 +53,12 @@
         <h4 class="fw-bold text-dark mb-1">Quản lý Thành viên</h4>
         <p class="text-muted small mb-0">Danh sách tài khoản và phân quyền hệ thống</p>
     </div>
-    </div>
+</div>
 
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3 border-bottom-0">
         <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
-            <input type="hidden" name="module" value="admin">
-            <input type="hidden" name="controller" value="user">
-            <input type="hidden" name="action" value="index">
-
+            
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
@@ -115,7 +112,7 @@
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
                                         <?php 
-                                            $defaultAvt = 'uploads/default/default_avt.png';
+                                            $defaultAvt = 'public/uploads/default/default_avt.png';
                                             $avt = !empty($u['avatar']) ? $u['avatar'] : $defaultAvt;
                                         ?>
                                         <div class="position-relative">
@@ -159,13 +156,13 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
                                             <li>
-                                                <a class="dropdown-item" href="index.php?module=admin&controller=user&action=edit&id=<?= $u['id'] ?>">
+                                                <a class="dropdown-item" href="admin/user/edit?id=<?= $u['id'] ?>">
                                                     <i class="fa fa-user-shield text-primary me-2"></i> Phân quyền
                                                 </a>
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
                                             <li>
-                                                <a class="dropdown-item text-danger" href="index.php?module=admin&controller=user&action=delete&id=<?= $u['id'] ?>" 
+                                                <a class="dropdown-item text-danger" href="admin/user/delete?id=<?= $u['id'] ?>" 
                                                    onclick="return confirm('⚠️ CẢNH BÁO: Xóa user này sẽ mất toàn bộ dữ liệu đơn hàng liên quan.\n\nBạn có chắc chắn muốn xóa?')">
                                                     <i class="fa fa-trash me-2"></i> Xóa tài khoản
                                                 </a>
@@ -198,7 +195,8 @@
             const formData = new FormData(form);
             const params = new URLSearchParams(formData);
             
-            fetch('index.php?' + params.toString())
+            // [FIX AJAX] Gọi về admin/user
+            fetch('admin/user?' + params.toString())
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
