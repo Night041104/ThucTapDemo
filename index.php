@@ -18,6 +18,7 @@ $staticRoutes = [
     'gio-hang'           => ['cart', 'index'],
     // 'thanh-toan'         => ['cart', 'checkout'],
     'lich-su-don'        => ['order', 'history'],
+    // 'chi-tiet-don'        => ['order', 'detail'],
     'tim-kiem'           => ['product', 'search'], 
     'quen-mat-khau'      => ['auth', 'forgotPassword'],
     // [SỬA/THÊM] Trỏ 'thanh-toan' về CheckoutController -> index
@@ -51,6 +52,11 @@ elseif (preg_match('#^san-pham/(.+?)(\.html)?$#', $url, $matches)) {
     $controllerName = 'product';
     $actionName = 'detail';
     $_GET['slug'] = $matches[1];
+}
+elseif (preg_match('#^chi-tiet-don/([0-9]+)$#', $url, $matches)) {
+    $controllerName = 'order';
+    $actionName = 'detail';
+    $_GET['id'] = $matches[1]; // Lấy số ID từ URL đưa vào biến $_GET['id']
 }
 // 4. KHU VỰC ADMIN & CÁC LINK KHÁC
 elseif (strpos($url, 'admin') === 0) {

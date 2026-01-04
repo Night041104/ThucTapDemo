@@ -1,16 +1,23 @@
 <?php
 // Load Model & Helper
 require_once __DIR__ . '/../../models/OrderModel.php';
-require_once __DIR__ . '/../../Helpers/GhnHelper.php'; // [QUAN TRỌNG] Load Helper GHN
+require_once __DIR__ . '/../../Helpers/GhnHelper.php';
 
 class OrderController {
     private $orderModel;
     private $baseUrl; // Biến lưu đường dẫn gốc
 
     public function __construct() {
-        // Kiểm tra quyền Admin
+        // 1. Tính toán Base URL
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']);
+        $this->baseUrl = $protocol . $domainName . $path;
+
+        // 2. Kiểm tra quyền Admin
         if (!isset($_SESSION['user']) || $_SESSION['user']['role_id'] != 1) {
-            header("Location: index.php?module=client&controller=auth&action=login");
+            // [FIX URL] Redirect về trang đăng nhập client chuẩn xác
+            header("Location: " . $this->baseUrl . "dang-nhap");
             exit;
         }
         $this->orderModel = new OrderModel();
@@ -22,10 +29,10 @@ class OrderController {
         $status  = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : '';
         $payment = isset($_GET['payment']) ? $_GET['payment'] : '';
 
-        // 2. Gọi Model
+        // Gọi Model
         $orders = $this->orderModel->getAllOrders($keyword, $status, $payment);
 
-        // 3. Truyền biến ra View
+        // Truyền biến ra View
         require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/order/index.php';
         require_once __DIR__ . '/../Views/layouts/footer.php';
@@ -37,16 +44,17 @@ class OrderController {
         $data = $this->orderModel->getOrderDetail($id);
 
         if (!$data) {
-            echo "Đơn hàng không tồn tại!"; // Nên thay bằng trang 404 đẹp hơn nếu có
+            // Có thể redirect về trang danh sách hoặc báo lỗi
+            echo "<script>alert('Đơn hàng không tồn tại!'); window.location.href='" . $this->baseUrl . "admin/order';</script>";
             exit;
         }
 
         $order = $data['info'];
         $items = $data['items'];
 
-        require_once __DIR__ . '/../Views/layouts/header.php'; // Đảm bảo có header
-        require __DIR__ . '/../Views/order/detail.php';
-        require_once __DIR__ . '/../Views/layouts/footer.php'; // Đảm bảo có footer
+        require_once __DIR__ . '/../Views/layouts/header.php';
+        require_once __DIR__ . '/../Views/order/detail.php';
+        require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 
     // 3. Xử lý cập nhật trạng thái (CÓ TÍCH HỢP GHN)
@@ -85,8 +93,6 @@ class OrderController {
                         // B. Lưu mã vận đơn vào Database
                         $this->orderModel->updateTrackingCode($orderId, $trackingCode);
                         
-                        // (Tùy chọn) Có thể lưu thông báo vào session để hiện sau khi reload
-                        // $_SESSION['success'] = "Tạo đơn GHN thành công: " . $trackingCode;
                     } else {
                         // C. Thất bại: Trả về lỗi ngay lập tức
                         $msg = $result['message'] ?? $result['code_message_value'] ?? 'Lỗi không xác định từ GHN';
@@ -105,7 +111,7 @@ class OrderController {
             // Gọi Model cập nhật trạng thái đơn hàng
             $result = $this->orderModel->updateStatus($orderId, $status);
 
-            if ($result === true) { // Chú ý so sánh === true vì updateStatus có thể trả về string lỗi
+            if ($result === true) { 
                 echo json_encode(['status' => 'success', 'message' => 'Cập nhật trạng thái thành công!']);
             } else {
                 // Trường hợp lỗi logic kho hàng (hàm updateStatus trả về chuỗi lỗi)
