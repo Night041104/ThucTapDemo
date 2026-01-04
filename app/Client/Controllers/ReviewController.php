@@ -9,42 +9,70 @@ class ReviewController {
     }
 
     public function submit() {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
-        $userId = $_SESSION['user']['id'];
-        $productId = $_POST['product_id'];
-        $rating = $_POST['rating'];
-        $comment = trim($_POST['comment']);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
+            $userId = $_SESSION['user']['id'];
+            $productId = $_POST['product_id'];
+            $rating = $_POST['rating'];
+            $comment = trim($_POST['comment']);
 
-        // --- BẮT ĐẦU PHẦN SỬA ---
-        // Gọi hàm getRootProductId từ Model để lấy ID cha (Parent ID)
-        // Nếu là sản phẩm cha, nó trả về chính nó. Nếu là con, nó trả về ID cha.
-        $rootProductId = $this->reviewModel->getRootProductId($productId);
-        // --- KẾT THÚC PHẦN SỬA ---
+            $rootProductId = $this->reviewModel->getRootProductId($productId);
+            $existingReview = $this->reviewModel->getUserReview($userId, $rootProductId);
 
-        // 1. Kiểm tra đánh giá dựa trên $rootProductId (ID cha)
-        $existingReview = $this->reviewModel->getUserReview($userId, $rootProductId);
+            if ($existingReview) {
+                // Thực hiện SỬA
+                $this->reviewModel->updateReview($existingReview['id'], $rating, $comment);
+                $_SESSION['success'] = "Cập nhật đánh giá thành công!";
+            } else {
+                // Thực hiện THÊM MỚI
+                $this->reviewModel->insertReview($userId, $rootProductId, $rating, $comment);
+                $_SESSION['success'] = "Cảm ơn bạn đã đánh giá sản phẩm!";
+            }
 
-        if ($existingReview) {
-            // 2. Nếu có rồi -> CẬP NHẬT
-            $this->reviewModel->updateReview($existingReview['id'], $rating, $comment);
-            $_SESSION['success'] = "Đã cập nhật đánh giá của bạn!";
-        } else {
-            // 3. Nếu chưa có -> THÊM MỚI (Lưu vào database với ID cha)
-            $this->reviewModel->insertReview($userId, $rootProductId, $rating, $comment);
-            $_SESSION['success'] = "Cảm ơn bạn đã đánh giá sản phẩm!";
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
         }
+    }
 
-        header("Location: " . $_SERVER['HTTP_REFERER']);
-        exit;
+    public function edit() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SESSION['user'])) {
+            $reviewId = $_POST['review_id']; // Cần gửi thêm ID này từ form
+            $userId = $_SESSION['user']['id'];
+            $rating = $_POST['rating'];
+            $comment = trim($_POST['comment']);
+
+            // Kiểm tra quyền sở hữu trước khi cho sửa
+            $review = $this->reviewModel->getReviewById($reviewId);
+            if ($review && $review['user_id'] == $userId) {
+                $this->reviewModel->updateReview($reviewId, $rating, $comment);
+                $_SESSION['success'] = "Cập nhật đánh giá thành công!";
+            } else {
+                $_SESSION['error'] = "Bạn không có quyền sửa đánh giá này!";
+            }
+
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+            exit;
         }
     }
 
     public function delete() {
         $id = $_GET['id'] ?? 0;
-        // Kiểm tra quyền (phải là chủ sở hữu hoặc admin)
-        // ... (logic kiểm tra giống UserController bạn đã gửi)
-        $this->reviewModel->deleteReview($id);
+        
+        // Bước 1: Phải đăng nhập mới được xóa
+        if (!isset($_SESSION['user'])) {
+            header("Location: index.php?controller=auth&action=login");
+            exit;
+        }
+
+        // Bước 2: Lấy thông tin bài review để kiểm tra chủ sở hữu
+        $review = $this->reviewModel->getReviewById($id); 
+
+        // Bước 3: CHỈ xóa nếu đúng là người đó viết bài đó
+        // (Đây là logic bảo mật cho Client, khác với file Admin)
+        if ($review && $review['user_id'] == $_SESSION['user']['id']) {
+            $this->reviewModel->deleteReview($id);
+        }
+
         header("Location: " . $_SERVER['HTTP_REFERER']);
+        exit;
     }
-    
 }

@@ -17,14 +17,22 @@ class ReviewModel extends BaseModel {
     }
     
     // Lấy danh sách đánh giá của sản phẩm (kèm tên user và phản hồi của admin)
-    public function getReviewsByProduct($productId) {
-        $parentId = $this->getRootProductId((int)$productId); // Luôn đưa về ID cha
-    
+    // Thêm tham số mặc định $ratingFilter = null
+    public function getReviewsByProduct($productId, $ratingFilter = 0) {
+        $parentId = $this->getRootProductId((int)$productId); 
+
+        // Bắt đầu câu SQL cơ bản
         $sql = "SELECT r.*, u.fname, u.lname 
                 FROM product_reviews r
                 JOIN users u ON r.user_id = u.id
-                WHERE r.product_id = $parentId
-                ORDER BY r.created_at DESC";
+                WHERE r.product_id = $parentId";
+
+        if ($ratingFilter > 0) {
+            $sql .= " AND r.rating = " . (int)$ratingFilter;
+        }
+
+        // Nối tiếp phần sắp xếp
+        $sql .= " ORDER BY r.created_at DESC";
                 
         $result = $this->_query($sql);
         $reviews = $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
@@ -104,5 +112,11 @@ class ReviewModel extends BaseModel {
         $sql = "INSERT INTO review_replies (review_id, user_id, reply_content, created_at) 
                 VALUES ($reviewId, '$userId', '$content', NOW())";
         return $this->_query($sql);
+    }
+    public function getReviewById($id) {
+        $id = (int)$id;
+        $sql = "SELECT * FROM product_reviews WHERE id = $id";
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_assoc($result) : null;
     }
 }
