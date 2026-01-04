@@ -62,11 +62,21 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Họ (Last Name)</label>
-                            <input type="text" name="lname" class="form-control" value="<?= htmlspecialchars($user['lname']) ?>" required>
+                            <input type="text" name="lname" class="form-control"
+                            value="<?= htmlspecialchars($user['lname']) ?>"
+                            required
+                            pattern="[A-Za-zÀ-ỹ\s]+"
+                            title="Họ không được chứa số hoặc ký tự đặc biệt">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Tên (First Name)</label>
-                            <input type="text" name="fname" class="form-control" value="<?= htmlspecialchars($user['fname']) ?>" required>
+                            <input type="text" name="fname" class="form-control"
+                               value="<?= htmlspecialchars($user['fname']) ?>"
+                               required
+                               pattern="[A-Za-zÀ-ỹ\s]+"
+                               title="Tên không được chứa số hoặc ký tự đặc biệt">
+
+
                         </div>
                         
                         <div class="col-md-6">
@@ -75,7 +85,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Số điện thoại</label>
-                            <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
+                            <input type="text" name="phone" class="form-control"
+       value="<?= htmlspecialchars($user['phone'] ?? '') ?>"
+       pattern="[0-9]{9,11}"
+       title="Số điện thoại chỉ được chứa số (9–11 chữ số)">
+
                         </div>
 
                         <div class="col-12 mt-4">
