@@ -70,37 +70,48 @@
 
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3 border-bottom-0">
-        <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
-            
-            <div class="col-md-5">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
-                    <input type="text" name="q" id="keyword" 
-                           value="<?= htmlspecialchars($keyword ?? '') ?>" 
-                           class="form-control bg-light border-start-0" 
-                           placeholder="Tìm theo tên sản phẩm, mã SKU...">
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <select name="master_id" id="master_id" class="form-select bg-light">
-                    <option value="0">-- Tất cả dòng sản phẩm --</option>
-                    <?php foreach($masters as $m): ?>
-                        <option value="<?= $m['id'] ?>" <?= (isset($filterMasterId) && $filterMasterId == $m['id']) ? 'selected' : '' ?>>
-                            <?= $m['name'] ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+       <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
+    
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+            <input type="text" name="q" id="keyword" 
+                   value="<?= htmlspecialchars($keyword ?? '') ?>" 
+                   class="form-control bg-light border-start-0" 
+                   placeholder="Tìm tên SP, SKU...">
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <select name="cate_id" id="cate_id" class="form-select bg-light">
+            <option value="0">-- Tất cả danh mục --</option>
+            <?php foreach($categories as $c): ?>
+                <option value="<?= $c['id'] ?>" <?= (isset($filterCateId) && $filterCateId == $c['id']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($c['name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 
-            <div class="col-md-auto d-flex align-items-center gap-2">
-                <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
-                
-                <a href="admin/product" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
-                    <i class="fa fa-times"></i>
-                </a>
-            </div>
-        </form>
+    <div class="col-md-3">
+        <select name="master_id" id="master_id" class="form-select bg-light">
+            <option value="0">-- Tất cả dòng SP --</option>
+            <?php foreach($masters as $m): ?>
+                <option value="<?= $m['id'] ?>" <?= (isset($filterMasterId) && $filterMasterId == $m['id']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($m['name']) ?> 
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="col-md-auto d-flex align-items-center gap-2">
+        <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
+        
+        <button type="button" id="btnClearFilter" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
+            <i class="fa fa-times"></i>
+        </button>
+    </div>  
+</form>
     </div>
 
     <div class="card-body p-0">
@@ -235,31 +246,24 @@
         const inputs = form.querySelectorAll('input, select');
         const spinner = document.getElementById('loadingSpinner');
         const tableBody = document.getElementById('productTableBody');
+        const btnClear = document.getElementById('btnClearFilter'); // [MỚI]
         let timeout = null;
 
         function fetchProducts() {
             spinner.classList.remove('d-none');
-            
-            // 1. Tạo URL query từ form
             const formData = new FormData(form);
             const params = new URLSearchParams(formData);
             
-            // 2. [FIX AJAX] Gọi về admin/product (dùng đường dẫn tương đối hoặc tuyệt đối có Base URL)
             fetch('admin/product?' + params.toString())
                 .then(response => response.text())
                 .then(html => {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     const newTbody = doc.getElementById('productTableBody');
-                    
-                    if(newTbody) {
-                        tableBody.innerHTML = newTbody.innerHTML;
-                    }
+                    if(newTbody) tableBody.innerHTML = newTbody.innerHTML;
                 })
                 .catch(err => console.error(err))
-                .finally(() => {
-                    spinner.classList.add('d-none');
-                });
+                .finally(() => spinner.classList.add('d-none'));
         }
 
         inputs.forEach(input => {
@@ -273,6 +277,23 @@
                 input.addEventListener('change', fetchProducts);
             }
         });
+
+        // [MỚI] Xử lý sự kiện nút Xóa lọc (AJAX)
+        if (btnClear) {
+            btnClear.addEventListener('click', function() {
+                // 1. Reset giá trị các ô input/select về mặc định
+                const keyword = document.getElementById('keyword');
+                const cateSelect = document.getElementById('cate_id');
+                const masterSelect = document.getElementById('master_id');
+
+                if (keyword) keyword.value = '';
+                if (cateSelect) cateSelect.value = '0';
+                if (masterSelect) masterSelect.value = '0';
+
+                // 2. Gọi hàm fetch để tải lại danh sách
+                fetchProducts();
+            });
+        }
     });
 </script>
 

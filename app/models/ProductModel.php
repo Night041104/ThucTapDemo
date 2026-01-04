@@ -9,22 +9,38 @@ class ProductModel extends BaseModel {
         return $row ? $row['id'] : 0;
     }
     // --- CÁC HÀM GET (GIỮ NGUYÊN) ---
-    public function getAll($filterMasterId = 0, $keyword = ''){
+    // File: models/ProductModel.php
+    
+    // [CẬP NHẬT] Thêm tham số $filterCateId vào hàm getAll
+    public function getAll($filterMasterId = 0, $keyword = '', $filterCateId = 0){
         $where = "1=1";
+        
+        // 1. Lọc theo Master ID (Giữ nguyên)
         if($filterMasterId > 0) {
-            $fid = $this -> escape($filterMasterId);
+            $fid = $this->escape($filterMasterId);
             $where .= " AND (p.id = '$fid' or p.parent_id = '$fid')"; 
         }
+
+        // 2. [MỚI] Lọc theo Category ID
+        if($filterCateId > 0) {
+            $cid = $this->escape($filterCateId);
+            $where .= " AND p.category_id = '$cid'"; 
+        }
+
+        // 3. Lọc theo Keyword (Giữ nguyên)
         if($keyword) {
-            $kw = $this -> escape($keyword);
+            $kw = $this->escape($keyword);
             $where .= " AND (p.name LIKE '%$kw%' OR p.sku LIKE '%$kw%')"; 
         }
+
+        // Câu lệnh SQL (Giữ nguyên)
         $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE $where
                 ORDER BY IF (p.parent_id = 0, p.id, p.parent_id) DESC, p.id ASC";
+                
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : []; 
     }

@@ -42,14 +42,22 @@ class ProductController {
     // =======================================================
     // 1. INDEX
     // =======================================================
-    public function index() {
-        $filterMasterId = isset($_GET['master_id']) ? $_GET['master_id'] : 0;
-        $keyword = isset($_GET['q']) ? $_GET['q'] : '';
+    // File: app/admin/controllers/ProductController.php
 
-        $products = $this->prodModel->getAll($filterMasterId, $keyword);
-        $masters  = $this->prodModel->getMasters();
+    public function index() {
+        // 1. Lấy tham số từ URL
+        $filterMasterId = isset($_GET['master_id']) ? $_GET['master_id'] : 0;
+        $filterCateId   = isset($_GET['cate_id'])   ? $_GET['cate_id']   : 0; // [MỚI]
+        $keyword        = isset($_GET['q'])         ? $_GET['q']         : '';
+
+        // 2. Gọi Model lấy danh sách sản phẩm (Truyền thêm $filterCateId)
+        $products = $this->prodModel->getAll($filterMasterId, $keyword, $filterCateId);
         
-        // Lấy danh sách ID thuộc tính biến thể để lọc hiển thị
+        // 3. Lấy dữ liệu cho các bộ lọc
+        $masters    = $this->prodModel->getMasters();
+        $categories = $this->cateModel->getAll(); // [MỚI] Lấy danh sách danh mục
+        
+        // 4. Các biến phụ khác (Giữ nguyên)
         $variantIds = $this->prodModel->getVariantAttributeIds();
 
         require __DIR__ . '/../views/product/index.php';
