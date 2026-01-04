@@ -3,7 +3,7 @@
         <h4 class="fw-bold text-dark mb-1">Quản lý Mã Giảm Giá</h4>
         <p class="text-muted small mb-0">Tạo và quản lý các chương trình khuyến mãi</p>
     </div>
-    <a href="index.php?module=admin&controller=coupon&action=create" class="btn btn-primary btn-sm shadow-sm">
+    <a href="admin/coupon/create" class="btn btn-primary btn-sm shadow-sm">
         <i class="fa fa-plus me-1"></i> Thêm mã mới
     </a>
 </div>
@@ -18,10 +18,7 @@
 <div class="card card-custom border-0 shadow-sm mb-4">
     <div class="card-header bg-white py-3 border-bottom-0">
         <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
-            <input type="hidden" name="module" value="admin">
-            <input type="hidden" name="controller" value="coupon">
-            <input type="hidden" name="action" value="index">
-
+            
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
@@ -70,7 +67,8 @@
                         <th class="text-end pe-4">Hành động</th>
                     </tr>
                 </thead>
-                <tbody id="couponTableBody"> <?php if(!empty($coupons)): ?>
+                <tbody id="couponTableBody"> 
+                    <?php if(!empty($coupons)): ?>
                         <?php foreach ($coupons as $c): ?>
                             <tr>
                                 <td class="ps-4">
@@ -133,11 +131,11 @@
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="btn-group">
-                                        <a href="index.php?module=admin&controller=coupon&action=edit&id=<?= $c['id'] ?>" 
+                                        <a href="admin/coupon/edit?id=<?= $c['id'] ?>" 
                                            class="btn btn-sm btn-outline-primary" title="Sửa">
                                             <i class="fa fa-edit"></i>
                                         </a>
-                                        <a href="index.php?module=admin&controller=coupon&action=delete&id=<?= $c['id'] ?>" 
+                                        <a href="admin/coupon/delete?id=<?= $c['id'] ?>" 
                                            class="btn btn-sm btn-outline-danger" 
                                            onclick="return confirm('Bạn chắc chắn muốn xóa mã này?')" title="Xóa">
                                             <i class="fa fa-trash"></i>
@@ -169,11 +167,10 @@
             const formData = new FormData(form);
             const params = new URLSearchParams(formData);
             
-            // Gửi request AJAX
-            fetch('index.php?' + params.toString())
+            // [FIX AJAX] Gọi về admin/coupon
+            fetch('admin/coupon?' + params.toString())
                 .then(response => response.text())
                 .then(html => {
-                    // Parse HTML trả về để lấy phần tbody mới
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     const newTbody = doc.getElementById('couponTableBody');
@@ -188,12 +185,11 @@
                 });
         }
 
-        // Bắt sự kiện khi nhập liệu hoặc thay đổi select
         inputs.forEach(input => {
             if (input.type === 'text') {
                 input.addEventListener('input', () => {
                     clearTimeout(timeout);
-                    timeout = setTimeout(fetchCoupons, 400); // Debounce 400ms
+                    timeout = setTimeout(fetchCoupons, 400); 
                 });
             }
             if (input.tagName === 'SELECT') {
@@ -201,7 +197,6 @@
             }
         });
         
-        // Hàm reset
         window.resetFilter = function() {
             form.reset();
             fetchCoupons();

@@ -97,18 +97,22 @@ class UserModel extends BaseModel {
         $lname = $this->escape($data['lname']);
         $phone = $this->escape($data['phone']);
         
-        // [KIỂM TRA KỸ 4 DÒNG NÀY]
         $street = $this->escape($data['street_address']);
         $city = $this->escape($data['city']);
         $district = $this->escape($data['district']);
         $ward = $this->escape($data['ward']);
         
+        // [MỚI]
+        $distId = isset($data['district_id']) ? (int)$data['district_id'] : 'NULL';
+        $wardCode = isset($data['ward_code']) ? "'".$this->escape($data['ward_code'])."'" : 'NULL';
+
         $avatarSql = "";
         if (!empty($data['avatar'])) {
             $avt = $this->escape($data['avatar']);
             $avatarSql = ", avatar = '$avt'";
         }
 
+        // Thêm update district_id và ward_code
         $sql = "UPDATE users SET 
                 fname = '$fname', 
                 lname = '$lname', 
@@ -116,7 +120,9 @@ class UserModel extends BaseModel {
                 street_address = '$street', 
                 city = '$city', 
                 district = '$district', 
-                ward = '$ward'
+                ward = '$ward',
+                district_id = $distId,
+                ward_code = $wardCode
                 $avatarSql
                 WHERE id = '$id'";
         

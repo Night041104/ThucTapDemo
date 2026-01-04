@@ -114,37 +114,29 @@
         <h6 class="fw-bold mb-3 text-uppercase" style="border-left: 4px solid #cd1818; padding-left: 10px;">Danh mục nổi bật</h6>
         <div class="d-flex flex-wrap gap-2 justify-content-center">
             <?php if(isset($categories) && is_array($categories)): foreach($categories as $cate): 
+                    // Logic chọn icon (giữ nguyên)
                     $icon = 'fa-circle-notch';
                     if(strpos($cate['slug'], 'dien-thoai')!==false) $icon='fa-mobile-screen';
                     elseif(strpos($cate['slug'], 'laptop')!==false) $icon='fa-laptop';
                     elseif(strpos($cate['slug'], 'tai-nghe')!==false) $icon='fa-headphones';
                     elseif(strpos($cate['slug'], 'dong-ho')!==false) $icon='fa-clock';
                     elseif(strpos($cate['slug'], 'pc')!==false) $icon='fa-desktop';
+                    elseif(strpos($cate['slug'], 'man-hinh')!==false) $icon='fa-desktop';
+                    elseif(strpos($cate['slug'], 'may-tinh-bang')!==false) $icon='fa-tablet-screen-button';
             ?>
-            <a href="index.php?controller=category&id=<?= $cate['id'] ?>" class="cate-item">
+            
+            <a href="danh-muc/<?= $cate['slug'] ?>" class="cate-item">
                 <div class="cate-icon-box"><i class="fa <?= $icon ?> fs-4 text-secondary"></i></div>
                 <div class="small fw-bold" style="font-size: 12px; line-height: 1.2;"><?= htmlspecialchars($cate['name']) ?></div>
             </a>
+            
             <?php endforeach; endif; ?>
         </div>
     </div>
 </div>
-
 <?php if(!empty($hotProducts)): ?>
 <div class="container mt-3">
     <div class="flash-sale-bg shadow-sm">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="fw-bold text-white fst-italic m-0 text-uppercase" style="font-size: 20px;">
-                <i class="fa fa-bolt text-warning me-2"></i>Giờ vàng giá sốc
-            </h3>
-            <div class="text-white fw-bold d-flex align-items-center gap-2">
-                <span class="small">Kết thúc:</span>
-                <span class="badge bg-dark rounded px-2">02</span>:
-                <span class="badge bg-dark rounded px-2">45</span>:
-                <span class="badge bg-dark rounded px-2">12</span>
-            </div>
-        </div>
-        
         <div class="row row-cols-2 row-cols-md-5 g-2">
             <?php foreach($hotProducts as $p): ?>
                 <?php 
@@ -158,11 +150,12 @@
                     <?php if($discountPercent > 0): ?>
                         <span class="discount-badge">Giảm <?= $discountPercent ?>%</span>
                     <?php endif; ?>
-                    <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>">
+                    
+                    <a href="san-pham/<?= $p['slug'] ?>.html">
                         <img src="<?= htmlspecialchars($p['thumbnail']) ?>" class="card-img-top">
                     </a>
                     <div class="card-body p-2 text-center d-flex flex-column h-100">
-                        <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>" class="product-name">
+                        <a href="san-pham/<?= $p['slug'] ?>.html" class="product-name">
                             <?= htmlspecialchars($p['name']) ?>
                         </a>
                         <div class="mt-auto">
@@ -185,17 +178,17 @@
     <div class="white-block">
         <div class="block-header">
             <h5 class="block-title">Điện thoại nổi bật</h5>
-            <a href="index.php?controller=category&id=3" class="btn btn-outline-danger btn-sm rounded-pill px-3">Xem tất cả</a>
+            <a href="danh-muc/dien-thoai" class="btn btn-outline-danger btn-sm rounded-pill px-3">Xem tất cả</a>
         </div>
         <div class="p-3">
             <div class="row row-cols-2 row-cols-md-4 g-3">
                 <?php foreach($phoneProducts as $p): ?>
-                    <?php 
-                        $discountPercent = 0;
-                        if (!empty($p['market_price']) && $p['market_price'] > $p['price']) {
-                            $discountPercent = round((($p['market_price'] - $p['price']) / $p['market_price']) * 100);
-                        }
-                    ?>
+                <?php 
+                    $discountPercent = 0;
+                    if (!empty($p['market_price']) && $p['market_price'] > $p['price']) {
+                        $discountPercent = round((($p['market_price'] - $p['price']) / $p['market_price']) * 100);
+                    }
+                ?>
                 <div class="col">
                     <div class="product-card">
                         <?php if($discountPercent > 0): ?>
@@ -204,11 +197,11 @@
                             <span class="discount-badge" style="background:#288ad6;">Trả góp 0%</span>
                         <?php endif; ?>
                         
-                        <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>">
+                        <a href="san-pham/<?= $p['slug'] ?>.html">
                             <img src="<?= htmlspecialchars($p['thumbnail']) ?>" class="card-img-top">
                         </a>
                         <div class="card-body p-3 d-flex flex-column h-100">
-                            <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>" class="product-name">
+                            <a href="san-pham/<?= $p['slug'] ?>.html" class="product-name">
                                 <?= htmlspecialchars($p['name']) ?>
                             </a>
                             <div class="d-flex align-items-center gap-2 mt-auto">
@@ -227,48 +220,4 @@
 </div>
 <?php endif; ?>
 
-<?php if(!empty($laptopProducts)): ?>
-<div class="container mt-4">
-    <div class="white-block">
-        <div class="block-header">
-            <h5 class="block-title">Laptop Bán Chạy</h5>
-            <a href="index.php?controller=category&id=2" class="btn btn-outline-danger btn-sm rounded-pill px-3">Xem tất cả</a>
-        </div>
-        <div class="p-3">
-            <div class="row row-cols-2 row-cols-md-4 g-3">
-                <?php foreach($laptopProducts as $p): ?>
-                    <?php 
-                        $discountPercent = 0;
-                        if (!empty($p['market_price']) && $p['market_price'] > $p['price']) {
-                            $discountPercent = round((($p['market_price'] - $p['price']) / $p['market_price']) * 100);
-                        }
-                    ?>
-                <div class="col">
-                    <div class="product-card">
-                        <?php if($discountPercent > 0): ?>
-                            <span class="discount-badge">Giảm <?= $discountPercent ?>%</span>
-                        <?php endif; ?>
-                        
-                        <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>">
-                            <img src="<?= htmlspecialchars($p['thumbnail']) ?>" class="card-img-top">
-                        </a>
-                        <div class="card-body p-3 d-flex flex-column h-100">
-                            <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>" class="product-name">
-                                <?= htmlspecialchars($p['name']) ?>
-                            </a>
-                            <div class="d-flex align-items-center gap-2 mt-auto">
-                                <span class="price-show fs-5"><?= number_format($p['price']) ?>₫</span>
-                                <?php if($discountPercent > 0): ?>
-                                    <span class="price-through"><?= number_format($p['market_price']) ?>₫</span>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 

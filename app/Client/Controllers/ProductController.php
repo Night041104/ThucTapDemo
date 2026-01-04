@@ -18,97 +18,93 @@ class ProductController {
     // URL: index.php?module=client&controller=product&action=detail&id=123
     // URL: index.php?module=client&controller=product&action=detail&id=123
     public function detail() {
-        $id = $_GET['id'] ?? 0;
+        $id = 0;
+
+        // 1. Ưu tiên lấy ID từ Slug
+        if (isset($_GET['slug'])) {
+            $id = $this->prodModel->getIdBySlug($_GET['slug']);
+        } else {
+            $id = $_GET['id'] ?? 0;
+        }
+
+        // Logic Review
         $this->reviewModel = new ReviewModel();
         $userReview = null;
         if(isset($_SESSION['user'])) {
             $userReview = $this->reviewModel->getUserReview($_SESSION['user']['id'], $id);
-        } // Khởi tạo model review
+        } 
                 
-        // 1. Lấy thông tin sản phẩm hiện tại
+        // 2. Lấy thông tin sản phẩm
         $product = $this->prodModel->getById($id);
         if (!$product) die("Sản phẩm không tồn tại!");
 
-        // 2. Lấy Gallery & Breadcrumb
+        // 3. Lấy Gallery & Breadcrumb
         $gallery = $this->prodModel->getGallery($id);
         $category = $this->cateModel->getById($product['category_id']);
 
-        // 3. XỬ LÝ BIẾN THỂ (LOGIC MỚI)
+        // 4. XỬ LÝ BIẾN THỂ (LOGIC MỚI CÓ SLUG)
         $masterId = ($product['parent_id'] == 0 || $product['parent_id'] == NULL) ? $product['id'] : $product['parent_id'];
         
-        // Lấy dữ liệu map từ DB
+        // Lấy dữ liệu map từ DB (đã bao gồm slug nhờ sửa Model)
         $rawMap = $this->prodModel->getFamilyVariantMap($masterId);
         
-        // A. Cấu trúc lại dữ liệu: [Product_ID => [Attr_ID => Value]]
-        // Để biết mỗi sản phẩm có những thuộc tính gì
         $productsMap = [];
         foreach ($rawMap as $row) {
             $productsMap[$row['product_id']][$row['attribute_id']] = $row['attribute_value'];
         }
 
-        // B. Gom nhóm thuộc tính để hiển thị (VD: Màu sắc -> [Đỏ, Xanh...])
-        // Cấu trúc: [Attr_Name => [Value => [Link_Product_ID, Active_State]]]
         $variantGroups = [];
-        $currentProductAttrs = $productsMap[$id] ?? []; // Thuộc tính của SP đang xem
+        $currentProductAttrs = $productsMap[$id] ?? []; 
 
         foreach ($rawMap as $row) {
             $attrName = $row['attribute_name'];
             $val = $row['attribute_value'];
             $attrId = $row['attribute_id'];
             
-            // Nếu giá trị này chưa có trong nhóm thì khởi tạo
             if (!isset($variantGroups[$attrName][$val])) {
-                
-                // --- LOGIC TÌM SẢN PHẨM ĐÍCH (SMART LINK) ---
-                // Mặc định: Tìm chính bản thân sản phẩm của dòng dữ liệu này
                 $targetId = $row['product_id']; 
+                $targetSlug = $row['slug']; // [MỚI] Lấy slug
 
-                // Nâng cao: Cố gắng tìm sản phẩm khớp với các thuộc tính CÒN LẠI của sản phẩm đang xem
-                // Ví dụ: Đang xem (Đỏ, 128GB). Đang tạo nút "Xanh".
-                // -> Cố tìm thằng (Xanh, 128GB). Nếu ko có mới lấy thằng (Xanh, 256GB).
-                
+                // Logic tìm sản phẩm đích (giữ nguyên)
                 foreach ($productsMap as $pid => $pAttrs) {
-                    // Điều kiện 1: Sản phẩm đó phải có giá trị thuộc tính này (VD: Phải là màu Xanh)
                     if (isset($pAttrs[$attrId]) && $pAttrs[$attrId] == $val) {
-                        $targetId = $pid; // Tạm chấp nhận ứng viên này
+                        $targetId = $pid; 
                         
-                        // Điều kiện 2 (Hoàn hảo): Khớp hết các thuộc tính khác
+                        // Tìm lại slug cho targetId này nếu nó thay đổi
+                        // (Đoạn này tối ưu: loop rawMap để lấy slug của pid)
+                        foreach($rawMap as $r2) { if($r2['product_id'] == $pid) { $targetSlug = $r2['slug']; break; } }
+
                         $matchAll = true;
                         foreach ($currentProductAttrs as $curAttrId => $curVal) {
-                            if ($curAttrId != $attrId) { // Bỏ qua thuộc tính đang xét
+                            if ($curAttrId != $attrId) { 
                                 if (!isset($pAttrs[$curAttrId]) || $pAttrs[$curAttrId] != $curVal) {
                                     $matchAll = false;
                                     break;
-                                    
                                 }
                             }
                         }
-                        
                         if ($matchAll) {
-                            $targetId = $pid; // Tìm thấy ứng viên hoàn hảo! Chốt luôn.
+                            $targetId = $pid;
+                            // Update slug cho targetId chuẩn
+                            foreach($rawMap as $r2) { if($r2['product_id'] == $pid) { $targetSlug = $r2['slug']; break; } }
                             break; 
                         }
                     }
                 }
-                // --- KẾT THÚC LOGIC TÌM ---
 
-                // ... (Các logic tìm targetId ở trên giữ nguyên) ...
-
-                // Xác định xem nút này có phải là nút đang active (của sản phẩm hiện tại) ko
                 $isActive = (isset($currentProductAttrs[$attrId]) && $currentProductAttrs[$attrId] == $val);
 
-                // [CẬP NHẬT] Thêm thumbnail và price vào mảng dữ liệu
                 $variantGroups[$attrName][$val] = [
                     'product_id' => $targetId,
+                    'slug'       => $targetSlug, // [MỚI] Truyền slug sang View
                     'active'     => $isActive,
-                    'thumbnail'  => $row['thumbnail'] ?? '' // Lấy ảnh từ Model (bạn đã thêm cột này)
+                    'thumbnail'  => $row['thumbnail'] ?? ''
                 ];
             }
         }
 
-        // 4. Decode Specs hiển thị
+        // 5. Decode Specs & Reviews
         $specs = json_decode($product['specs_json'], true) ?? [];
-        // LẤY DỮ LIỆU ĐÁNH GIÁ
         $reviews = $this->reviewModel->getReviewsByProduct($id);
         $reviewStats = $this->reviewModel->getReviewStats($id);
 
@@ -116,7 +112,6 @@ class ProductController {
         require __DIR__ . '/../views/product/detail.php';
         require __DIR__ . '/../views/layouts/footer.php';
     }
-
     public function search() {
     // Lấy 'keyword' thay vì 'q' cho khớp với header.php
     $keyword = $_GET['keyword'] ?? ''; 

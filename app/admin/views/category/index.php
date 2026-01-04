@@ -32,7 +32,7 @@
         <h4 class="fw-bold text-dark mb-1">Quản lý Danh mục</h4>
         <p class="text-muted small mb-0">Phân loại sản phẩm và cấu hình mẫu thông số kỹ thuật</p>
     </div>
-    <a href="index.php?module=admin&controller=category&action=create" class="btn btn-primary shadow-sm px-3">
+    <a href="admin/category/create" class="btn btn-primary shadow-sm px-3">
         <i class="fa fa-plus-circle me-2"></i>Thêm mới
     </a>
 </div>
@@ -98,11 +98,11 @@
                                 <?php endif; ?>
                             </td>
                             <td class="text-end pe-4">
-                                <a href="index.php?module=admin&controller=category&action=edit&id=<?= $c['id'] ?>" 
+                                <a href="admin/category/edit?id=<?= $c['id'] ?>" 
                                    class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Sửa">
                                     <i class="fa fa-pen"></i>
                                 </a>
-                                <a href="index.php?module=admin&controller=category&action=delete&id=<?= $c['id'] ?>" 
+                                <a href="admin/category/delete?id=<?= $c['id'] ?>" 
                                    class="btn btn-sm btn-outline-danger border-0 rounded-circle ms-1" 
                                    onclick="return confirm('⚠️ CẢNH BÁO QUAN TRỌNG:\n\nXóa danh mục sẽ ảnh hưởng đến TẤT CẢ sản phẩm thuộc danh mục này.\nBạn có chắc chắn muốn xóa?')" title="Xóa">
                                     <i class="fa fa-trash"></i>

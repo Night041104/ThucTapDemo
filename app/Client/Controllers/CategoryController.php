@@ -104,7 +104,16 @@ class CategoryController {
     }
 
     public function index() {
-        $cateId = $_GET['id'] ?? 0;
+        $cateId = 0;
+
+        // 1. Kiểm tra Slug trước
+        if (isset($_GET['slug'])) {
+            $cateId = $this->cateModel->getIdBySlug($_GET['slug']);
+        } 
+        // 2. Fallback về ID
+        else {
+            $cateId = $_GET['id'] ?? 0;
+        }
         
         $category = $this->cateModel->getById($cateId);
         if (!$category) die("<h3 style='text-align:center; margin-top:50px;'>Danh mục không tồn tại!</h3>");
@@ -113,7 +122,7 @@ class CategoryController {
         $filterBrands = $this->brandModel->getByCategoryId($cateId);
         $filterAttrs  = $this->attrModel->getFiltersByCateForClient($cateId);
         
-        // Tính khoảng giá động (Mới)
+        // Tính khoảng giá động
         $priceRanges = $this->getDynamicPriceRanges($cateId);
 
         require __DIR__ . '/../views/layouts/header.php'; 

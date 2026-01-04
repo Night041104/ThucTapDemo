@@ -5,12 +5,9 @@
 $rootPath = dirname(__DIR__, 3); 
 require_once $rootPath . '/models/CategoryModel.php';
 require_once $rootPath . '/models/ProductModel.php';
-// Không cần BrandModel nữa vì đã bỏ phần hãng sản xuất
-// require_once $rootPath . '/models/BrandModel.php'; 
 
 $cateModel = new CategoryModel();
 $prodModel = new ProductModel();
-// $brandModel = new BrandModel(); 
 
 // 2. LOGIC GIỎ HÀNG & USER
 $totalQty = isset($_SESSION['cart']) ? array_sum($_SESSION['cart']) : 0;
@@ -43,6 +40,15 @@ function getIconBySlug($slug) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FPT Shop Clone System</title>
     
+    <?php 
+        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $domainName = $_SERVER['HTTP_HOST'];
+        // Loại bỏ index.php để lấy thư mục gốc
+        $path = str_replace('index.php', '', $_SERVER['SCRIPT_NAME']); 
+        $baseUrl = $protocol . $domainName . $path;
+    ?>
+    <base href="<?= $baseUrl ?>">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -195,7 +201,7 @@ function getIconBySlug($slug) {
         }
         .sidebar-link:hover { background: #f8f9fa; color: #cd1818; padding-left: 25px; }
         
-        /* MEGA MENU UPDATED (Full Width Product) */
+        /* MEGA MENU */
         .mega-content { 
             position: absolute; 
             left: 100%; 
@@ -213,7 +219,7 @@ function getIconBySlug($slug) {
         .sidebar-item:hover .mega-content { display: block; }
 
         .hot-product-item { 
-            width: 19%; /* Chia 5 cột (100% / 5 = 20% trừ đi gap) */
+            width: 19%; 
             padding: 10px; 
             border: 1px solid #eee; 
             border-radius: 8px; 
@@ -257,9 +263,8 @@ function getIconBySlug($slug) {
     <div class="container d-flex justify-content-between">
         <span class="fw-bold"><i class="fa fa-star text-warning me-1"></i> FPT Shop Clone System - Uy tín, Chất lượng</span>
         <div>
-            <a href="index.php?module=client&controller=about">Giới thiệu</a>
-            <a href="index.php?module=client&controller=about&action=warranty">Chính sách bảo hành</a>
-
+            <a href="<?= $baseUrl ?>index.php?module=client&controller=about">Giới thiệu</a>
+            <a href="<?= $baseUrl ?>index.php?module=client&controller=about&action=warranty">Chính sách bảo hành</a>
         </div>
     </div>
 </div>
@@ -268,11 +273,9 @@ function getIconBySlug($slug) {
     <div class="container py-2">
         <div class="d-flex align-items-center justify-content-between">
             
-            <a href="index.php?module=client&controller=home" class="logo me-4"><span>FPT</span>Shop</a>
+            <a href="<?= $baseUrl ?>trang-chu" class="logo me-4"><span>FPT</span>Shop</a>
 
-            <form action="index.php" method="GET" class="search-container d-none d-lg-block">
-                <input type="hidden" name="controller" value="product">
-                <input type="hidden" name="action" value="search">
+            <form action="<?= $baseUrl ?>tim-kiem" method="GET" class="search-container d-none d-lg-block">
                 <input type="text" name="keyword" class="search-input" placeholder="Bạn muốn tìm gì hôm nay? (iPhone 16, Laptop Gaming...)">
                 <button type="submit" class="search-btn"><i class="fa fa-search"></i></button>
             </form>
@@ -283,32 +286,33 @@ function getIconBySlug($slug) {
                     <span>Thông tin</span>
                 </a>
                 
-                <a href="index.php?controller=order&action=history" class="action-item">
+                <a href="<?= $baseUrl ?>lich-su-don" class="action-item">
                     <i class="fa-solid fa-truck-fast"></i>
                     <span>Tra cứu</span>
                 </a>
 
-                <a href="index.php?controller=cart" class="action-item">
+                <a href="<?= $baseUrl ?>gio-hang" class="action-item">
                     <i class="fa-solid fa-cart-shopping"></i>
                     <span>Giỏ hàng</span>
                     <span id="cart-total-count" class="cart-badge" style="<?= $totalQty > 0 ? '' : 'display:none;' ?>">
                         <?= $totalQty > 0 ? $totalQty : 0 ?>
                     </span>
                 </a>
+
                 <?php if (isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
-        <a href="index.php?module=admin&controller=dashboard" class="action-item text-warning">
-            <i class="fa-solid fa-user-shield"></i>
-            <span>Quản trị</span>
-        </a>
-    <?php endif; ?>
+                    <a href="<?= $baseUrl ?>admin/dashboard" class="action-item text-warning">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Quản trị</span>
+                    </a>
+                <?php endif; ?>
 
                 <?php if($isLoggedIn): ?>
-                    <a href="index.php?controller=account&action=profile" class="action-item">
+                    <a href="<?= $baseUrl ?>tai-khoan" class="action-item">
                         <img src="<?= $userAvatar ?>" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-bottom: 2px; border: 1px solid #fff;">
                         <span><?= htmlspecialchars($userName) ?></span>
                     </a>
                 <?php else: ?>
-                    <a href="index.php?module=client&controller=auth&action=login" class="action-item">
+                    <a href="<?= $baseUrl ?>dang-nhap" class="action-item">
                         <i class="fa-regular fa-user"></i>
                         <span>Đăng nhập</span>
                     </a>
@@ -319,7 +323,6 @@ function getIconBySlug($slug) {
 
     <div class="nav-bar">
         <div class="container d-flex h-100">
-            
             <div class="menu-wrapper">
                 <div class="cat-btn">
                     <i class="fa fa-bars me-2" style="font-size: 18px;"></i> DANH MỤC
@@ -328,17 +331,13 @@ function getIconBySlug($slug) {
                 <div class="sidebar-menu">
                     <ul>
                         <?php foreach($categories as $cate): 
-                            $cId = $cate['id'];
-                            $cName = $cate['name'];
                             $cSlug = $cate['slug'];
-                            
-                            // Lấy 5 sản phẩm nổi bật thay vì 3
-                            $menuProducts = $prodModel->getProductsByCateForClient($cId);
+                            $menuProducts = $prodModel->getProductsByCateForClient($cate['id']);
                             $menuProducts = array_slice($menuProducts, 0, 5); 
                         ?>
                         <li class="sidebar-item">
-                            <a href="index.php?controller=category&id=<?= $cId ?>" class="sidebar-link">
-                                <span><i class="fa <?= getIconBySlug($cSlug) ?> me-3 text-secondary w-25px text-center"></i><?= htmlspecialchars($cName) ?></span>
+                            <a href="<?= $baseUrl ?>danh-muc/<?= $cSlug ?>" class="sidebar-link">
+                                <span><i class="fa <?= getIconBySlug($cSlug) ?> me-3 text-secondary w-25px text-center"></i><?= htmlspecialchars($cate['name']) ?></span>
                                 <i class="fa fa-angle-right text-muted" style="font-size: 12px;"></i>
                             </a>
 
@@ -350,7 +349,7 @@ function getIconBySlug($slug) {
                                         <div class="d-flex gap-3">
                                             <?php foreach($menuProducts as $p): ?>
                                             <div class="hot-product-item">
-                                                <a href="index.php?controller=product&action=detail&id=<?= $p['id'] ?>">
+                                                <a href="<?= $baseUrl ?>san-pham/<?= $p['slug'] ?>.html">
                                                     <img src="<?= htmlspecialchars($p['thumbnail']) ?>" alt="">
                                                     <div class="hot-product-name"><?= htmlspecialchars($p['name']) ?></div>
                                                     <div class="hot-product-price"><?= number_format($p['price'], 0, ',', '.') ?>đ</div>
@@ -369,11 +368,11 @@ function getIconBySlug($slug) {
             </div>
 
             <div class="quick-links d-none d-lg-flex">
-                <a href="index.php?controller=product&keyword=iPhone"><i class="fab fa-apple me-1" style="font-size: 16px;"></i> iPhone</a>
-                <a href="index.php?controller=product&keyword=Samsung">Samsung</a>
-                <a href="index.php?controller=product&keyword=Xiaomi">Xiaomi</a>
-                <a href="index.php?controller=product&keyword=Oppo">Oppo</a>
-                <a href="index.php?controller=category&id=4">Tai nghe</a>
+                <a href="<?= $baseUrl ?>tim-kiem?keyword=iPhone"><i class="fab fa-apple me-1" style="font-size: 16px;"></i> iPhone</a>
+                <a href="<?= $baseUrl ?>tim-kiem?keyword=Samsung">Samsung</a>
+                <a href="<?= $baseUrl ?>tim-kiem?keyword=Xiaomi">Xiaomi</a>
+                <a href="<?= $baseUrl ?>tim-kiem?keyword=Oppo">Oppo</a>
+                <a href="<?= $baseUrl ?>danh-muc/tai-nghe">Tai nghe</a>
                 <a href="#">Máy cũ giá rẻ</a>
             </div>
 

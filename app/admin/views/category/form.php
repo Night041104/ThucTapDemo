@@ -4,7 +4,7 @@
     <h3 class="fw-bold text-dark mb-0">
         <?= $currentData['id'] ? "Chỉnh sửa Danh mục" : "Tạo Danh mục mới" ?>
     </h3>
-    <a href="index.php?module=admin&controller=category&action=index" class="btn btn-outline-secondary">
+    <a href="admin/category" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>
@@ -15,7 +15,7 @@
     </div>
 <?php endif; ?>
 
-<form method="POST" action="index.php?module=admin&controller=category&action=save">
+<form method="POST" action="admin/category/save">
     <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
 
     <div class="row">

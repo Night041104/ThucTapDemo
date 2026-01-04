@@ -115,34 +115,58 @@
             <div class="form-group">
                 <label>Địa chỉ nhận hàng <span class="text-danger">*</span></label>
                 
-                <div class="row g-2 mb-3">
-                    <div class="col-md-4">
-                        <select id="province" class="form-control"><option value="0">Tỉnh/Thành</option></select>
-                    </div>
-                    <div class="col-md-4">
-                        <select id="district" class="form-control"><option value="0">Quận/Huyện</option></select>
-                    </div>
-                    <div class="col-md-4">
-                        <select id="ward" class="form-control"><option value="0">Phường/Xã</option></select>
-                    </div>
-                </div>
-
-                <input type="text" name="street_address" class="form-control" 
+                <input type="text" name="street_address" class="form-control mb-3" 
                        value="<?= isset($user['street_address']) ? htmlspecialchars($user['street_address']) : '' ?>" 
                        placeholder="Số nhà, tên đường, tòa nhà..." required>
 
-                <?php if(!empty($user['city'])): ?>
-                    <div class="mt-2 text-success small">
-                        <i class="fa fa-check-circle"></i> Sử dụng địa chỉ mặc định: 
-                        <b><?= $user['street_address'] ?>, <?= $user['ward'] ?>, <?= $user['district'] ?>, <?= $user['city'] ?></b>
+                <?php 
+                // Kiểm tra: Phải có cả Tên VÀ ID thì mới coi là địa chỉ hợp lệ
+                $hasDefaultAddress = !empty($user['city']) && !empty($user['district_id']) && !empty($user['ward_code']);
+                ?>
+
+                <?php if ($hasDefaultAddress): ?>
+                    
+                    <div class="alert alert-success d-flex align-items-center p-2 small">
+                        <i class="fa fa-check-circle me-2"></i>
+                        <div>
+                            Đang sử dụng địa chỉ mặc định: 
+                            <b><?= htmlspecialchars($user['ward']) ?>, <?= htmlspecialchars($user['district']) ?>, <?= htmlspecialchars($user['city']) ?></b>
+                        </div>
                     </div>
-                    <input type="hidden" name="city" id="city_text" value="<?= $user['city'] ?>">
-                    <input type="hidden" name="district" id="district_text" value="<?= $user['district'] ?>">
-                    <input type="hidden" name="ward" id="ward_text" value="<?= $user['ward'] ?>">
+                    
+                    <input type="hidden" name="city" id="city_text" value="<?= htmlspecialchars($user['city']) ?>">
+                    <input type="hidden" name="district" id="district_text" value="<?= htmlspecialchars($user['district']) ?>">
+                    <input type="hidden" name="ward" id="ward_text" value="<?= htmlspecialchars($user['ward']) ?>">
+
+                    <input type="hidden" name="district_id" id="district_id" value="<?= htmlspecialchars($user['district_id']) ?>">
+                    <input type="hidden" name="ward_code" id="ward_code" value="<?= htmlspecialchars($user['ward_code']) ?>">
+
                 <?php else: ?>
+                    
+                    <?php if(!empty($user['city'])): ?>
+                        <div class="alert alert-warning small py-2 mb-2">
+                            <i class="fa fa-exclamation-circle"></i> Địa chỉ cũ của bạn thiếu thông tin định danh mới. Vui lòng chọn lại Tỉnh/Huyện/Xã bên dưới để hệ thống tính phí vận chuyển chính xác.
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <select id="province" class="form-control"><option value="0">Tỉnh/Thành</option></select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="district" class="form-control"><option value="0">Quận/Huyện</option></select>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="ward" class="form-control"><option value="0">Phường/Xã</option></select>
+                        </div>
+                    </div>
+                    
                     <input type="hidden" name="city" id="city_text">
                     <input type="hidden" name="district" id="district_text">
                     <input type="hidden" name="ward" id="ward_text">
+                    <input type="hidden" name="district_id" id="district_id">
+                    <input type="hidden" name="ward_code" id="ward_code">
+
                 <?php endif; ?>
             </div>
 
@@ -197,21 +221,26 @@
             <div class="payment-methods">
                 <h3 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #555;">Phương thức thanh toán</h3>
                 
-                <label class="payment-option">
-                    <input type="radio" name="payment_method" value="COD" checked> 
-                    <span>💵 Thanh toán khi nhận hàng (COD)</span>
-                </label>
+                <?php if ($finalTotal <= 50000000): ?>
+                    <label class="payment-option">
+                        <input type="radio" name="payment_method" value="COD" checked> 
+                        <span>💵 Thanh toán khi nhận hàng (COD)</span>
+                    </label>
+                <?php else: ?>
+                    <div class="alert alert-warning small p-2 mb-2">
+                        <i class="fa fa-info-circle"></i> Đơn hàng trên 50.000.000đ vượt quá hạn mức thu hộ của đơn vị vận chuyển. Vui lòng thanh toán Online.
+                    </div>
+                <?php endif; ?>
                 
                 <label class="payment-option">
-                    <input type="radio" name="payment_method" value="VNPAY"> 
+                    <input type="radio" name="payment_method" value="VNPAY" <?= ($finalTotal > 50000000) ? 'checked' : '' ?>> 
                     <span>💳 Thanh toán Online qua VNPAY</span>
                 </label>
             </div>
-
             <button type="submit" class="btn-confirm">XÁC NHẬN ĐẶT HÀNG</button>
             
             <div style="text-align: center; margin-top: 15px;">
-                <a href="index.php?controller=cart" style="text-decoration: none; color: #666; font-size: 13px; border-bottom: 1px dashed #999;">
+                <a href="gio-hang" style="text-decoration: none; color: #666; font-size: 13px; border-bottom: 1px dashed #999;">
                     <i class="fa fa-arrow-left"></i> Quay lại giỏ hàng
                 </a>
             </div>

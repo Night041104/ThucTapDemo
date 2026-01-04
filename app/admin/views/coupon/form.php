@@ -1,13 +1,13 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0 text-gray-800"><?= $isEdit ? 'Cập nhật Mã Giảm Giá' : 'Thêm Mã Giảm Giá Mới' ?></h1>
-    <a href="index.php?module=admin&controller=coupon" class="btn btn-secondary btn-sm">
+    <a href="admin/coupon" class="btn btn-secondary btn-sm">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>
 
 <div class="card shadow mb-4">
     <div class="card-body">
-        <form action="index.php?module=admin&controller=coupon&action=save" method="POST">
+        <form action="admin/coupon/save" method="POST">
             <?php if($isEdit): ?>
                 <input type="hidden" name="id" value="<?= $coupon['id'] ?>">
             <?php endif; ?>
@@ -108,7 +108,6 @@
 </div>
 
 <script>
-    // 1. Logic ẩn hiện ô Giảm tối đa & Thay đổi đơn vị
     function toggleMaxDiscount() {
         var type = document.getElementById('coupon_type').value;
         var maxDiv = document.getElementById('max_discount_div');
@@ -123,16 +122,12 @@
         }
     }
     
-    // 2. [MỚI] Script định dạng tiền tệ (Giống form Product)
     document.addEventListener("DOMContentLoaded", function() {
-        toggleMaxDiscount(); // Chạy khi load
+        toggleMaxDiscount(); 
 
-        // Format Money (Tự động thêm dấu phẩy khi gõ)
         document.querySelectorAll('.money').forEach(inp => {
             inp.addEventListener('keyup', function() {
-                // Xóa các ký tự không phải số
                 let n = parseInt(this.value.replace(/\D/g,''), 10);
-                // Format lại theo chuẩn US (1,000,000)
                 this.value = isNaN(n) ? '' : n.toLocaleString('en-US');
             });
         });

@@ -13,16 +13,16 @@
                     <h6 class="mb-0 fw-bold"><?= htmlspecialchars($u['lname'] . ' ' . $u['fname']) ?></h6>
                 </div>
                 <div class="list-group list-group-flush py-2">
-                    <a href="index.php?controller=account&action=profile" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
+                    <a href="tai-khoan" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
                         <i class="fa fa-user-circle me-2"></i> Thông tin tài khoản
                     </a>
-                    <a href="index.php?controller=order&action=history" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-danger bg-light border-start border-4 border-danger">
+                    <a href="lich-su-don" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-danger bg-light border-start border-4 border-danger">
                         <i class="fa fa-shopping-bag me-2"></i> Quản lý đơn hàng
                     </a>
-                    <a href="index.php?controller=account&action=changePassword" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
+                    <a href="doi-mat-khau" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
                         <i class="fa fa-lock me-2"></i> Đổi mật khẩu
                     </a>
-                    <a href="index.php?module=client&controller=auth&action=logout" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
+                    <a href="dang-xuat" class="list-group-item list-group-item-action border-0 px-4 py-3 fw-500 text-secondary">
                         <i class="fa fa-sign-out-alt me-2"></i> Đăng xuất
                     </a>
                 </div>
@@ -48,6 +48,7 @@
                                     <th>Ngày đặt</th>
                                     <th>Tổng tiền</th>
                                     <th>Trạng thái</th>
+                                    <th>Vận chuyển</th>
                                     <th>Thao tác</th>
                                 </tr>
                             </thead>
@@ -72,8 +73,26 @@
                                             ?>
                                             <span class="badge <?= $bClass ?> rounded-pill fw-normal px-3"><?= $bText ?></span>
                                         </td>
+                                        
                                         <td>
-                                            <a href="index.php?controller=order&action=detail&id=<?= $o['id'] ?>" class="btn btn-outline-danger btn-sm">
+                                            <?php if (!empty($o['tracking_code'])): ?>
+                                                <div class="d-flex flex-column align-items-start">
+                                                    <span class="text-dark fw-bold small mb-1">
+                                                        <i class="fa fa-barcode me-1"></i><?= htmlspecialchars($o['tracking_code']) ?>
+                                                    </span>
+                                                    <a href="https://tracking.ghn.dev/?order_code=<?= $o['tracking_code'] ?>" 
+                                                       target="_blank" 
+                                                       class="btn btn-sm btn-outline-success py-0 px-2" style="font-size: 11px;">
+                                                        Xem hành trình
+                                                    </a>
+                                                </div>
+                                            <?php else: ?>
+                                                <span class="text-muted small">-</span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <td>
+                                            <a href="chi-tiet-don/<?= $o['id'] ?>" class="btn btn-outline-danger btn-sm">
                                                 <i class="fa fa-eye"></i> Chi tiết
                                             </a>
                                         </td>

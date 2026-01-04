@@ -2,7 +2,12 @@
 require_once __DIR__ . '/BaseModel.php';
 
 class CategoryModel extends BaseModel {
-    
+    public function getIdBySlug($slug) {
+        $slug = $this->escape($slug);
+        $result = $this->_query("SELECT id FROM categories WHERE slug = '$slug'");
+        $row = mysqli_fetch_assoc($result);
+        return $row ? $row['id'] : 0;
+    }
     public function getAll() {
         $result = $this->_query("SELECT * FROM categories ORDER BY id DESC");
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];

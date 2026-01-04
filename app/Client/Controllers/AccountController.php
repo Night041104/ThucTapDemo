@@ -17,7 +17,8 @@ class AccountController {
 
     public function profile() {
         if (!isset($_SESSION['user'])) {
-            header("Location: index.php?controller=auth&action=login");
+            // [FIX] Link đăng nhập
+            header("Location: dang-nhap");
             exit;
         }
 
@@ -31,7 +32,8 @@ class AccountController {
 
     public function update() {
         if (!isset($_SESSION['user'])) {
-            header("Location: index.php?controller=auth&action=login");
+            // [FIX] Link đăng nhập
+            header("Location: dang-nhap");
             exit;
         }
 
@@ -50,6 +52,8 @@ class AccountController {
             $city     = trim($_POST['city']);
             $district = trim($_POST['district']);
             $ward     = trim($_POST['ward']);
+            $districtId = isset($_POST['district_id']) ? (int)$_POST['district_id'] : 0;
+            $wardCode   = isset($_POST['ward_code']) ? trim($_POST['ward_code']) : '';
 
             $avatarName = ''; 
 
@@ -62,20 +66,15 @@ class AccountController {
 
                 if (in_array($fileExt, $allowed)) {
                     $newFileName = "avatar_" . $userId . "_" . time() . "." . $fileExt;
-                    
-                    // Dùng biến chung $this->uploadDir cho gọn
                     $targetFile = $this->uploadDir . $newFileName;
                     
                     if (move_uploaded_file($fileTmp, $targetFile)) {
-                        $avatarName = $targetFile; // Lưu đường dẫn mới (VD: uploads/avatars/...)
+                        $avatarName = $targetFile; 
                         $_SESSION['user']['avatar'] = $avatarName; 
 
-                        // [QUAN TRỌNG] XÓA ẢNH CŨ (Logic mới thêm)
+                        // XÓA ẢNH CŨ
                         if (!empty($oldAvatarPath)) {
-                            // Xử lý đường dẫn cũ: Xóa dấu '/' ở đầu nếu có (để unlink hiểu là đường dẫn tương đối)
                             $pathToDelete = ltrim($oldAvatarPath, '/'); 
-                            
-                            // Kiểm tra: File tồn tại VÀ Không phải là file vừa upload
                             if (file_exists($pathToDelete) && $pathToDelete != $avatarName) {
                                 unlink($pathToDelete);
                             }
@@ -83,12 +82,14 @@ class AccountController {
 
                     } else {
                         $_SESSION['error'] = "Không thể lưu file ảnh. Kiểm tra quyền ghi thư mục!";
-                        header("Location: index.php?controller=account&action=profile");
+                        // [FIX] Link tài khoản
+                        header("Location: tai-khoan");
                         exit;
                     }
                 } else {
                     $_SESSION['error'] = "Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP)!";
-                    header("Location: index.php?controller=account&action=profile");
+                    // [FIX] Link tài khoản
+                    header("Location: tai-khoan");
                     exit;
                 }
             }
@@ -102,6 +103,8 @@ class AccountController {
                 'city' => $city,
                 'district' => $district,
                 'ward' => $ward,
+                'district_id' => $districtId,
+                'ward_code'   => $wardCode,
                 'avatar' => $avatarName
             ];
 
@@ -114,20 +117,24 @@ class AccountController {
                 $_SESSION['user']['city'] = $city;
                 $_SESSION['user']['district'] = $district;
                 $_SESSION['user']['ward'] = $ward;
+                $_SESSION['user']['district_id'] = $districtId;
+                $_SESSION['user']['ward_code']   = $wardCode;
                 
                 $_SESSION['success'] = "Cập nhật thông tin thành công!";
             } else {
                 $_SESSION['error'] = "Có lỗi xảy ra khi lưu Database.";
             }
 
-            header("Location: index.php?controller=account&action=profile");
+            // [FIX] Link tài khoản
+            header("Location: tai-khoan");
             exit;
         }
     }
 
     public function changePassword() {
         if (!isset($_SESSION['user'])) {
-            header("Location: index.php?controller=auth&action=login");
+            // [FIX] Link đăng nhập
+            header("Location: dang-nhap");
             exit;
         }
 
@@ -140,19 +147,22 @@ class AccountController {
 
             if (!$this->userModel->verifyCurrentPassword($userId, $currentPass)) {
                 $_SESSION['error'] = "Mật khẩu hiện tại không đúng!";
-                header("Location: index.php?controller=account&action=changePassword");
+                // [FIX] Link đổi mật khẩu
+                header("Location: doi-mat-khau");
                 exit;
             }
 
             if (strlen($newPass) < 6) {
                 $_SESSION['error'] = "Mật khẩu mới phải có ít nhất 6 ký tự!";
-                header("Location: index.php?controller=account&action=changePassword");
+                // [FIX] Link đổi mật khẩu
+                header("Location: doi-mat-khau");
                 exit;
             }
 
             if ($newPass !== $confirmPass) {
                 $_SESSION['error'] = "Mật khẩu nhập lại không khớp!";
-                header("Location: index.php?controller=account&action=changePassword");
+                // [FIX] Link đổi mật khẩu
+                header("Location: doi-mat-khau");
                 exit;
             }
 
@@ -162,7 +172,8 @@ class AccountController {
                 $_SESSION['error'] = "Lỗi hệ thống, vui lòng thử lại.";
             }
 
-            header("Location: index.php?controller=account&action=changePassword");
+            // [FIX] Link đổi mật khẩu
+            header("Location: doi-mat-khau");
             exit;
         }
 

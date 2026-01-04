@@ -4,7 +4,7 @@
     <h3 class="fw-bold text-dark mb-0">
         <?= $currentData['id'] ? "Chỉnh sửa Thương hiệu" : "Tạo Thương hiệu mới" ?>
     </h3>
-    <a href="index.php?module=admin&controller=brand&action=index" class="btn btn-outline-secondary">
+    <a href="admin/brand" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left me-1"></i> Quay lại
     </a>
 </div>
@@ -23,7 +23,7 @@
             </div>
             
             <div class="card-body pt-0">
-                <form method="POST" action="index.php?module=admin&controller=brand&action=save" enctype="multipart/form-data">
+                <form method="POST" action="admin/brand/save" enctype="multipart/form-data">
                     <input type="hidden" name="id" value="<?= $currentData['id'] ?>">
 
                     <div class="mb-4">
@@ -71,7 +71,7 @@
                                      style="width: 100%; height: 100%; object-fit: contain;">
                                 
                                 <?php if($hasOldImg): ?>
-                                    <a href="index.php?module=admin&controller=brand&action=deleteImage&id=<?= $currentData['id'] ?>" 
+                                    <a href="admin/brand/deleteImage?id=<?= $currentData['id'] ?>" 
                                        id="btn-server-del" 
                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white shadow-sm text-decoration-none" 
                                        onclick="return confirm('Xóa vĩnh viễn logo này?')" title="Xóa ảnh cũ">✕</a>
@@ -101,7 +101,7 @@
 </div>
 
 <script>
-    // Logic JS giữ nguyên nhưng cập nhật ID cho khớp HTML mới
+    // Logic JS giữ nguyên
     const oldImgSrc = '<?= $hasOldImg ? $currentData['logo_url'] : '' ?>';
     const hasOldImg = <?= $hasOldImg ? 'true' : 'false' ?>;
 
