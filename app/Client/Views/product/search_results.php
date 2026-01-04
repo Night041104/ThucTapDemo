@@ -8,7 +8,6 @@
            style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 5px; text-decoration: none; color: #333; <?= $selectedCate == 0 ? 'background: #cb1c22; color: #fff; border-color: #cb1c22;' : '' ?>">
             Tất cả (<?= count($allResults) ?>)
         </a>
-
         <?php foreach ($categoryTabs as $tab): ?>
             <a href="tim-kiem?keyword=<?= urlencode($keyword) ?>&cate_id=<?= $tab['id'] ?>" 
                style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 5px; text-decoration: none; color: #333; <?= $selectedCate == $tab['id'] ? 'background: #cb1c22; color: #fff; border-color: #cb1c22;' : '' ?>">

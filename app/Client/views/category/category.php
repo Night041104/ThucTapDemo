@@ -318,7 +318,10 @@ $fixedColorMap = [
                 <?php foreach($filterAttrs as $attr): ?>
                     <?php if(!empty($attr['filter_options'])): ?>
                         
-                        <?php $isColorAttr = in_array(mb_strtolower($attr['name']), ['màu', 'màu sắc', 'color']); ?>
+                         <?php 
+                            $attrNameLower = mb_strtolower($attr['name']); 
+                            $isColorAttr = (mb_strpos($attrNameLower, 'màu') !== false) || (mb_strpos($attrNameLower, 'color') !== false); 
+                        ?>
 
                         <div class="filter-box">
                             <span class="filter-title"><?= htmlspecialchars($attr['name']) ?></span>
