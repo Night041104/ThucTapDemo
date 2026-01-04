@@ -367,7 +367,8 @@ class ProductModel extends BaseModel {
                     p.thumbnail,
                     pav.attribute_id,
                     a.name as attribute_name,
-                    COALESCE(ao.value, pav.value_custom) as attribute_value
+                    /* ĐỔI THỨ TỰ: Ưu tiên lấy value_custom trước, nếu trống mới lấy ao.value */
+                    COALESCE(NULLIF(pav.value_custom, ''), ao.value) as attribute_value
                 FROM products p
                 JOIN product_attribute_values pav ON p.id = pav.product_id
                 JOIN attributes a ON pav.attribute_id = a.id
@@ -392,27 +393,34 @@ class ProductModel extends BaseModel {
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
     public function searchProducts($keyword) {
-    $kw = $this->escape($keyword);
-    $where = "p.status = 1 AND (p.parent_id IS NULL OR p.parent_id = 0)";
-    
-    if ($kw != '') {
-        $where .= " AND p.name LIKE '%$kw%'";
-    }
+        $kw = $this->escape($keyword);
+        // Chỉ lấy sản phẩm đang kinh doanh và là sản phẩm cha (Master)
+        $where = "p.status = 1 AND (p.parent_id IS NULL OR p.parent_id = 0)";
+        
+        if ($kw != '') {
+            // MỞ RỘNG: Tìm theo tên SP OR Tên danh mục OR Tên thương hiệu
+            $where .= " AND (p.name LIKE '%$kw%' 
+                        OR c.name LIKE '%$kw%' 
+                        OR b.name LIKE '%$kw%'
+                        OR p.sku LIKE '%$kw%')"; 
+        }
 
-    $sql = "SELECT p.*, c.name as cate_name 
-            FROM products p 
-            LEFT JOIN categories c ON p.category_id = c.id 
-            WHERE $where 
-            ORDER BY 
-                CASE 
-                    WHEN p.name LIKE '$kw%' THEN 1  -- Bắt đầu bằng từ khóa: Ưu tiên 1
-                    WHEN p.name LIKE '% $kw%' THEN 2 -- Có chứa từ khóa đứng sau khoảng trắng: Ưu tiên 2
-                    ELSE 3                           -- Chứa từ khóa ở giữa từ (như bluetooth): Ưu tiên 3
-                END ASC, 
-                p.id DESC";
-            
-    $result = $this->_query($sql);
-    return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+        $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name 
+                FROM products p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN brands b ON p.brand_id = b.id 
+                WHERE $where 
+                ORDER BY 
+                    CASE 
+                        WHEN p.name LIKE '$kw%' THEN 1       -- Ưu tiên tên SP khớp đầu câu
+                        WHEN c.name LIKE '%$kw%' THEN 2      -- Ưu tiên khớp tên danh mục
+                        WHEN p.name LIKE '% $kw%' THEN 3     -- Khớp tên SP ở giữa
+                        ELSE 4 
+                    END ASC, 
+                    p.id DESC";
+                
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
     // 1. Hàm lấy danh sách mặc định (Chỉ lấy SP Cha)
     public function getProductsByCateForClient($cateId) {
@@ -493,18 +501,6 @@ class ProductModel extends BaseModel {
             'max' => (int)($row['max_price'] ?? 0)
         ];
     }
-    // Thêm vào trong class ProductModel
-    public function getByBrandName($brandName) {
-        $brandName = $this->escape($brandName);
-        // Join với bảng brands để lọc theo tên
-        $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name
-                FROM products p
-                LEFT JOIN categories c ON p.category_id = c.id
-                LEFT JOIN brands b ON p.brand_id = b.id
-                WHERE b.name LIKE '%$brandName%' AND p.status = 1
-                ORDER BY p.id DESC";
-        $result = $this->_query($sql);
-        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
-    }
+    
 }
 ?>

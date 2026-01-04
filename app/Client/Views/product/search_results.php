@@ -4,13 +4,13 @@
     <?php endif; ?>
     
     <div class="category-tabs" style="display: flex; gap: 10px; margin: 20px 0; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-        <a href="index.php?controller=product&action=search&q=<?= urlencode($keyword) ?>&cate_id=0" 
+        <a href="index.php?controller=product&action=search&keyword=<?= urlencode($keyword) ?>&cate_id=0" 
            style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 5px; text-decoration: none; color: #333; <?= $selectedCate == 0 ? 'background: #cb1c22; color: #fff; border-color: #cb1c22;' : '' ?>">
             Tất cả (<?= count($allResults) ?>)
         </a>
 
         <?php foreach ($categoryTabs as $tab): ?>
-            <a href="index.php?controller=product&action=search&q=<?= urlencode($keyword) ?>&cate_id=<?= $tab['id'] ?>" 
+            <a href="index.php?controller=product&action=search&keyword=<?= urlencode($keyword) ?>&cate_id=<?= $tab['id'] ?>" 
                style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 5px; text-decoration: none; color: #333; <?= $selectedCate == $tab['id'] ? 'background: #cb1c22; color: #fff; border-color: #cb1c22;' : '' ?>">
                 <?= $tab['name'] ?> (<?= $tab['count'] ?>)
             </a>
