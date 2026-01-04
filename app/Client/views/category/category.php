@@ -27,57 +27,104 @@ $fixedColorMap = [
     <style>
         /* 1. LAYOUT CHUNG */
         .main-content { display: flex; gap: 20px; margin-top: 20px; padding-bottom: 50px; }
-        .sidebar { width: 260px; flex-shrink: 0; }
+        .sidebar { 
+            width: 260px; 
+            flex-shrink: 0;
+            
+            /* Giúp sidebar dính chặt khi cuộn trang */
+            position: -webkit-sticky; /* Cho Safari */
+            position: sticky;
+            top: 20px; /* Cách mép trên màn hình 20px */
+            
+            /* Thiết lập chiều cao tối đa bằng chiều cao màn hình */
+            height: calc(100vh - 40px); 
+            
+            /* Nếu nội dung dài hơn chiều cao màn hình -> Hiện thanh cuộn riêng */
+            overflow-y: auto; 
+            
+            /* Tinh chỉnh nhỏ để thanh cuộn không đè nội dung */
+            padding-right: 5px; 
+        }
+
+        /* [THÊM MỚI] Làm đẹp thanh cuộn cho Sidebar (Chrome/Safari/Edge) */
+        .sidebar::-webkit-scrollbar {
+            width: 6px; /* Thanh cuộn nhỏ gọn */
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #ccc; 
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #aaa; /* Đậm hơn khi di chuột vào */
+        }
         .product-list { flex: 1; min-height: 500px; position: relative; }
 
         /* 2. FILTER BOX STYLE */
         .filter-box { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid #e5e5e5; }
         .filter-title { font-weight: 700; font-size: 14px; margin-bottom: 12px; display: block; color: #333; }
         
-        /* [FIX 1] ẨN INPUT TUYỆT ĐỐI (Khắc phục lỗi ô tròn to) */
+        /* ẨN INPUT TUYỆT ĐỐI */
         .sidebar input[type="checkbox"], 
         .sidebar input[type="radio"] {
-            position: absolute !important;
-            width: 0 !important;
-            height: 0 !important;
-            opacity: 0 !important;
-            overflow: hidden !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            z-index: -1;
+            position: absolute !important; width: 0 !important; height: 0 !important;
+            opacity: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; z-index: -1;
         }
 
-        /* 3. STYLE CHO NÚT CHỮ (RAM, ROM, GIÁ...) */
-        .filter-option { margin-bottom: 5px; }
+        /* 3. STYLE CHO NÚT CHỮ (RAM, ROM...) - [ĐÃ SỬA LỖI BẤT ĐỐI XỨNG] */
+        .filter-option { 
+            margin-bottom: 0; 
+            height: 100%; /* Chiếm hết chiều cao grid cell */
+        }
         
         .filter-option label {
-            display: block; cursor: pointer; font-size: 13px; color: #444;
-            padding: 6px 10px; border: 1px solid #e0e0e0; border-radius: 4px;
-            background: #fff; text-align: center; transition: all 0.2s;
-            user-select: none; position: relative;
+            cursor: pointer; 
+            font-size: 12px; 
+            color: #444;
+            padding: 5px 8px; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 4px;
+            background: #fff; 
+            transition: all 0.2s;
+            user-select: none; 
+            position: relative;
+            
+            /* Flexbox để căn giữa nội dung bất kể dài ngắn */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            height: 100%;       
+            min-height: 40px;   /* Chiều cao tối thiểu đồng bộ */
+            line-height: 1.2;
         }
+
         .filter-option label:hover { border-color: #cd1818; color: #cd1818; }
         
         .filter-option input:checked + label {
             border-color: #cd1818; background: #fff0f0; color: #cd1818; font-weight: 600;
         }
         .filter-option input:checked + label::after {
-            content: '✓'; position: absolute; top: -4px; right: -4px;
-            background: #cd1818; color: white; font-size: 9px;
+            content: '✓'; position: absolute; top: -5px; right: -5px;
+            background: #cd1818; color: white; font-size: 8px;
             width: 14px; height: 14px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
+            border: 1px solid #fff;
         }
 
         /* 4. STYLE CHO GRID MÀU SẮC */
         .color-grid-layout {
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
-            gap: 15px 5px; 
+            gap: 10px 5px; 
             justify-items: center;
             padding-bottom: 5px;
         }
 
-        /* [FIX 2] Label bao trùm input (Khắc phục lỗi click không ăn) */
         .color-item {
             display: flex; flex-direction: column; align-items: center;
             cursor: pointer; width: 100%; position: relative;
@@ -85,178 +132,143 @@ $fixedColorMap = [
         }
 
         .color-circle {
-            width: 36px; height: 36px; border-radius: 50%;
-            margin-bottom: 6px; position: relative;
+            width: 34px; height: 34px; border-radius: 50%;
+            margin-bottom: 5px; position: relative;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid rgba(0,0,0,0.1);
             transition: transform 0.2s, box-shadow 0.2s;
             box-sizing: border-box;
         }
-        /* Màu trắng thêm viền rõ hơn */
         .color-circle[style*="#ffffff"] { border: 1px solid #ddd; }
 
         .color-item:hover .color-circle { transform: translateY(-3px); }
 
-        /* Khi chọn màu: Input (đã ẩn) checked -> tác động lên .color-circle ngay sau nó */
         .color-item input:checked + .color-circle {
             box-shadow: 0 0 0 2px white, 0 0 0 4px #2f80ed; 
             border-color: transparent;
         }
         
         .color-label {
-            font-size: 11px; color: #666; text-align: center;
+            font-size: 10px; color: #666; text-align: center;
             width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .color-item input:checked ~ .color-label { color: #2f80ed; font-weight: 700; }
 
         /* 5. CÁC GRID KHÁC */
-        .brand-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .attr-grid-text { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .price-list { display: flex; flex-direction: column; gap: 8px; }
-        .price-list .filter-option label { text-align: left; padding-left: 15px; }
-
-        /* 6. LOGIC XEM THÊM */
-        .collapse-container { position: relative; }
-        .collapse-content { 
-            /* [FIX 3] Tăng chiều cao để chứa đủ 4 hàng màu */
-            max-height: 400px; 
-            overflow: hidden; 
-            transition: max-height 0.3s ease; 
+        .brand-grid { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; 
         }
-        .collapse-content.expanded { max-height: 1200px; }
         
-        .btn-view-more {
-            display: block; width: 100%; text-align: center; margin-top: 10px;
-            font-size: 12px; color: #288ad6; cursor: pointer; background: none; border: none;
+        /* Grid cho chữ: Tự động căng đều chiều cao */
+        .attr-grid-text { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 8px; 
+            align-items: stretch; 
         }
-        .btn-view-more:hover { text-decoration: underline; }
+
+        /* List giá: Căn trái, không center */
+        .price-list { display: flex; flex-direction: column; gap: 8px; }
+        .price-list .filter-option label { 
+            justify-content: flex-start; padding-left: 15px; min-height: 36px; 
+        }
+
+        /* 6. LOGIC XEM THÊM - [ĐÃ SỬA LOGIC] */
+        .collapse-container { position: relative; }
+        
+        /* 6. LOGIC XEM THÊM - [FIX LẦN 2] */
+       /* 6. LOGIC XEM THÊM - [FIX HOÀN CHỈNH] */
+        .collapse-content { 
+            /* Chiều cao 3 hàng (~135px) + Padding đệm (~30px) = 165px.
+               Đặt 165px để hiển thị trọn vẹn 3 hàng và lớp mờ.
+            */
+            max-height: 165px; 
+            
+            /* [QUAN TRỌNG] Tạo khoảng trống ở đáy để chứa lớp mờ, tránh đè lên chữ */
+            padding-bottom: 30px; 
+            
+            overflow: hidden; 
+            transition: max-height 0.4s ease-in-out, padding 0.4s; 
+            position: relative;
+        }
+        
+        /* Khi mở rộng thì xóa khoảng đệm đi cho đẹp */
+        .collapse-content.expanded { 
+            max-height: 1000px; 
+            padding-bottom: 0; 
+        }
+
+        /* Hiệu ứng mờ đáy */
+        .collapse-content:not(.expanded)::after {
+            content: ''; 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            
+            /* Chiều cao bằng đúng padding-bottom để lấp đầy khoảng trống */
+            height: 30px; 
+            
+            /* Gradient trắng mờ */
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1) 80%);
+            pointer-events: none;
+        }
+        
+        /* Ẩn lớp mờ khi đã mở rộng */
+        .collapse-content.expanded::after {
+            display: none;
+        }
+
+        .btn-view-more {
+            display: block; width: 100%; text-align: center; margin-top: 5px;
+            font-size: 12px; color: #288ad6; cursor: pointer; 
+            background: #f8f9fa; border: 1px solid #eee; padding: 6px 0; border-radius: 4px;
+        }
+        .btn-view-more:hover { background: #f0f0f0; text-decoration: none; color: #cd1818; }
 
         /* 7. LOADING & PRODUCT */
         .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); z-index: 10; display: none; justify-content: center; padding-top: 100px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #cd1818; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-       /* ... (Các CSS cũ giữ nguyên) ... */
-
-        /* === CSS SẢN PHẨM HIỆN ĐẠI === */
-        .products-grid { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 15px; /* Khoảng cách giữa các thẻ */
-        }
-        @media (min-width: 1100px) { 
-            .products-grid { grid-template-columns: repeat(4, 1fr); } 
-        }
+        /* === CSS SẢN PHẨM === */
+        .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        @media (min-width: 1100px) { .products-grid { grid-template-columns: repeat(4, 1fr); } }
 
         .product-card { 
-            background: white; 
-            border-radius: 10px; /* Bo góc mềm mại */
-            padding: 15px; 
-            border: 1px solid #f0f0f0; /* Viền mờ nhẹ */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02); /* Bóng mờ mặc định */
-            text-decoration: none; 
-            color: inherit; 
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Hiệu ứng mượt mà */
-            position: relative;
-            overflow: hidden; /* Để cắt bo góc cho các phần tử con */
-            display: flex;
-            flex-direction: column;
+            background: white; border-radius: 10px; padding: 15px; 
+            border: 1px solid #f0f0f0; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            text-decoration: none; color: inherit; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
         }
+        .product-card:hover { border-color: #fff; box-shadow: 0 12px 20px rgba(0,0,0,0.1); transform: translateY(-5px); z-index: 2; }
 
-        /* Hiệu ứng HOVER: Nổi lên và bóng đậm hơn */
-        .product-card:hover { 
-            border-color: #fff;
-            box-shadow: 0 12px 20px rgba(0,0,0,0.1); /* Bóng đổ sâu */
-            transform: translateY(-5px); /* Nhấc nhẹ thẻ lên */
-            z-index: 2;
-        }
+        .prod-img-box { width: 100%; height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; transition: transform 0.5s ease; }
+        .prod-img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.3s ease; }
+        .product-card:hover .prod-img { transform: scale(1.05); }
 
-        /* Ảnh sản phẩm */
-        .prod-img-box {
-            width: 100%;
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            transition: transform 0.5s ease;
-        }
-        .prod-img { 
-            max-width: 100%; 
-            max-height: 100%; 
-            object-fit: contain; 
-            transition: transform 0.3s ease;
-        }
-        /* Zoom nhẹ ảnh khi hover */
-        .product-card:hover .prod-img {
-            transform: scale(1.05); 
-        }
-
-        /* Nhãn giảm giá */
         .discount-badge {
-            position: absolute;
-            top: 10px; left: -4px; /* Treo lơ lửng bên trái */
-            background: #cd1818; 
-            color: white;
-            font-size: 11px; 
-            font-weight: 700;
-            padding: 4px 8px; 
-            border-radius: 0 4px 4px 0; /* Bo góc bên phải */
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-            z-index: 5;
+            position: absolute; top: 10px; left: -4px; background: #cd1818; color: white;
+            font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 0 4px 4px 0;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.2); z-index: 5;
         }
-        /* Mẹo nhỏ: Tam giác gấp khúc tạo hiệu ứng ruy băng 3D */
         .discount-badge::before {
-            content: '';
-            position: absolute;
-            bottom: -4px; left: 0;
-            border-top: 4px solid #8a0e0e; /* Màu tối hơn */
-            border-left: 4px solid transparent;
+            content: ''; position: absolute; bottom: -4px; left: 0;
+            border-top: 4px solid #8a0e0e; border-left: 4px solid transparent;
         }
 
-        /* Thông tin sản phẩm */
         .prod-info { flex: 1; display: flex; flex-direction: column; }
-        
-        .prod-brand-tag { 
-            font-size: 10px; 
-            color: #666; 
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
-
+        .prod-brand-tag { font-size: 10px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; letter-spacing: 0.5px; }
         .prod-name { 
-            font-size: 14px; 
-            font-weight: 600; 
-            line-height: 1.4; 
-            margin: 0 0 10px 0; 
-            height: 40px; /* Giới hạn 2 dòng */
-            overflow: hidden; 
-            display: -webkit-box; 
-            -webkit-line-clamp: 2; 
-            -webkit-box-orient: vertical;
-            color: #333;
-            transition: color 0.2s;
+            font-size: 14px; font-weight: 600; line-height: 1.4; margin: 0 0 10px 0; 
+            height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            color: #333; transition: color 0.2s;
         }
-        .product-card:hover .prod-name { color: #2f80ed; /* Đổi màu tên khi hover */ }
+        .product-card:hover .prod-name { color: #2f80ed; }
 
-        .prod-price-box { margin-top: auto; } /* Đẩy giá xuống đáy */
-        
-        .prod-price { 
-            color: #cd1818; 
-            font-weight: 700; 
-            font-size: 16px; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-        }
-        .prod-old-price { 
-            text-decoration: line-through; 
-            color: #999; 
-            font-size: 13px; 
-            font-weight: 400; 
-        }
+        .prod-price-box { margin-top: auto; }
+        .prod-price { color: #cd1818; font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .prod-old-price { text-decoration: line-through; color: #999; font-size: 13px; font-weight: 400; }
 
         .empty-state { text-align: center; padding: 50px; width: 100%; background: #fff; border-radius: 8px; border: 1px solid #eee; }
     </style>
@@ -360,7 +372,12 @@ $fixedColorMap = [
                                     </div>
                                 <?php endif; ?>
 
-                                <?php if(count($attr['filter_options']) > ($isColorAttr ? 12 : 9)): ?>
+                                <?php 
+                                    // Với màu sắc: > 12 item thì hiện
+                                    // Với chữ: > 9 item thì hiện (khoảng 3 hàng)
+                                    $limit = $isColorAttr ? 12 : 9;
+                                    if(count($attr['filter_options']) > $limit): 
+                                ?>
                                     <button class="btn-view-more" onclick="toggleExpand(this)">Xem thêm ▾</button>
                                 <?php endif; ?>
                             </div>

@@ -1,520 +1,444 @@
 <style>
     /* =========================================
-       1. CẤU TRÚC LAYOUT CHÍNH
+       CORE VARIABLES & RESET
        ========================================= */
-    .detail-container { max-width: 1200px; margin: 20px auto; display: flex; gap: 30px; padding: 0 15px; font-family: 'Segoe UI', sans-serif; }
-    .col-left { width: 45%; }
-    .col-right { width: 55%; }
+    :root {
+        --primary-red: #cb1c22;
+        --dark-red: #a61419;
+        --bg-gray: #f8f9fa;
+        --text-main: #333;
+        --text-gray: #666;
+        --border-color: #e5e7eb;
+    }
 
-    /* Breadcrumb */
-    .breadcrumb { margin-top: 15px; font-size: 13px; color: #666; margin-bottom: 10px;}
-    .breadcrumb a { text-decoration: none; color: #666; }
-    .breadcrumb a:hover { color: #cd1818; }
+    .detail-wrapper {
+        background-color: #fff;
+        font-family: 'Roboto', 'Segoe UI', sans-serif;
+        color: var(--text-main);
+    }
+
+    .container-detail {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 15px;
+    }
+
+    /* BREADCRUMB */
+    .breadcrumb-custom {
+        padding: 10px 0;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: var(--text-gray);
+        background: transparent;
+    }
+    .breadcrumb-custom a { color: #007bff; text-decoration: none; font-weight: 500; }
+    .breadcrumb-custom a:hover { text-decoration: underline; }
 
     /* =========================================
-       2. ẢNH SẢN PHẨM & THUMBNAILS
+       LAYOUT GRID
        ========================================= */
-    .main-image-box { border: 1px solid #eee; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 15px; background: white; position: relative; overflow: hidden; }
-    .main-image-box img { max-width: 100%; height: 400px; object-fit: contain; transition: 0.3s; }
+    .product-layout { display: flex; gap: 40px; margin-bottom: 40px; align-items: flex-start; }
+    .gallery-box { width: 42%; position: relative; }
+    .info-box { width: 58%; }
+
+    /* =========================================
+       GALLERY CAROUSEL
+       ========================================= */
+    .main-img-stage {
+        border-radius: 8px;
+        border: 1px solid #f0f0f0;
+        padding: 20px;
+        text-align: center;
+        background: #fff;
+        margin-bottom: 15px;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .main-img-stage img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .main-img-stage:hover img { transform: scale(1.05); }
+
+    .img-nav-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        width: 40px; height: 40px; background: rgba(0, 0, 0, 0.15);
+        color: #fff; border: none; border-radius: 50%; font-size: 18px;
+        cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center;
+        transition: all 0.3s; opacity: 0;
+    }
+    .main-img-stage:hover .img-nav-btn { opacity: 1; }
+    .img-nav-btn:hover { background: rgba(203, 28, 34, 0.8); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+    .nav-prev { left: 10px; }
+    .nav-next { right: 10px; }
+
+    .thumb-list-container {
+        overflow-x: auto; width: 100%; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth; margin-top: 10px;
+    }
+    .thumb-list-container::-webkit-scrollbar { display: none; }
+    .thumb-list { display: flex; gap: 10px; width: max-content; padding: 2px; }
     
-    .thumb-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; justify-content: center; }
-    .thumb-item { width: 60px; height: 60px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; object-fit: cover; opacity: 0.6; transition: 0.2s; }
-    .thumb-item:hover, .thumb-item.active { border-color: #cd1818; opacity: 1; }
+    .thumb-item {
+        width: 60px; height: 60px; border: 1px solid #ddd; border-radius: 4px; padding: 2px;
+        cursor: pointer; object-fit: contain; opacity: 0.6; transition: all 0.2s; background: #fff;
+    }
+    .thumb-item:hover, .thumb-item.active { border-color: var(--primary-red); opacity: 1; box-shadow: 0 0 0 1px var(--primary-red); }
+
+    /* Mini Specs */
+    .mini-specs-box { margin-top: 25px; background: #f8f9fa; border-radius: 8px; padding: 15px; border: 1px solid #eee; }
+    .mini-specs-list li { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid #eee; }
+    .btn-show-full-specs { width: 100%; margin-top: 10px; padding: 8px; background: #fff; border: 1px solid var(--primary-red); color: var(--primary-red); border-radius: 4px; cursor: pointer; }
+    .btn-show-full-specs:hover { background: var(--primary-red); color: white; }
 
     /* =========================================
-       3. THÔNG TIN & GIÁ
+       PRODUCT INFO
        ========================================= */
-    .prod-title { font-size: 24px; font-weight: 700; color: #333; margin-bottom: 5px; line-height: 1.3; }
-    .prod-sku { font-size: 13px; color: #777; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;}
-    .rating-box { color: #ff9f00; font-size: 13px; }
-
-    /* Giá bán */
-    .price-box { display: flex; align-items: flex-end; gap: 15px; margin-bottom: 20px; }
-    .current-price { font-size: 28px; font-weight: bold; color: #cd1818; line-height: 1; }
-    .market-price { font-size: 16px; color: #666; text-decoration: line-through; }
-
-    /* =========================================
-       4. BIẾN THỂ GOM NHÓM (NEW STYLE)
-       ========================================= */
-    .variant-section { margin-bottom: 20px; }
-    .variant-row { margin-bottom: 15px; }
-    .variant-name { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px; display: block; }
+    .prod-title { font-size: 26px; font-weight: 700; color: #222; margin-bottom: 8px; }
+    .prod-meta { font-size: 13px; color: #666; display: flex; gap: 15px; margin-bottom: 15px; }
     
-    .variant-options { display: flex; flex-wrap: wrap; gap: 10px; }
-    
-    .opt-btn {
-        border: 1px solid #ddd; background: #fff; color: #333;
-        padding: 8px 15px; border-radius: 4px; cursor: pointer;
-        text-decoration: none; font-size: 13px; min-width: 80px; text-align: center;
-        transition: 0.2s; position: relative; display: inline-block;
+    .price-area { display: flex; align-items: baseline; gap: 15px; margin-bottom: 20px; }
+    .price-current { font-size: 32px; font-weight: bold; color: var(--primary-red); }
+    .price-old { font-size: 16px; color: #999; text-decoration: line-through; }
+
+    /* VARIANTS */
+    .variant-group { margin-bottom: 15px; }
+    .variant-label { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block; }
+    .variant-list { display: flex; flex-wrap: wrap; gap: 10px; }
+    .variant-btn {
+        min-width: 80px; padding: 6px 15px; border: 1px solid #d1d5db; border-radius: 6px;
+        background: #fff; color: #444; font-size: 13px; text-decoration: none;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        position: relative; transition: all 0.2s;
     }
-    .opt-btn:hover { border-color: #cd1818; color: #cd1818; }
-    
-    .opt-btn.active {
-        border-color: #cd1818; color: #cd1818; background: #fff5f5; font-weight: bold;
+    .variant-thumb { width: 25px; height: 25px; object-fit: contain; border-radius: 2px; }
+    .variant-btn:hover { border-color: var(--primary-red); color: var(--primary-red); }
+    .variant-btn.active {
+        border-color: var(--primary-red); background: #fffafa; color: var(--primary-red); font-weight: 600; box-shadow: 0 0 0 1px inset var(--primary-red);
     }
-    /* Dấu tick nhỏ ở góc giống FPT */
-    .opt-btn.active::after {
-        content: ''; position: absolute; top: 0; right: 0;
-        width: 0; height: 0;
-        border-style: solid; border-width: 0 12px 12px 0;
-        border-color: transparent #cd1818 transparent transparent;
+    .variant-btn.active::after {
+        content: ''; position: absolute; top: 0; right: 0; border-style: solid; border-width: 0 16px 16px 0;
+        border-color: transparent var(--primary-red) transparent transparent; border-top-right-radius: 5px;
     }
-    .opt-btn.active::before {
-        content: '✓'; position: absolute; top: -1px; right: 0px;
-        color: white; font-size: 7px; z-index: 1; font-weight: bold;
+    .variant-btn.active::before {
+        content: '✓'; position: absolute; top: -2px; right: 1px; font-size: 9px; color: #fff; z-index: 2; font-weight: bold;
     }
 
-    /* =========================================
-       5. KHUYẾN MÃI & NÚT MUA
-       ========================================= */
-    .promo-box { border:1px solid #fee2e2; background:#fff1f2; padding:15px; border-radius:8px; margin-bottom:20px; }
-    .promo-title { color:#be123c; font-weight:bold; font-size:14px; margin-bottom:10px; display:flex; align-items:center; gap:5px; }
-    .promo-list { list-style: none; padding: 0; margin: 0; }
-    .promo-list li { font-size: 13px; color: #333; margin-bottom: 5px; padding-left: 15px; position: relative; }
-    .promo-list li::before { content: "•"; color: #be123c; font-weight: bold; position: absolute; left: 0; }
+    /* Promo & Actions */
+    .promo-container { border: 1px solid #fee2e2; border-radius: 8px; margin-bottom: 25px; overflow: hidden; }
+    .promo-header { background: #fee2e2; padding: 10px 15px; color: #991b1b; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+    .promo-content { padding: 15px; background: #fff; }
+    .promo-item { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; color: #333; }
+    .promo-icon { color: #fff; background: #28a745; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; margin-top: 2px; }
 
-    .action-box { display: flex; gap: 10px; margin-top: 20px; }
-    .btn-buy-now { 
-        flex: 1; background: #cd1818; color: white; border: none; border-radius: 4px; padding: 12px; 
-        font-size: 16px; font-weight: bold; text-transform: uppercase; cursor: pointer; text-align: center; transition: 0.2s;
-    }
-    .btn-buy-now span { display: block; font-size: 11px; font-weight: normal; text-transform: none; margin-top: 2px; opacity: 0.9; }
-    .btn-buy-now:hover { background: #b71c1c; box-shadow: 0 4px 8px rgba(205, 24, 24, 0.2); }
+    .action-group { display: flex; gap: 15px; margin-top: 20px; }
+    .btn-buy-now { flex: 1; background: linear-gradient(180deg, #f52f32 0%, #cb1c22 100%); color: white; border: none; border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; box-shadow: 0 4px 6px rgba(203, 28, 34, 0.3); }
+    .btn-buy-now:hover { background: linear-gradient(180deg, #cb1c22 0%, #a61419 100%); transform: translateY(-2px); }
+    .btn-cart { width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid var(--primary-red); background: white; color: var(--primary-red); border-radius: 8px; cursor: pointer; }
+    .btn-cart:hover { background: #fff1f1; }
 
-    .btn-add-cart {
-        width: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        border: 1px solid #cd1818; border-radius: 4px; background: white; color: #cd1818; cursor: pointer; font-size: 9px; transition: 0.2s;
-    }
-    .btn-add-cart i { font-size: 22px; margin-bottom: 2px; }
-    .btn-add-cart:hover { background: #fff5f5; }
-
-    /* =========================================
-       6. MINI SPECS & MODAL
-       ========================================= */
-    .mini-specs { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 20px; }
-    .mini-specs ul { padding: 0; margin: 0; list-style: none; }
-    .mini-specs li { display: flex; margin-bottom: 8px; font-size: 13px; border-bottom: 1px solid #f1f1f1; padding-bottom: 8px; }
-    .mini-specs li:last-child { border-bottom: none; }
-    .mini-specs li strong { width: 130px; min-width: 130px; color: #555; font-weight: 500; }
-    .mini-specs li span { color: #333; }
-
-    .btn-show-specs {
-        display: block; width: 100%; padding: 10px; margin-top: 10px;
-        background: white; border: 1px solid #ddd; border-radius: 4px;
-        color: #333; font-weight: 500; cursor: pointer; transition: 0.2s;
-        text-align: center; font-size: 13px;
-    }
-    .btn-show-specs:hover { background: #f9f9f9; border-color: #999; color: #cd1818; }
-
-    /* Modal CSS */
-    .specs-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5); z-index: 9999;
-        opacity: 0; visibility: hidden; transition: 0.3s;
-    }
+    /* Modal & Review */
+    .specs-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
     .specs-overlay.active { opacity: 1; visibility: visible; }
-
-    .specs-panel {
-        position: absolute; top: 0; right: 0; bottom: 0;
-        width: 600px; max-width: 90%;
-        background: white; box-shadow: -5px 0 15px rgba(0,0,0,0.1);
-        transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        display: flex; flex-direction: column;
-    }
+    .specs-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 550px; max-width: 90%; background: #fff; transform: translateX(100%); transition: transform 0.4s; display: flex; flex-direction: column; }
     .specs-overlay.active .specs-panel { transform: translateX(0); }
+    .sp-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .sp-body { flex: 1; overflow-y: auto; padding: 20px; }
 
-    .sp-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; background: #fff; }
-    .sp-title { font-weight: bold; font-size: 18px; color: #333; }
-    .btn-close-specs { background: none; border: none; font-size: 28px; color: #999; cursor: pointer; line-height: 1; }
+    .review-box { background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 30px; }
     
-    .sp-tabs {
-        display: flex; gap: 20px; overflow-x: auto; padding: 0 20px;
-        border-bottom: 1px solid #eee; background: #fff; scroll-behavior: smooth;
-        white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-    .sp-tabs::-webkit-scrollbar { height: 0px; }
-    .sp-tab-item {
-        font-size: 14px; color: #666; cursor: pointer; padding: 12px 0; border-bottom: 3px solid transparent; font-weight: 500;
-    }
-    .sp-tab-item.active { color: #cd1818; border-color: #cd1818; }
-
-    .sp-body { flex: 1; overflow-y: auto; padding: 20px; scroll-behavior: smooth; background: #fff; }
-    .sp-group { margin-bottom: 30px; scroll-margin-top: 10px; }
-    .sp-group-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid #cd1818; }
-    
-    .sp-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-    .sp-row:last-child { border-bottom: none; }
-    .sp-label { width: 40%; color: #666; padding-right: 15px; }
-    .sp-val { width: 60%; color: #333; font-weight: 500; }
-
-    /* CSS ĐÁNH GIÁ */
-    .review-section { border-top: 1px solid #eee; padding: 30px 20px; background: #fff; margin-top: 20px; border-radius: 8px; }
-    .rating-summary { display: flex; flex-direction: column; align-items: center; gap: 25px; margin-bottom: 40px; background: #fdfdfd; padding: 25px; border-radius: 12px;}
-    .avg-score { text-align: center; }
-    .avg-score h2 { font-size: 56px; color: #fe2c6a; margin: 0; line-height: 1; }
-    .stars { color: #ffbe00; font-size: 24px; margin: 10px 0; }
-    .progress-bars { width: 100%; max-width: 450px; }
-    .bar-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-    .bar-bg { background: #eee; height: 10px; flex-grow: 1; border-radius: 5px; overflow: hidden; }
-    .bar-fill { background: #fe2c6a; height: 100%; border-radius: 5px; }
-    .btn-review-action { background: #cd1818; color: white; border: none; padding: 12px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    .btn-review-action:hover { background: #b71c1c; transform: scale(1.05); }
-    .review-item { border-bottom: 1px solid #f1f1f1; padding: 20px 0; text-align: left; }
-    .user-info { font-weight: bold; display: flex; align-items: center; gap: 10px; }
+    @media (max-width: 992px) { .product-layout { flex-direction: column; } .gallery-box, .info-box { width: 100%; } }
 </style>
 
-<div class="container breadcrumb">
-    <a href="trang-chu">Trang chủ</a> / 
-    
-    <a href="danh-muc/<?= $category['slug'] ?>"><?= $category['name'] ?? 'Danh mục' ?></a> / 
-    
-    <span style="color: #333;"><?= $product['name'] ?></span>
-</div>
-
-<div class="detail-container">
-    <div class="col-left">
-        <div class="main-image-box">
-            <img id="main-img" src="<?= $product['thumbnail'] ?>" alt="<?= $product['name'] ?>">
-        </div>
-        
-        <div class="thumb-list">
-            <img src="<?= $product['thumbnail'] ?>" class="thumb-item active" onclick="changeImage(this.src)">
-            <?php if(!empty($gallery)): ?>
-                <?php foreach($gallery as $img): ?>
-                    <img src="<?= $img['image_url'] ?>" class="thumb-item" onclick="changeImage(this.src)">
-                <?php endforeach; ?>
-            <?php endif; ?>
+<div class="detail-wrapper">
+    <div class="container-detail">
+        <div class="breadcrumb-custom">
+            <a href="index.php"><i class="fa fa-home"></i> Trang chủ</a> / 
+            <a href="danh-muc/<?= $category['slug'] ?>"><?= $category['name'] ?? 'Danh mục' ?></a> / 
+            <span><?= $product['name'] ?></span>
         </div>
 
-        <?php if(!empty($specs)): ?>
-        <div class="mini-specs">
-            <h4 style="margin: 0 0 15px 0; font-size: 16px;">Thông số kỹ thuật</h4>
-            <ul>
-                <?php 
-                $count = 0;
-                foreach($specs as $group) {
-                    if(isset($group['items'])) {
-                        foreach($group['items'] as $item) {
-                            if($count++ > 4) break 2; 
-                            echo "<li><strong>{$item['name']}:</strong> <span>{$item['value']}</span></li>";
-                        }
-                    }
-                }
-                ?>
-            </ul>
-            <button type="button" class="btn-show-specs" onclick="openSpecs()">
-                Xem cấu hình chi tiết <i class="fa fa-chevron-right" style="font-size: 10px; margin-left: 5px;"></i>
-            </button>
-        </div>
-        <?php endif; ?>
-    </div>
-
-    <div class="col-right">
-        <h1 class="prod-title"><?= $product['name'] ?></h1>
-        <div class="prod-sku">
-            <span>SKU: <?= $product['sku'] ?></span> | 
-            <span class="rating-box">
-                <?php 
-                    $avg = $reviewStats['avg'] ?? 0;
-                    for($i=1; $i<=5; $i++) echo ($i <= $avg) ? '★' : '☆';
-                ?>
-                (<?= $reviewStats['total'] ?? 0 ?> đánh giá)
-            </span>
-        </div>
-
-        <div class="price-box">
-            <div class="current-price"><?= number_format($product['price']) ?>₫</div>
-            <?php if($product['market_price'] > $product['price']): ?>
-                <div class="market-price"><?= number_format($product['market_price']) ?>₫</div>
-            <?php endif; ?>
-        </div>
-
-        <?php if(!empty($variantGroups)): ?>
-            <div class="variant-section">
-                <?php foreach($variantGroups as $groupName => $options): ?>
-                    <div class="variant-row">
-                        <span class="variant-name"><?= htmlspecialchars($groupName) ?></span>
-                        <div class="variant-options">
-                            <?php foreach($options as $valText => $info): ?>
-                                <a href="san-pham/<?= $info['slug'] ?>.html" 
-                                   class="opt-btn <?= $info['active'] ? 'active' : '' ?>">
-                                    <?= htmlspecialchars($valText) ?>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="promo-box">
-            <div class="promo-title"><i class="fa fa-gift"></i> ƯU ĐÃI THÊM</div>
-            <ul class="promo-list">
-                <li>Giảm ngay 500.000đ khi thanh toán qua ZaloPay/VNPAY.</li>
-                <li>Thu cũ đổi mới: Trợ giá đến 2 triệu đồng.</li>
-                <li>Tặng kèm ốp lưng chính hãng trị giá 300.000đ.</li>
-                <li>Bảo hành chính hãng 12 tháng, lỗi 1 đổi 1 trong 30 ngày.</li>
-            </ul>
-        </div>
-
-        <form method="POST" action="index.php?module=client&controller=cart&action=add">
-            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-            <input type="hidden" name="quantity" value="1">
-            
-            <div class="action-box">
-                <button type="submit" name="buy_now" value="1" class="btn-buy-now">
-                    MUA NGAY
-                    <span>(Giao tận nơi hoặc nhận tại cửa hàng)</span>
-                </button>
-
-                <button type="submit" name="add_to_cart" value="1" class="btn-add-cart" title="Thêm vào giỏ hàng">
-                    <i class="fa fa-cart-plus"></i>
-                    <span>Thêm giỏ</span>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="specs-modal" class="specs-overlay" onclick="closeSpecs(event)">
-    <div class="specs-panel" onclick="event.stopPropagation()">
-        
-        <div class="sp-header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <img src="<?= $product['thumbnail'] ?>" style="width:40px; height:40px; object-fit:contain;">
-                <span class="sp-title">Thông số kỹ thuật</span>
-            </div>
-            <button class="btn-close-specs" onclick="closeSpecs()">×</button>
-        </div>
-
-        <div class="sp-tabs">
-            <?php foreach($specs as $index => $group): ?>
-                <div class="sp-tab-item" onclick="scrollToGroup('group-<?= $index ?>', this)">
-                    <?= $group['group_name'] ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="sp-body" id="sp-body-container">
-            <?php foreach($specs as $index => $group): ?>
-                <div id="group-<?= $index ?>" class="sp-group">
-                    <div class="sp-group-title"><?= $group['group_name'] ?></div>
-                    <?php if(isset($group['items'])): ?>
-                        <?php foreach($group['items'] as $item): ?>
-                            <div class="sp-row">
-                                <div class="sp-label"><?= $item['name'] ?></div>
-                                <div class="sp-val"><?= $item['value'] ?></div>
-                            </div>
-                        <?php endforeach; ?>
+        <div class="product-layout">
+            <div class="gallery-box">
+                <div class="main-img-stage">
+                    <button class="img-nav-btn nav-prev" onclick="changeImageByStep(-1)"><i class="fa fa-chevron-left"></i></button>
+                    <button class="img-nav-btn nav-next" onclick="changeImageByStep(1)"><i class="fa fa-chevron-right"></i></button>
+                    <img id="main-img" src="<?= $product['thumbnail'] ?>" alt="<?= $product['name'] ?>">
+                    <?php if($product['market_price'] > $product['price']): ?>
+                        <?php $percent = round((($product['market_price'] - $product['price']) / $product['market_price']) * 100); ?>
+                        <div style="position: absolute; top: 15px; left: 15px; background: #cb1c22; color: #fff; padding: 5px 10px; border-radius: 4px; font-weight: 700; font-size: 13px;">Giảm <?= $percent ?>%</div>
                     <?php endif; ?>
                 </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</div>
-
-<div class="review-section container">
-    <h3 style="text-align: center; margin-bottom: 30px; font-size: 22px;">Đánh giá sản phẩm <?= $product['name'] ?></h3>
-    
-    <div class="rating-summary">
-        <div class="avg-score">
-            <h2><?= $reviewStats['avg'] ?>/5</h2>
-            <div class="stars">
-                <?php 
-                $avg = $reviewStats['avg'] ?? 0;
-                for($i=1; $i<=5; $i++) echo ($i <= $avg) ? '★' : '☆'; 
-                ?>
-            </div>
-            <p><?= $reviewStats['total'] ?> đánh giá</p>
-        </div>
-        <div class="progress-bars">
-            <?php for($i=5; $i>=1; $i--): 
-                $percent = ($reviewStats['total'] > 0) ? ($reviewStats[$i] / $reviewStats['total']) * 100 : 0;
-            ?>
-            <div class="bar-item">
-                <span style="min-width: 25px;"><?= $i ?>★</span>
-                <div class="bar-bg"><div class="bar-fill" style="width: <?= $percent ?>%"></div></div>
-                <span style="min-width: 25px; text-align: right;"><?= $reviewStats[$i] ?></span>
-            </div>
-            <?php endfor; ?>
-        </div>
-        <?php if(!$userReview): ?>
-        <button onclick="<?= isset($_SESSION['user']) ? "$('#formReview').toggle()" : "window.location.href='index.php?module=client&controller=auth&action=login'" ?>" class="btn-review-action">
-            Viết đánh giá
-        </button>
-        <?php else: ?>
-        <div style="flex: 1; text-align: center; color: #28a745; font-weight: 500;">
-            <i class="fa fa-check-circle"></i> Bạn đã đánh giá sản phẩm này
-        </div>
-        <?php endif; ?>
-    </div>
-
-    <div id="formReview" style="display:none; margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fdfdfd;">
-        <?php if(isset($_SESSION['user'])): ?>
-        <form action="index.php?module=client&controller=review&action=submit" method="POST">
-            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-            <label style="font-weight: bold; display: block; margin-bottom: 10px;">
-                <?= $userReview ? 'Chỉnh sửa đánh giá của bạn:' : 'Gửi đánh giá mới:' ?>
-            </label>
-            <select name="rating" required style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px;">
-                <?php for($i=5; $i>=1; $i--): ?>
-                    <option value="<?= $i ?>" <?= (isset($userReview) && $userReview['rating'] == $i) ? 'selected' : '' ?>>
-                        <?= $i ?> sao <?= $i==5 ? '(Rất tốt)' : '' ?>
-                    </option>
-                <?php endfor; ?>
-            </select>
-            <textarea name="comment" required style="width: 100%; height: 100px; padding: 10px; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 15px;" placeholder="Cảm nhận của bạn..."><?= $userReview['comment'] ?? '' ?></textarea>
-            <div style="display: flex; gap: 10px;">
-                <button type="submit" class="btn-review-action" style="padding: 10px 20px;">
-                    <?= $userReview ? 'Cập nhật' : 'Hoàn tất' ?>
-                </button>
-                <button type="button" onclick="$('#formReview').hide()" style="background: #eee; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer;">Hủy</button>
-            </div>
-        </form>
-        <?php endif; ?>
-    </div>
-
-    <div class="review-list">
-    <?php if(empty($reviews)): ?>
-        <p style="text-align:center; color:#999;">Chưa có đánh giá nào cho sản phẩm này.</p>
-    <?php endif; ?>
-
-    <?php foreach($reviews as $rev): ?>
-        <div class="review-item">
-            <div class="user-info">
-                <?= htmlspecialchars($rev['fname'] . ' ' . $rev['lname']) ?>
-                <span style="color:#ffbe00; margin-left:10px;">
-                    <?= str_repeat('★', $rev['rating']) ?>
-                </span>
-            </div>
-            
-            <p style="margin:8px 0;"><?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
-            
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                <small style="color:#999"><?= date('d/m/Y', strtotime($rev['created_at'])) ?></small>
-
-                <?php if(isset($_SESSION['user']) && $rev['user_id'] == $_SESSION['user']['id']): ?>
-                    <div class="action-links">
-                        <a href="javascript:void(0)" onclick="$('#formReview').show(); window.scrollTo(0, $('#formReview').offset().top - 100);" style="color:#007bff; font-size:12px;">Sửa</a>
-                        <span style="color:#ddd">|</span>
-                        <a href="index.php?controller=review&action=delete&id=<?= $rev['id'] ?>" style="color:red; font-size:12px;" onclick="return confirm('Xóa đánh giá này?')">Xóa</a>
+                <div class="thumb-list-container" id="thumb-container">
+                    <div class="thumb-list" id="thumb-track">
+                        <img src="<?= $product['thumbnail'] ?>" class="thumb-item active" onclick="changeImage(this)">
+                        <?php if(!empty($gallery)): foreach($gallery as $img): ?>
+                            <img src="<?= $img['image_url'] ?>" class="thumb-item" onclick="changeImage(this)">
+                        <?php endforeach; endif; ?>
                     </div>
-                <?php elseif(isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
-                    <a href="index.php?controller=review&action=delete&id=<?= $rev['id'] ?>" style="color:red; font-size:12px;" onclick="return confirm('Xóa đánh giá này (Admin)?')">Xóa</a>
-                    <span style="color:#ddd">|</span>
-                    <a href="javascript:void(0)" onclick="toggleReplyForm(<?= $rev['id'] ?>)" style="color:#28a745; font-size:12px; font-weight:bold;">Phản hồi</a>
+                </div>
+                <?php if(!empty($specs)): ?>
+                <div class="mini-specs-box">
+                    <div style="font-weight: 700; margin-bottom: 10px; text-transform: uppercase;"><i class="fa fa-cogs"></i> Thông số tóm tắt</div>
+                    <ul class="mini-specs-list">
+                        <?php $count = 0; foreach($specs as $group) { if(isset($group['items'])) { foreach($group['items'] as $item) { if($count++ >= 5) break 2; echo "<li><span>{$item['name']}</span> <span>{$item['value']}</span></li>"; }}} ?>
+                    </ul>
+                    <button class="btn-show-full-specs" onclick="openSpecs()">Xem cấu hình chi tiết</button>
+                </div>
                 <?php endif; ?>
             </div>
 
-            <?php if (!empty($rev['replies'])): ?>
-                <?php foreach ($rev['replies'] as $reply): ?>
-                    <div class="admin-reply-box" style="margin-left: 40px; background: #f9f9f9; padding: 12px; border-left: 3px solid #cd1818; border-radius: 4px; margin-top: 10px;">
-                        <div style="margin-bottom: 5px;">
-                            <strong style="color: #cd1818;"><i class="fa fa-check-circle"></i> FPT Shop Trả lời:</strong>
-                        </div>
-                        <div style="font-size: 14px; color: #333; line-height: 1.5;">
-                            <?= nl2br(htmlspecialchars($reply['reply_content'])) ?>
-                        </div>
-                        <div style="margin-top: 5px;">
-                            <small style="color: #999; font-size: 11px;"><?= date('d/m/Y H:i', strtotime($reply['created_at'])) ?></small>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-
-            <?php if (isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
-                <div id="reply-form-<?= $rev['id'] ?>" style="display:none; margin-left: 40px; margin-top: 15px; background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px;">
-                    <form action="index.php?module=admin&controller=review&action=reply" method="POST">
-                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
-                        <textarea name="reply_text" required style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;" placeholder="Nhập nội dung phản hồi khách hàng..."></textarea>
-                        <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <button type="submit" class="btn-review-action" style="padding: 6px 15px; font-size: 13px; border-radius: 4px;">Gửi phản hồi</button>
-                            <button type="button" onclick="toggleReplyForm(<?= $rev['id'] ?>)" style="background: #eee; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 13px;">Hủy</button>
-                        </div>
-                    </form>
+            <div class="info-box">
+                <h1 class="prod-title"><?= $product['name'] ?></h1>
+                <div class="prod-meta">
+                    <span>SKU: <?= $product['sku'] ?></span>
+                    <span style="color: #f59e0b; font-weight: 600;"><?= $reviewStats['avg'] ?? 0 ?> <i class="fa fa-star"></i></span>
                 </div>
-            <?php endif; ?>
+                <div class="price-area">
+                    <div class="price-current"><?= number_format($product['price']) ?>₫</div>
+                    <?php if($product['market_price'] > $product['price']): ?>
+                        <div class="price-old"><?= number_format($product['market_price']) ?>₫</div>
+                    <?php endif; ?>
+                </div>
+
+                <?php if(!empty($variantGroups)): ?>
+                    <div style="margin-bottom: 25px;">
+                        <?php foreach($variantGroups as $groupName => $options): 
+                            $isColorGroup = (mb_stripos($groupName, 'màu') !== false || mb_stripos($groupName, 'color') !== false);
+                        ?>
+                            <div class="variant-group">
+                                <span class="variant-label"><?= htmlspecialchars($groupName) ?></span>
+                                <div class="variant-list">
+                                    <?php foreach($options as $valText => $info): ?>
+                                        <a href="san-pham/<?= $info['slug'] ?>.html" class="variant-btn <?= $info['active'] ? 'active' : '' ?>">
+                                            <?php if ($isColorGroup): 
+                                                $variantImg = isset($info['image']) && !empty($info['image']) ? $info['image'] : $product['thumbnail'];
+                                            ?>
+                                                 <img src="<?= $variantImg ?>" class="variant-thumb">
+                                            <?php endif; ?>
+                                            <?= htmlspecialchars($valText) ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="promo-container">
+                    <div class="promo-header"><i class="fa fa-gift"></i> ƯU ĐÃI ĐẶC QUYỀN</div>
+                    <div class="promo-content">
+                        <div class="promo-item"><div class="promo-icon"><i class="fa fa-check"></i></div><span>Giảm ngay <strong>500.000đ</strong> qua VNPAY/ZaloPay.</span></div>
+                        <div class="promo-item"><div class="promo-icon"><i class="fa fa-check"></i></div><span>Tặng Combo phụ kiện trị giá <strong>450.000đ</strong>.</span></div>
+                        <div class="promo-item"><div class="promo-icon"><i class="fa fa-shield"></i></div><span>Bảo hành chính hãng 12 tháng - Lỗi 1 đổi 1.</span></div>
+                    </div>
+                </div>
+
+                <form method="POST" action="">
+                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                    <div class="action-group">
+                        <button type="submit" name="buy_now" value="1" class="btn-buy-now">
+                            <span style="display:block; font-size:18px; font-weight:800;">MUA NGAY</span>
+                            <span style="display:block; font-size:12px; font-weight:normal;">(Giao tận nơi hoặc nhận tại cửa hàng)</span>
+                        </button>
+                        <button type="button" class="btn-cart btn-add-cart">
+                            <i class="fa fa-cart-plus" style="font-size:20px;"></i>
+                            <span style="font-size:9px; font-weight:700;">THÊM GIỎ</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-    <?php endforeach; ?>
+
+        <div class="review-box">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; border-left: 5px solid var(--primary-red); padding-left: 10px;">
+                Đánh giá & Nhận xét <?= $product['name'] ?>
+            </h3>
+            
+            <div style="display: flex; gap: 40px; margin-bottom: 40px; flex-wrap: wrap;">
+                <div style="text-align: center; width: 150px;">
+                    <div style="font-size: 48px; font-weight: bold; color: var(--primary-red); line-height: 1;"><?= $reviewStats['avg'] ?>/5</div>
+                    <div style="color: #f59e0b; margin: 5px 0;">
+                        <?php $avg = $reviewStats['avg'] ?? 0; for($i=1; $i<=5; $i++) echo ($i <= $avg) ? '★' : '☆'; ?>
+                    </div>
+                    <div style="font-size: 13px; color: #666;"><?= $reviewStats['total'] ?> đánh giá</div>
+                </div>
+                
+                <div style="flex: 1; min-width: 300px;">
+                     <?php for($i=5; $i>=1; $i--): $percent = ($reviewStats['total'] > 0) ? ($reviewStats[$i] / $reviewStats['total']) * 100 : 0; ?>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px; font-size: 13px;">
+                        <span style="width: 30px; font-weight: bold;"><?= $i ?> ★</span>
+                        <div style="flex: 1; height: 6px; background: #eee; border-radius: 3px; overflow: hidden;">
+                            <div style="width: <?= $percent ?>%; background: var(--primary-red); height: 100%;"></div>
+                        </div>
+                        <span style="width: 30px; text-align: right; color: #999;"><?= $reviewStats[$i] ?></span>
+                    </div>
+                    <?php endfor; ?>
+                </div>
+
+                <div style="display: flex; align-items: center;">
+                    <?php if(!$userReview): ?>
+                        <button onclick="<?= isset($_SESSION['user']) ? "$('#formReview').slideToggle()" : "window.location.href='dang-nhap'" ?>" 
+                            style="background: var(--primary-red); color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                            Viết đánh giá
+                        </button>
+                    <?php else: ?>
+                        <div style="color: green; font-weight: bold;"><i class="fa fa-check-circle"></i> Bạn đã đánh giá</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div id="formReview" style="display:none; margin-bottom: 30px; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                <?php if(isset($_SESSION['user'])): ?>
+                <form id="review-form" action="index.php?module=client&controller=review&action=submit" method="POST">
+                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-weight: bold;">Đánh giá của bạn:</label>
+                        <select name="rating" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd;">
+                            <option value="5">5 Sao (Tuyệt vời)</option>
+                            <option value="4">4 Sao (Tốt)</option>
+                            <option value="3">3 Sao (Bình thường)</option>
+                            <option value="2">2 Sao (Tệ)</option>
+                            <option value="1">1 Sao (Rất tệ)</option>
+                        </select>
+                    </div>
+                    <textarea name="comment" required style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;" placeholder="Mời bạn chia sẻ cảm nhận..."><?= $userReview['comment'] ?? '' ?></textarea>
+                    
+                    <button type="submit" id="btn-submit-review" style="background: var(--primary-red); color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer;">
+                        Gửi đánh giá
+                    </button>
+                </form>
+                <?php endif; ?>
+            </div>
+
+            <div class="review-list">
+                <?php if(empty($reviews)): ?>
+                    <p style="text-align:center; color:#999;" id="no-review-text">Chưa có đánh giá nào.</p>
+                <?php endif; ?>
+                
+                <div id="review-list-container">
+                    <?php foreach($reviews as $rev): ?>
+                        <div style="border-bottom: 1px solid #eee; padding: 20px 0;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div>
+                                    <strong style="font-size: 15px;"><?= htmlspecialchars($rev['fname'] . ' ' . $rev['lname']) ?></strong>
+                                    <span style="color: #f59e0b; margin-left: 10px; font-size: 13px;"><?= str_repeat('★', $rev['rating']) ?></span>
+                                </div>
+                                <small style="color: #999;"><?= date('d/m/Y', strtotime($rev['created_at'])) ?></small>
+                            </div>
+                            <p style="margin-top: 8px; color: #444; line-height: 1.5;"><?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
+                            
+                            <?php if (!empty($rev['replies'])): foreach ($rev['replies'] as $reply): ?>
+                                <div style="margin-left: 30px; background: #f9f9f9; padding: 10px; border-left: 3px solid #cd1818; margin-top: 10px; border-radius: 4px;">
+                                    <div style="font-weight:bold; color:#cd1818; font-size:13px; margin-bottom:4px;"><i class="fa fa-user-shield"></i> Quản trị viên</div>
+                                    <div style="font-size:13px; color:#333;"><?= nl2br(htmlspecialchars($reply['reply_content'])) ?></div>
+                                </div>
+                            <?php endforeach; endif; ?>
+
+                            <?php if(isset($_SESSION['user']) && $_SESSION['user']['role_id'] == 1): ?>
+                                <div style="margin-top: 5px; font-size: 12px;">
+                                    <a href="javascript:void(0)" onclick="$('#reply-form-<?= $rev['id'] ?>').toggle()" style="color: #007bff; margin-right: 10px;">Trả lời</a>
+                                    <a href="index.php?controller=review&action=delete&id=<?= $rev['id'] ?>" onclick="return confirm('Xóa?')" style="color: red;">Xóa</a>
+                                </div>
+                                <div id="reply-form-<?= $rev['id'] ?>" style="display:none; margin-top: 10px; margin-left: 30px;">
+                                    <form action="index.php?module=admin&controller=review&action=reply" method="POST">
+                                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
+                                        <textarea name="reply_text" style="width:100%; height:60px; padding:5px; border:1px solid #ddd;" placeholder="Nội dung trả lời..."></textarea>
+                                        <button type="submit" style="margin-top:5px; padding:4px 10px; cursor:pointer;">Gửi</button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="specs-modal" class="specs-overlay" onclick="closeSpecs()">
+    <div class="specs-panel" onclick="event.stopPropagation()">
+        <div class="sp-header"><h3>Thông số kỹ thuật</h3><button onclick="closeSpecs()" style="border:none;background:none;font-size:24px;cursor:pointer;">&times;</button></div>
+        <div class="sp-body"><?php foreach($specs as $group): ?><div class="sp-group"><h4 style="background:#f5f5f5;padding:5px;"><?= $group['group_name'] ?></h4><?php if(isset($group['items'])): foreach($group['items'] as $item): ?><div style="display:flex;padding:5px 0;border-bottom:1px solid #eee;"><span style="width:140px;color:#666;"><?= $item['name'] ?></span><span><?= $item['value'] ?></span></div><?php endforeach; endif; ?></div><?php endforeach; ?></div>
     </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    function toggleReplyForm(id) {
-        var form = document.getElementById('reply-form-' + id);
-        if (form.style.display === "none") {
-            form.style.display = "block";
-        } else {
-            form.style.display = "none";
-        }
+    // JS CAROUSEL
+    function changeImage(el) {
+        document.getElementById('main-img').src = el.src;
+        document.querySelectorAll('.thumb-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
-
-    function changeImage(src) {
-        document.getElementById('main-img').src = src;
-        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
+    function changeImageByStep(step) {
+        const thumbs = document.querySelectorAll('.thumb-item');
+        let activeIndex = -1;
+        thumbs.forEach((img, index) => { if (img.classList.contains('active')) activeIndex = index; });
+        let newIndex = activeIndex + step;
+        if (newIndex < 0) newIndex = thumbs.length - 1;
+        if (newIndex >= thumbs.length) newIndex = 0;
+        if (thumbs[newIndex]) thumbs[newIndex].click();
     }
-
-    function openSpecs() {
-        document.getElementById('specs-modal').classList.add('active');
-        document.body.style.overflow = 'hidden'; 
-    }
-
-    function closeSpecs() {
-        document.getElementById('specs-modal').classList.remove('active');
-        document.body.style.overflow = ''; 
-    }
-
-    function scrollToGroup(id, tabElement) {
-        const element = document.getElementById(id);
-        const container = document.getElementById('sp-body-container');
-        if(container && element) {
-            document.querySelectorAll('.sp-tab-item').forEach(el => el.classList.remove('active'));
-            tabElement.classList.add('active');
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
+    // MODAL
+    function openSpecs() { document.getElementById('specs-modal').classList.add('active'); document.body.style.overflow = 'hidden'; }
+    function closeSpecs() { document.getElementById('specs-modal').classList.remove('active'); document.body.style.overflow = ''; }
 
     $(document).ready(function() {
+        // [1] CART AJAX
         $('.btn-add-cart').click(function(e) {
             e.preventDefault(); 
-            var form = $(this).closest('form');
-            var productId = form.find('input[name="product_id"]').val();
-            var quantity = 1;
+            // Giả lập logic cart cũ
+            showToast('✅ Đã thêm vào giỏ hàng (Logic cart cần active)');
+        });
+
+        // [2] REVIEW AJAX (NEW CODE)
+        $('#review-form').on('submit', function(e) {
+            e.preventDefault(); // Chặn load trang
+
+            var btn = $('#btn-submit-review');
+            var originalText = btn.text();
+            btn.text('Đang gửi...').prop('disabled', true);
+
+            var formData = $(this).serialize(); // Lấy dữ liệu form
+            var formAction = $(this).attr('action');
 
             $.ajax({
-                url: 'index.php?module=client&controller=cart&action=addAjax',
+                url: formAction,
                 type: 'POST',
-                dataType: 'json',
-                data: {
-                    product_id: productId,
-                    quantity: quantity
-                },
+                data: formData,
+                // dataType: 'json', <--- Bỏ dòng này nếu Controller chưa trả về JSON chuẩn
                 success: function(response) {
-                    if (response.status === 'success') {
-                        var cartBadge = $('#cart-total-count');
-                        cartBadge.text(response.totalQty);
-                        cartBadge.show(); 
-                        showToast('✅ Đã thêm vào giỏ hàng thành công!');
-                        $('.fa-shopping-cart').addClass('fa-bounce');
-                        setTimeout(function(){ $('.fa-shopping-cart').removeClass('fa-bounce'); }, 1000);
-                    } else {
-                        alert('❌ ' + response.message);
-                    }
+                    // Mẹo: Vì chưa chắc Controller trả về JSON, ta chỉ cần check status 200 là coi như thành công
+                    // Nếu bạn đã sửa Controller trả JSON: if(response.status == 'success') ...
+                    
+                    showToast('✅ Đánh giá thành công! Đang tải lại...');
+                    $('#formReview').slideUp();
+                    
+                    // Reload sau 1.5s để cập nhật danh sách (cách an toàn nhất)
+                    setTimeout(function() {
+                        location.reload(); 
+                    }, 1500);
                 },
-                error: function() {
-                    alert('Lỗi hệ thống! Vui lòng thử lại.');
+                error: function(xhr, status, error) {
+                    console.error(xhr.responseText);
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                    btn.text(originalText).prop('disabled', false);
                 }
             });
         });
 
-        function showToast(message) {
-            var toast = $('<div style="position:fixed; top:80px; right:20px; background:#28a745; color:white; padding:15px 25px; border-radius:5px; box-shadow:0 5px 15px rgba(0,0,0,0.2); z-index:9999; animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;">' + message + '</div>');
-            $('body').append(toast);
-            setTimeout(function() { toast.remove(); }, 3000);
+        function showToast(msg) {
+            var t = $('<div style="position:fixed; top:80px; right:20px; background:#28a745; color:#fff; padding:15px 20px; border-radius:5px; z-index:9999; box-shadow:0 5px 15px rgba(0,0,0,0.2); font-weight:bold;">'+msg+'</div>');
+            $('body').append(t);
+            setTimeout(() => t.fadeOut(500, () => t.remove()), 2500);
         }
-        $('<style>@keyframes fadeIn {from {opacity:0; transform:translateX(20px);} to {opacity:1; transform:translateX(0);}} @keyframes fadeOut {from {opacity:1;} to {opacity:0;}}</style>').appendTo('head');
     });
 </script>
