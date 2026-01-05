@@ -1,3 +1,14 @@
+<?php require_once __DIR__ . '/../layouts/header.php'; ?>
+
+<?php 
+    $totalRecords = isset($totalRecords) ? $totalRecords : 0;
+    $totalPages   = isset($totalPages) ? $totalPages : 0;
+    $page         = isset($page) ? $page : 1;
+    $keyword      = isset($keyword) ? $keyword : '';
+    $status       = isset($status) ? $status : '';
+    $type         = isset($type) ? $type : '';
+?>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="fw-bold text-dark mb-1">Quản lý Mã Giảm Giá</h4>
@@ -19,28 +30,31 @@
     <div class="card-header bg-white py-3 border-bottom-0">
         <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
             
+            <input type="hidden" name="page" id="pageInput" value="<?= $page ?>">
+
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
                     <input type="text" name="keyword" id="keyword" 
                            class="form-control bg-light border-start-0" 
-                           placeholder="Nhập mã code, mô tả...">
+                           placeholder="Nhập mã code, mô tả..."
+                           value="<?= htmlspecialchars($keyword) ?>">
                 </div>
             </div>
 
             <div class="col-md-3">
                 <select name="type" id="type" class="form-select bg-light">
                     <option value="">-- Tất cả loại --</option>
-                    <option value="percent">💎 Theo phần trăm (%)</option>
-                    <option value="fixed">💵 Theo tiền mặt (VNĐ)</option>
+                    <option value="percent" <?= ($type == 'percent') ? 'selected' : '' ?>>💎 Theo phần trăm (%)</option>
+                    <option value="fixed" <?= ($type == 'fixed') ? 'selected' : '' ?>>💵 Theo tiền mặt (VNĐ)</option>
                 </select>
             </div>
 
             <div class="col-md-3">
                 <select name="status" id="status" class="form-select bg-light">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="1">✅ Đang kích hoạt</option>
-                    <option value="0">⛔ Đã tắt</option>
+                    <option value="1" <?= ($status == '1') ? 'selected' : '' ?>>✅ Đang kích hoạt</option>
+                    <option value="0" <?= ($status == '0') ? 'selected' : '' ?>>⛔ Đã tắt</option>
                 </select>
             </div>
 
@@ -151,55 +165,99 @@
             </table>
         </div>
     </div>
+
+    <div class="card-footer bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center" id="pagination-container">
+            <div class="small text-muted">
+                Hiển thị <strong><?= count($coupons) ?></strong> / <strong><?= $totalRecords ?></strong> mã
+            </div>
+            <?php require __DIR__ . '/../layouts/pagination.php'; ?>
+        </div>
+    </div>
 </div>
 
 <script>
+    // [CẤU HÌNH] URL API cho trang Coupon
+    const API_URL = '<?= $this->baseUrl ?>admin/coupon'; 
+    const TABLE_BODY_ID = 'couponTableBody';
+
+    function changePage(newPage) {
+        event.preventDefault();
+        const pageInput = document.getElementById('pageInput');
+        if(pageInput) {
+            pageInput.value = newPage;
+            fetchCoupons();
+        }
+    }
+
+    function fetchCoupons() {
+        const form = document.getElementById('filterForm');
+        const spinner = document.getElementById('loadingSpinner');
+        const tableBody = document.getElementById(TABLE_BODY_ID);
+        const paginationContainer = document.getElementById('pagination-container');
+
+        spinner.classList.remove('d-none');
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        // Push URL state
+        const newUrl = API_URL + '?' + params.toString();
+        window.history.pushState({path: newUrl}, '', newUrl);
+
+        fetch(newUrl)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newTbody = doc.getElementById(TABLE_BODY_ID);
+                if(newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+
+                const newPagination = doc.getElementById('pagination-container');
+                if(newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => {
+                spinner.classList.add('d-none');
+            });
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         const form = document.getElementById('filterForm');
         const inputs = form.querySelectorAll('input, select');
-        const spinner = document.getElementById('loadingSpinner');
-        const tableBody = document.getElementById('couponTableBody');
         let timeout = null;
-
-        function fetchCoupons() {
-            spinner.classList.remove('d-none');
-            
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
-            
-            // [FIX AJAX] Gọi về admin/coupon
-            fetch('admin/coupon?' + params.toString())
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newTbody = doc.getElementById('couponTableBody');
-                    
-                    if(newTbody) {
-                        tableBody.innerHTML = newTbody.innerHTML;
-                    }
-                })
-                .catch(err => console.error(err))
-                .finally(() => {
-                    spinner.classList.add('d-none');
-                });
-        }
 
         inputs.forEach(input => {
             if (input.type === 'text') {
                 input.addEventListener('input', () => {
+                    document.getElementById('pageInput').value = 1; 
                     clearTimeout(timeout);
                     timeout = setTimeout(fetchCoupons, 400); 
                 });
             }
             if (input.tagName === 'SELECT') {
-                input.addEventListener('change', fetchCoupons);
+                input.addEventListener('change', () => {
+                    document.getElementById('pageInput').value = 1;
+                    fetchCoupons();
+                });
             }
         });
         
         window.resetFilter = function() {
             form.reset();
+            document.getElementById('pageInput').value = 1;
             fetchCoupons();
         }
+        
+        window.addEventListener('popstate', function() {
+            location.reload(); 
+        });
     });
 </script>
+
+<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

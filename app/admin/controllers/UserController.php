@@ -24,15 +24,32 @@ class UserController {
 
     // 1. DANH SÁCH USER
     public function index() {
+        // Lấy tham số lọc
         $keyword = $_GET['keyword'] ?? '';
         $role    = $_GET['role'] ?? '';
         $status  = $_GET['status'] ?? '';
 
-        $users = $this->userModel->getAllUsers($keyword, $role, $status);
+        // [MỚI] Phân trang
+        $page  = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 2; 
+
+        // Gọi Model lấy danh sách trang hiện tại
+        $users = $this->userModel->getAllUsers($keyword, $role, $status, $page, $limit);
+        
+        // Tính tổng số trang (cho bộ lọc hiện tại)
+        $totalRecords = $this->userModel->countAllUsers($keyword, $role, $status);
+        $totalPages   = ceil($totalRecords / $limit);
+
+        // [QUAN TRỌNG] Lấy số liệu thống kê cho 4 ô card đầu trang 
+        // (Không phụ thuộc vào bộ lọc keyword hiện tại, đếm toàn bộ hệ thống)
+        $statTotal   = $this->userModel->countAllUsers(); 
+        $statAdmin   = $this->userModel->countAllUsers('', 1, ''); // role=1
+        $statActive  = $this->userModel->countAllUsers('', '', 1); // status=1
+        $statBlocked = $this->userModel->countAllUsers('', '', 0); // status=0
         
         require_once __DIR__ . '/../Views/users/index.php';
     }
-
     // 2. SỬA USER (Phân quyền, Kích hoạt)
     public function edit() {
         $id = $_GET['id'] ?? '';

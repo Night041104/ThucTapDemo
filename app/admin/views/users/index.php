@@ -1,16 +1,18 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <?php 
-    $totalUsers = count($users);
-    $adminCount = 0;
-    $activeCount = 0;
-    $blockedCount = 0;
+    $totalRecords = isset($totalRecords) ? $totalRecords : 0;
+    $totalPages   = isset($totalPages) ? $totalPages : 0;
+    $page         = isset($page) ? $page : 1;
+    $keyword      = isset($keyword) ? $keyword : '';
+    $role         = isset($role) ? $role : '';
+    $status       = isset($status) ? $status : '';
 
-    foreach($users as $u) {
-        if($u['role_id'] == 1) $adminCount++;
-        if($u['is_verified'] == 1) $activeCount++;
-        else $blockedCount++;
-    }
+    // Biến thống kê từ Controller
+    $statTotal   = isset($statTotal) ? $statTotal : 0;
+    $statAdmin   = isset($statAdmin) ? $statAdmin : 0;
+    $statActive  = isset($statActive) ? $statActive : 0;
+    $statBlocked = isset($statBlocked) ? $statBlocked : 0;
 ?>
 
 <div class="row mb-4">
@@ -18,7 +20,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-primary small mb-1">Tổng thành viên</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalUsers ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $statTotal ?></div>
             </div>
         </div>
     </div>
@@ -26,7 +28,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #e74a3b !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-danger small mb-1">Quản trị viên (Admin)</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $adminCount ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $statAdmin ?></div>
             </div>
         </div>
     </div>
@@ -34,7 +36,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1cc88a !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-success small mb-1">Đang hoạt động</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $activeCount ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $statActive ?></div>
             </div>
         </div>
     </div>
@@ -42,7 +44,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f6c23e !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-warning small mb-1">Chưa kích hoạt</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $blockedCount ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $statBlocked ?></div>
             </div>
         </div>
     </div>
@@ -59,28 +61,31 @@
     <div class="card-header bg-white py-3 border-bottom-0">
         <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
             
+            <input type="hidden" name="page" id="pageInput" value="<?= $page ?>">
+
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
                     <input type="text" name="keyword" id="keyword" 
                            class="form-control bg-light border-start-0" 
-                           placeholder="Tìm tên, email...">
+                           placeholder="Tìm tên, email..."
+                           value="<?= htmlspecialchars($keyword) ?>">
                 </div>
             </div>
 
             <div class="col-md-3">
                 <select name="role" id="role" class="form-select bg-light">
                     <option value="">-- Tất cả vai trò --</option>
-                    <option value="1">👑 Admin</option>
-                    <option value="0">👤 Khách hàng</option>
+                    <option value="1" <?= ($role == '1') ? 'selected' : '' ?>>👑 Admin</option>
+                    <option value="0" <?= ($role == '0') ? 'selected' : '' ?>>👤 Khách hàng</option>
                 </select>
             </div>
 
             <div class="col-md-3">
                 <select name="status" id="status" class="form-select bg-light">
                     <option value="">-- Tất cả trạng thái --</option>
-                    <option value="1">✅ Active</option>
-                    <option value="0">⛔ Pending</option>
+                    <option value="1" <?= ($status == '1') ? 'selected' : '' ?>>✅ Active</option>
+                    <option value="0" <?= ($status == '0') ? 'selected' : '' ?>>⛔ Pending</option>
                 </select>
             </div>
 
@@ -179,56 +184,98 @@
             </table>
         </div>
     </div>
+
+    <div class="card-footer bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center" id="pagination-container">
+            <div class="small text-muted">
+                Hiển thị <strong><?= count($users) ?></strong> / <strong><?= $totalRecords ?></strong> thành viên
+            </div>
+            <?php require __DIR__ . '/../layouts/pagination.php'; ?>
+        </div>
+    </div>
 </div>
 
 <script>
+    // [CẤU HÌNH] URL API cho trang User
+    const API_URL = '<?= $this->baseUrl ?>admin/user'; 
+    const TABLE_BODY_ID = 'userTableBody';
+
+    function changePage(newPage) {
+        event.preventDefault();
+        const pageInput = document.getElementById('pageInput');
+        if(pageInput) {
+            pageInput.value = newPage;
+            fetchUsers();
+        }
+    }
+
+    function fetchUsers() {
+        const form = document.getElementById('filterForm');
+        const spinner = document.getElementById('loadingSpinner');
+        const tableBody = document.getElementById(TABLE_BODY_ID);
+        const paginationContainer = document.getElementById('pagination-container');
+
+        spinner.classList.remove('d-none');
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        // Push URL state
+        const newUrl = API_URL + '?' + params.toString();
+        window.history.pushState({path: newUrl}, '', newUrl);
+
+        fetch(newUrl)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newTbody = doc.getElementById(TABLE_BODY_ID);
+                if(newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+
+                const newPagination = doc.getElementById('pagination-container');
+                if(newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => {
+                spinner.classList.add('d-none');
+            });
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         const form = document.getElementById('filterForm');
         const inputs = form.querySelectorAll('input, select');
-        const spinner = document.getElementById('loadingSpinner');
-        const tableBody = document.getElementById('userTableBody');
         let timeout = null;
-
-        function fetchUsers() {
-            spinner.classList.remove('d-none');
-            
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
-            
-            // [FIX AJAX] Gọi về admin/user
-            fetch('admin/user?' + params.toString())
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newTbody = doc.getElementById('userTableBody');
-                    
-                    if(newTbody) {
-                        tableBody.innerHTML = newTbody.innerHTML;
-                    }
-                })
-                .catch(err => console.error(err))
-                .finally(() => {
-                    spinner.classList.add('d-none');
-                });
-        }
 
         inputs.forEach(input => {
             if (input.type === 'text') {
                 input.addEventListener('input', () => {
+                    document.getElementById('pageInput').value = 1; 
                     clearTimeout(timeout);
                     timeout = setTimeout(fetchUsers, 400); 
                 });
             }
             if (input.tagName === 'SELECT') {
-                input.addEventListener('change', fetchUsers);
+                input.addEventListener('change', () => {
+                    document.getElementById('pageInput').value = 1;
+                    fetchUsers();
+                });
             }
         });
         
         window.resetFilter = function() {
             form.reset();
+            document.getElementById('pageInput').value = 1;
             fetchUsers();
         }
+        
+        window.addEventListener('popstate', function() {
+            location.reload(); 
+        });
     });
 </script>
 

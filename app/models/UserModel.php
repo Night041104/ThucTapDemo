@@ -235,22 +235,25 @@ class UserModel extends BaseModel {
 
     // 11. LẤY TẤT CẢ USER (Có thể phân trang nếu muốn)
     // 11. [ĐÃ NÂNG CẤP] LẤY TẤT CẢ USER (CÓ LỌC)
-    public function getAllUsers($keyword = '', $role = '', $status = '') {
+    // File: models/UserModel.php
+
+    // 11. [CẬP NHẬT] LẤY DANH SÁCH USER (CÓ LỌC & PHÂN TRANG)
+    public function getAllUsers($keyword = '', $role = '', $status = '', $page = 1, $limit = 10) {
         $sql = "SELECT * FROM users WHERE 1=1";
 
-        // 1. Tìm theo từ khóa (Tên hoặc Email)
+        // 1. Tìm theo từ khóa
         if (!empty($keyword)) {
             $keyword = $this->escape($keyword);
             $sql .= " AND (lname LIKE '%$keyword%' OR fname LIKE '%$keyword%' OR email LIKE '%$keyword%')";
         }
 
-        // 2. Lọc theo Vai trò (0 hoặc 1)
+        // 2. Lọc theo Vai trò
         if ($role !== '') {
             $role = (int)$role;
             $sql .= " AND role_id = $role";
         }
 
-        // 3. Lọc theo Trạng thái (0 hoặc 1)
+        // 3. Lọc theo Trạng thái
         if ($status !== '') {
             $status = (int)$status;
             $sql .= " AND is_verified = $status";
@@ -258,12 +261,39 @@ class UserModel extends BaseModel {
 
         $sql .= " ORDER BY created_at DESC";
 
+        // [MỚI] Thêm Limit & Offset
+        $offset = ($page - 1) * $limit;
+        $sql .= " LIMIT $offset, $limit";
+
         $result = $this->_query($sql);
         $data = [];
         while ($row = mysqli_fetch_assoc($result)) {
             $data[] = $row;
         }
         return $data;
+    }
+
+    // [THÊM MỚI] Đếm tổng số user (Dùng cho Phân trang & Thống kê)
+    public function countAllUsers($keyword = '', $role = '', $status = '') {
+        $sql = "SELECT COUNT(*) as total FROM users WHERE 1=1";
+
+        // Logic lọc y hệt getAllUsers
+        if (!empty($keyword)) {
+            $keyword = $this->escape($keyword);
+            $sql .= " AND (lname LIKE '%$keyword%' OR fname LIKE '%$keyword%' OR email LIKE '%$keyword%')";
+        }
+        if ($role !== '') {
+            $role = (int)$role;
+            $sql .= " AND role_id = $role";
+        }
+        if ($status !== '') {
+            $status = (int)$status;
+            $sql .= " AND is_verified = $status";
+        }
+
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
 
     // 12. ADMIN CẬP NHẬT USER (Sửa quyền, trạng thái)

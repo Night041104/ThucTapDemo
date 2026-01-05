@@ -23,12 +23,26 @@ class CouponController {
     }
 
     // 1. Danh sách (CÓ LỌC)
+    // File: app/admin/controllers/CouponController.php
+
+    // 1. Danh sách (CÓ LỌC & PHÂN TRANG)
     public function index() {
+        // Lấy tham số lọc
         $keyword = $_GET['keyword'] ?? '';
         $status  = $_GET['status'] ?? '';
         $type    = $_GET['type'] ?? '';
 
-        $coupons = $this->couponModel->getAllCoupons($keyword, $status, $type);
+        // [MỚI] Lấy tham số phân trang
+        $page  = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 1; // 10 mã mỗi trang
+
+        // Gọi Model (Truyền thêm page, limit)
+        $coupons = $this->couponModel->getAllCoupons($keyword, $status, $type, $page, $limit);
+        
+        // [MỚI] Tính toán phân trang
+        $totalRecords = $this->couponModel->countAll($keyword, $status, $type);
+        $totalPages   = ceil($totalRecords / $limit);
         
         require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/coupon/index.php';

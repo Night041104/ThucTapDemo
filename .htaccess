@@ -1,7 +1,7 @@
 RewriteEngine On
 
 # [QUAN TRỌNG] Thiết lập thư mục gốc đúng với URL của bạn
-RewriteBase /ThucTapDemo/
+RewriteBase /baitapPhP/ThucTapDemo/
 
 # Nếu là file thật (ảnh, css, js) thì không viết lại
 RewriteCond %{REQUEST_FILENAME} !-f

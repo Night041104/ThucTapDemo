@@ -8,36 +8,61 @@ class CouponModel extends BaseModel {
     // Trong models/CouponModel.php
 
 // 1. [NÂNG CẤP] Lấy danh sách Coupon có lọc
-public function getAllCoupons($keyword = '', $status = '', $type = '') {
-    $sql = "SELECT * FROM coupons WHERE 1=1";
+// File: models/CouponModel.php
 
-    // Lọc theo từ khóa (Mã hoặc Mô tả)
-    if (!empty($keyword)) {
-        $keyword = $this->escape($keyword);
-        $sql .= " AND (code LIKE '%$keyword%' OR description LIKE '%$keyword%')";
+    // 1. [THAY THẾ] Lấy danh sách Coupon có lọc & Phân trang
+    public function getAllCoupons($keyword = '', $status = '', $type = '', $page = 1, $limit = 10) {
+        $where = "1=1";
+
+        // Lọc theo từ khóa
+        if (!empty($keyword)) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (code LIKE '%$kw%' OR description LIKE '%$kw%')";
+        }
+
+        // Lọc theo Trạng thái
+        if ($status !== '') {
+            $st = (int)$status;
+            $where .= " AND status = $st";
+        }
+
+        // Lọc theo Loại
+        if (!empty($type)) {
+            $ty = $this->escape($type);
+            $where .= " AND type = '$ty'";
+        }
+
+        // Tính Offset
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT * FROM coupons WHERE $where ORDER BY id DESC LIMIT $offset, $limit";
+
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
 
-    // Lọc theo Trạng thái (0: Tắt, 1: Bật)
-    if ($status !== '') {
-        $status = (int)$status;
-        $sql .= " AND status = $status";
-    }
+    // 2. [THÊM MỚI] Đếm tổng số bản ghi (cho Phân trang)
+    public function countAll($keyword = '', $status = '', $type = '') {
+        $where = "1=1";
+        // Logic lọc y hệt getAllCoupons
+        if (!empty($keyword)) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (code LIKE '%$kw%' OR description LIKE '%$kw%')";
+        }
+        if ($status !== '') {
+            $st = (int)$status;
+            $where .= " AND status = $st";
+        }
+        if (!empty($type)) {
+            $ty = $this->escape($type);
+            $where .= " AND type = '$ty'";
+        }
 
-    // Lọc theo Loại (fixed/percent)
-    if (!empty($type)) {
-        $type = $this->escape($type);
-        $sql .= " AND type = '$type'";
+        $sql = "SELECT COUNT(*) as total FROM coupons WHERE $where";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
-
-    $sql .= " ORDER BY id DESC";
-
-    $result = $this->_query($sql);
-    $data = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $data[] = $row;
-    }
-    return $data;
-}
 
     // 2. Lấy 1 coupon theo ID
     public function getCouponById($id) {
