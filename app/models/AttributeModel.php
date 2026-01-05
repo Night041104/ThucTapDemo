@@ -7,23 +7,25 @@ class AttributeModel extends BaseModel {
     // File: models/AttributeModel.php
 
     // [THAY THẾ] Hàm getAll hỗ trợ Tìm kiếm & Phân trang
-    public function getAll($keyword = '', $page = 1, $limit = 10) {
+    public function getAll($keyword = '', $page = 1, $limit = 0) {
         $where = "1=1";
         if ($keyword) {
             $kw = $this->escape($keyword);
             $where .= " AND (a.name LIKE '%$kw%' OR a.code LIKE '%$kw%')";
         }
 
-        // Tính Offset
-        $offset = ($page - 1) * $limit;
-
         $sql = "SELECT a.*, GROUP_CONCAT(o.value SEPARATOR ', ') as opts_list 
                 FROM attributes a 
                 LEFT JOIN attribute_options o ON a.id = o.attribute_id 
                 WHERE $where
                 GROUP BY a.id 
-                ORDER BY a.id DESC 
-                LIMIT $offset, $limit";
+                ORDER BY a.id DESC";
+
+        // Chỉ áp dụng phân trang nếu limit > 0
+        if ($limit > 0) {
+            $offset = ($page - 1) * $limit;
+            $sql .= " LIMIT $offset, $limit";
+        }
         
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
