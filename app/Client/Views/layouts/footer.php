@@ -105,10 +105,10 @@
             <div class="col-lg-4 col-md-6 mb-4">
                 <h5 class="footer-heading">Hỗ trợ khách hàng</h5>
                 <ul class="footer-list">
-                    <li><a href="index.php?module=client&controller=about&action=guide" class="footer-link">Hướng dẫn mua hàng online</a></li>
-                    <li><a href="index.php?module=client&controller=about&action=warranty" class="footer-link">Chính sách bảo hành & Đổi trả</a></li>
-                    <li><a href="index.php?module=client&controller=about&action=payment" class="footer-link">Phương thức thanh toán</a></li>
-                    <li><a href="index.php?controller=order&action=history" class="footer-link">Tra cứu đơn hàng</a></li>
+                    <li><a href="huong-dan-mua-hang" class="footer-link">Hướng dẫn mua hàng online</a></li>
+                    <li><a href="chinh-sach-bao-hanh" class="footer-link">Chính sách bảo hành & Đổi trả</a></li>
+                    <li><a href="phuong-thuc-thanh-toan" class="footer-link">Phương thức thanh toán</a></li>
+                    <li><a href="lich-su-don" class="footer-link">Tra cứu đơn hàng</a></li>
                 </ul>
             </div>
 

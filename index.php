@@ -24,6 +24,10 @@ $staticRoutes = [
     // [SỬA/THÊM] Trỏ 'thanh-toan' về CheckoutController -> index
     'thanh-toan'         => ['checkout', 'index'],
     'them-gio-hang'      => ['cart', 'add'],
+    'huong-dan-mua-hang'     => ['about', 'guide'],    // Gọi AboutController -> guide()
+    'chinh-sach-bao-hanh'    => ['about', 'warranty'], // Gọi AboutController -> warranty()
+    'phuong-thuc-thanh-toan' => ['about', 'payment'],
+    'gioi-thieu' => ['about', 'index'],
     // [THÊM MỚI] Route cho trang thành công
     'dat-hang-thanh-cong'=> ['checkout', 'success'],
 ];

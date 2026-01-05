@@ -11,7 +11,7 @@
                 Tại thanh tìm kiếm, gõ tên sản phẩm Quý khách muốn mua (ví dụ: "Iphone 17 Pro Max 256GB"). Hệ thống sẽ hiển thị các sản phẩm liên quan để bạn lựa chọn.
             </p>
             <div class="image-placeholder mt-3 text-center">
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/buoc1.jpg" class="img-fluid rounded border shadow-sm" alt="Hướng dẫn tìm kiếm">
+                <img src="uploads/shop_guide/buoc1.jpg" class="img-fluid rounded border shadow-sm" alt="Hướng dẫn tìm kiếm">
             </div>
         </div>
 
@@ -21,7 +21,7 @@
                 Sau khi tìm được sản phẩm ưng ý, Quý khách hãy <strong>click vào tên sản phẩm</strong> đó. Một trang mới sẽ hiện ra, hiển thị đầy đủ thông tin chi tiết về sản phẩm, bao gồm thông số kỹ thuật, chính sách bảo hành, và các bài đánh giá để bạn tham khảo.
             </p>
             <div class="image-placeholder mt-3 text-center">
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/buoc2.jpg" class="img-fluid rounded border shadow-sm" alt="Xem chi tiết">
+                <img src="uploads/shop_guide/buoc2.jpg" class="img-fluid rounded border shadow-sm" alt="Xem chi tiết">
             </div>
         </div>
 
@@ -31,11 +31,11 @@
                 Khi đã quyết định mua, Quý khách chỉ cần click vào nút <span class="badge bg-danger">MUA NGAY</span>. Sản phẩm sẽ được thêm vào giỏ hàng. Quý khách có thể kiểm tra lại các sản phẩm đã chọn bằng cách nhấn vào biểu tượng giỏ hàng trên thanh menu.
             </p>
             <div class="image-placeholder mt-3 text-center">
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/muangay.jpg" class="img-fluid rounded border shadow-sm" alt="">
+                <img src="uploads/shop_guide/muangay.jpg" class="img-fluid rounded border shadow-sm" alt="">
             </div>
             <p class="text-justify">Sau khi kiểm tra chính xác sản phẩm muốn đặt mua, quý khách chọn <strong>"Xác nhận đặt hàng"</strong> để tiến hành đặt hàng.</p>
             <div class="image-placeholder mt-3 text-center">
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/xac_nhan_dat_hang.jpg" class="img-fluid rounded border shadow-sm" alt="Giỏ hàng">
+                <img src="uploads/shop_guide/xac_nhan_dat_hang.jpg" class="img-fluid rounded border shadow-sm" alt="Giỏ hàng">
             </div>
         </div>
 
@@ -47,7 +47,7 @@
                 <li class="mb-2"><strong>2. Thông tin cá nhân:</strong> Nhập chính xác Họ tên, Số điện thoại và ghi chú về đơn hàng để chúng tôi liên hệ giao hàng.</li>
             </ul>
             <div class="image-placeholder mt-3 text-center">
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/dien_thong_tin.jpg" class="img-fluid rounded border shadow-sm" alt="Điền thông tin">
+                <img src="uploads/shop_guide/dien_thong_tin.jpg" class="img-fluid rounded border shadow-sm" alt="Điền thông tin">
             </div>
         </div>
 
@@ -56,7 +56,7 @@
             <h5 class="fw-bold text-danger">Bước 5: Chọn hình thức thanh toán</h5>
             <p class="text-justify">FPT Shop hỗ trợ 2 phương thức thanh toán linh hoạt. Quý khách có thể lựa chọn tùy theo nhu cầu:</p>
              <div class="image-placeholder mt-3 text-center">
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/phuong_thuc_thanh_toan.jpg" class="img-fluid rounded border shadow-sm" alt="Các phương thức thanh toán">
+                <img src="uploads/shop_guide/phuong_thuc_thanh_toan.jpg" class="img-fluid rounded border shadow-sm" alt="Các phương thức thanh toán">
             </div>
             
             <div class="bg-light p-3 rounded-3 mb-4 border-start border-danger border-3">
@@ -71,7 +71,7 @@
             </div>
 
             <div class="image-placeholder mt-4 text-center"> 
-                <img src="../../../../../ThucTapDemo/uploads/shop_guide/thanh_toan.jpg" class="img-fluid rounded border shadow-sm" alt="Giao diện thanh toán VNPAY">
+                <img src="uploads/shop_guide/thanh_toan.jpg" class="img-fluid rounded border shadow-sm" alt="Giao diện thanh toán VNPAY">
             </div>
         </div>
 
