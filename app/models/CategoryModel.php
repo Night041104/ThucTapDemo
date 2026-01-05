@@ -8,10 +8,40 @@ class CategoryModel extends BaseModel {
         $result = $this->_query("SELECT id FROM categories WHERE slug = '$slug'");
         $row = mysqli_fetch_assoc($result);
         return $row ? $row['id'] : 0;
-    }
-    public function getAll() {
-        $result = $this->_query("SELECT * FROM categories ORDER BY id DESC");
+    }// [CẬP NHẬT] Hàm getAll hỗ trợ tìm kiếm và phân trang
+    public function getAll($keyword = '', $page = 1, $limit = 10) {
+        $where = "1=1";
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND name LIKE '%$kw%'";
+        }
+
+        // Tính offset
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT * FROM categories WHERE $where ORDER BY id DESC LIMIT $offset, $limit";
+        $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+
+    // [THÊM MỚI] Hàm đếm tổng số bản ghi
+    public function countAll($keyword = '') {
+        $where = "1=1";
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND name LIKE '%$kw%'";
+        }
+
+        $sql = "SELECT COUNT(*) as total FROM categories WHERE $where";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
+    }
+    public function countHasConfig() {
+        $sql = "SELECT COUNT(*) as total FROM categories WHERE spec_template IS NOT NULL AND spec_template != '' AND spec_template != '[]'";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
 
     public function getById($id) {

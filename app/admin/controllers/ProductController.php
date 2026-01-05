@@ -49,10 +49,15 @@ class ProductController {
         $filterMasterId = isset($_GET['master_id']) ? $_GET['master_id'] : 0;
         $filterCateId   = isset($_GET['cate_id'])   ? $_GET['cate_id']   : 0; // [MỚI]
         $keyword        = isset($_GET['q'])         ? $_GET['q']         : '';
-
+        // 2. [MỚI] Xử lý phân trang
+        $page  = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 10;
         // 2. Gọi Model lấy danh sách sản phẩm (Truyền thêm $filterCateId)
-        $products = $this->prodModel->getAll($filterMasterId, $keyword, $filterCateId);
-        
+       // Code đúng (Thêm biến $page vào trước $limit):
+        $products = $this->prodModel->getAll($filterMasterId, $keyword, $filterCateId, $page, $limit);
+        $totalRecords = $this->prodModel->countAll($filterMasterId, $keyword, $filterCateId);
+        $totalPages   = ceil($totalRecords / $limit);
         // 3. Lấy dữ liệu cho các bộ lọc
         $masters    = $this->prodModel->getMasters();
         $categories = $this->cateModel->getAll(); // [MỚI] Lấy danh sách danh mục

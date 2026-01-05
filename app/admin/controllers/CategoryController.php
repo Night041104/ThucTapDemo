@@ -25,7 +25,22 @@ class CategoryController {
     }
 
     public function index() {
-        $listCates = $this->cateModel->getAll();
+        // 1. Nhận tham số từ URL
+        $keyword = isset($_GET['q']) ? $_GET['q'] : ''; // Lấy từ khóa tìm kiếm
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 5; 
+
+        // 2. Gọi Model
+        $listCates = $this->cateModel->getAll($keyword, $page, $limit);
+        $totalRecords = $this->cateModel->countAll($keyword);
+        
+        // 3. Tính tổng số trang
+        $totalPages = ceil($totalRecords / $limit);
+
+        // 4. [FIX LỖI] Lấy thống kê để không bị lỗi Undefined variable
+        $hasConfig = $this->cateModel->countHasConfig();
+
         require __DIR__ . '/../views/category/index.php';
     }
 

@@ -4,13 +4,56 @@ require_once __DIR__ . '/BaseModel.php';
 class AttributeModel extends BaseModel {
     
     // Lấy danh sách để hiển thị ra bảng (index)
-    public function getAll() {
+    // File: models/AttributeModel.php
+
+    // [THAY THẾ] Hàm getAll hỗ trợ Tìm kiếm & Phân trang
+    public function getAll($keyword = '', $page = 1, $limit = 10) {
+        $where = "1=1";
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (a.name LIKE '%$kw%' OR a.code LIKE '%$kw%')";
+        }
+
+        // Tính Offset
+        $offset = ($page - 1) * $limit;
+
         $sql = "SELECT a.*, GROUP_CONCAT(o.value SEPARATOR ', ') as opts_list 
                 FROM attributes a 
                 LEFT JOIN attribute_options o ON a.id = o.attribute_id 
-                GROUP BY a.id ORDER BY a.id DESC";
+                WHERE $where
+                GROUP BY a.id 
+                ORDER BY a.id DESC 
+                LIMIT $offset, $limit";
+        
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+
+    // [THÊM MỚI] Đếm tổng số bản ghi (cho Phân trang)
+    public function countAll($keyword = '') {
+        $where = "1=1";
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (name LIKE '%$kw%' OR code LIKE '%$kw%')";
+        }
+        $sql = "SELECT COUNT(*) as total FROM attributes WHERE $where";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
+    }
+
+    // [THÊM MỚI] Đếm số lượng biến thể (cho Thống kê đầu trang)
+    public function countVariants() {
+        $result = $this->_query("SELECT COUNT(*) as total FROM attributes WHERE is_variant = 1");
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
+    }
+
+    // [THÊM MỚI] Đếm số lượng Custom (cho Thống kê đầu trang)
+    public function countCustomizable() {
+        $result = $this->_query("SELECT COUNT(*) as total FROM attributes WHERE is_customizable = 1");
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
 
     // Lấy chi tiết để đổ vào Form Sửa

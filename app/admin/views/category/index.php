@@ -1,19 +1,11 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-<?php 
-    $total = count($listCates);
-    $hasConfig = 0;
-    foreach($listCates as $c) {
-        $tpl = json_decode($c['spec_template'], true);
-        if(!empty($tpl)) $hasConfig++;
-    }
-?>
 <div class="row mb-4">
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-primary small mb-1">Tổng danh mục</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $total ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalRecords ?? 0 ?></div> 
             </div>
         </div>
     </div>
@@ -21,7 +13,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1cc88a !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-success small mb-1">Đã cấu hình thông số</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $hasConfig ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $hasConfig ?? 0 ?></div>
             </div>
         </div>
     </div>
@@ -52,10 +44,18 @@
 
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3 border-bottom-0">
-        <div class="input-group" style="max-width: 400px;">
-            <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
-            <input type="text" id="searchInput" class="form-control bg-light border-start-0" placeholder="Tìm tên danh mục...">
-        </div>
+        <form id="filterForm" class="d-flex align-items-center" onsubmit="return false;">
+            <input type="hidden" name="page" id="pageInput" value="<?= $page ?? 1 ?>">
+
+            <div class="input-group" style="max-width: 400px;">
+                <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+                <input type="text" name="q" id="keyword" 
+                       value="<?= htmlspecialchars($keyword ?? '') ?>"
+                       class="form-control bg-light border-start-0" 
+                       placeholder="Tìm tên danh mục...">
+            </div>
+            <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></div>
+        </form>
     </div>
 
     <div class="card-body p-0">
@@ -79,42 +79,36 @@
                         ?>
                         <tr>
                             <td class="ps-4 text-muted small"><?= $c['id'] ?></td>
-                            <td>
-                                <span class="fw-bold text-dark fs-6"><?= htmlspecialchars($c['name']) ?></span>
-                            </td>
-                            <td>
-                                <code class="text-muted bg-light px-2 py-1 rounded border"><?= $c['slug'] ?></code>
-                            </td>
+                            <td><span class="fw-bold text-dark fs-6"><?= htmlspecialchars($c['name']) ?></span></td>
+                            <td><code class="text-muted bg-light px-2 py-1 rounded border"><?= $c['slug'] ?></code></td>
                             <td>
                                 <?php if(count($tpl) > 0): ?>
-                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-light me-1">
-                                        <?= count($tpl) ?> nhóm
-                                    </span>
-                                    <span class="badge bg-info bg-opacity-10 text-info border border-info-light">
-                                        <?= $countItems ?> thông số
-                                    </span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary-light me-1"><?= count($tpl) ?> nhóm</span>
+                                    <span class="badge bg-info bg-opacity-10 text-info border border-info-light"><?= $countItems ?> thông số</span>
                                 <?php else: ?>
                                     <span class="text-muted small fst-italic">(Chưa cấu hình)</span>
                                 <?php endif; ?>
                             </td>
                             <td class="text-end pe-4">
-                                <a href="admin/category/edit?id=<?= $c['id'] ?>" 
-                                   class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Sửa">
-                                    <i class="fa fa-pen"></i>
-                                </a>
-                                <a href="admin/category/delete?id=<?= $c['id'] ?>" 
-                                   class="btn btn-sm btn-outline-danger border-0 rounded-circle ms-1" 
-                                   onclick="return confirm('⚠️ CẢNH BÁO QUAN TRỌNG:\n\nXóa danh mục sẽ ảnh hưởng đến TẤT CẢ sản phẩm thuộc danh mục này.\nBạn có chắc chắn muốn xóa?')" title="Xóa">
-                                    <i class="fa fa-trash"></i>
-                                </a>
+                                <a href="admin/category/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary border-0 rounded-circle" title="Sửa"><i class="fa fa-pen"></i></a>
+                                <a href="admin/category/delete?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-danger border-0 rounded-circle ms-1" onclick="return confirm('⚠️ Xóa danh mục sẽ ảnh hưởng đến TẤT CẢ sản phẩm thuộc danh mục này.\nBạn có chắc chắn muốn xóa?')" title="Xóa"><i class="fa fa-trash"></i></a>
                             </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="5" class="text-center py-5 text-muted">Chưa có danh mục nào.</td></tr>
+                        <tr><td colspan="5" class="text-center py-5 text-muted">Không tìm thấy danh mục nào.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="card-footer bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center" id="pagination-container">
+            <div class="small text-muted">
+                Hiển thị <strong><?= count($listCates) ?></strong> / <strong><?= $totalRecords ?? 0 ?></strong> kết quả
+            </div>
+            <?php require __DIR__ . '/../layouts/pagination.php'; ?>
         </div>
     </div>
 </div>
@@ -125,12 +119,68 @@
 </style>
 
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let value = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#cateTableBody tr');
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.indexOf(value) > -1 ? '' : 'none';
+    // [CẤU HÌNH] Sửa đúng đường dẫn
+    const API_URL = '<?= $this->baseUrl ?>admin/category'; 
+    const TABLE_BODY_ID = 'cateTableBody';
+
+    function changePage(newPage) {
+        event.preventDefault();
+        const pageInput = document.getElementById('pageInput');
+        if(pageInput) {
+            pageInput.value = newPage;
+            fetchData();
+        }
+    }
+
+    function fetchData() {
+        const form = document.getElementById('filterForm');
+        const spinner = document.getElementById('loadingSpinner');
+        const tableBody = document.getElementById(TABLE_BODY_ID);
+        const paginationContainer = document.getElementById('pagination-container');
+
+        spinner.classList.remove('d-none');
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        // Push URL lên trình duyệt để F5 vẫn giữ kết quả
+        const newUrl = API_URL + '?' + params.toString();
+        window.history.pushState({path: newUrl}, '', newUrl);
+
+        fetch(newUrl)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newTbody = doc.getElementById(TABLE_BODY_ID);
+                if(newTbody && tableBody) tableBody.innerHTML = newTbody.innerHTML;
+
+                const newPagination = doc.getElementById('pagination-container');
+                if(newPagination && paginationContainer) paginationContainer.innerHTML = newPagination.innerHTML;
+            })
+            .catch(err => console.error(err))
+            .finally(() => spinner.classList.add('d-none'));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const keywordInput = document.getElementById('keyword');
+        let timeout = null;
+        
+        // Tìm kiếm sau khi ngừng gõ 400ms
+        if (keywordInput) {
+            keywordInput.addEventListener('input', () => {
+                const pInput = document.getElementById('pageInput');
+                if(pInput) pInput.value = 1; // Reset về trang 1
+                
+                clearTimeout(timeout);
+                timeout = setTimeout(fetchData, 400); 
+            });
+        }
+        
+        // Xử lý nút Back trình duyệt
+        window.addEventListener('popstate', function() {
+            location.reload(); 
         });
     });
 </script>

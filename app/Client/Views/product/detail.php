@@ -161,7 +161,34 @@
     .btn-filter-rating:hover { border-color: var(--primary-red); color: var(--primary-red); }
     .btn-filter-rating.active { background-color: #fff; border-color: var(--primary-red); color: var(--primary-red); font-weight: bold; box-shadow: inset 0 0 0 1px var(--primary-red); }
 
+
     @media (max-width: 992px) { .product-layout { flex-direction: column; } .gallery-box, .info-box { width: 100%; } }
+    .btn-disabled-state {
+        width: 100%;
+        padding: 12px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 16px;
+        text-transform: uppercase;
+        color: white;
+        border-radius: 8px;
+        cursor: not-allowed;
+        box-shadow: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .state-out-stock {
+        background-color: #6c757d; /* Màu xám */
+        border: 1px solid #5a6268;
+    }
+
+    .state-stopped {
+        background-color: #212529; /* Màu đen */
+        border: 1px solid #000;
+    }
 </style>
 
 <div class="detail-wrapper">
@@ -251,22 +278,47 @@
                     </div>
                 </div>
 
-                <form method="POST" action="them-gio-hang">
-                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                    <input type="hidden" name="quantity" value="1"> 
-                    
-                    <div class="action-group">
-                        <button type="submit" name="buy_now" value="1" class="btn-buy-now">
-                            <span style="display:block; font-size:18px; font-weight:800;">MUA NGAY</span>
-                            <span style="display:block; font-size:12px; font-weight:normal;">(Giao tận nơi hoặc nhận tại cửa hàng)</span>
-                        </button>
+                <?php 
+                    // Status -1: Ngừng kinh doanh
+                    $isStopped = (isset($product['status']) && $product['status'] == -1); 
+                    // Status 1 nhưng quantity = 0: Hết hàng
+                    $isOutStock = (isset($product['status']) && $product['status'] == 1 && $product['quantity'] <= 0); 
+                ?>
 
-                        <button type="button" class="btn-cart btn-add-cart">
-                            <i class="fa fa-cart-plus" style="font-size:20px;"></i>
-                            <span style="font-size:9px; font-weight:700;">THÊM GIỎ</span>
-                        </button>
+                <?php if ($isStopped): ?>
+                    <div class="mt-4">
+                        <div class="btn-disabled-state state-stopped">
+                            <i class="fa fa-ban"></i> SẢN PHẨM NGỪNG KINH DOANH
+                        </div>
+                        <p class="text-center mt-2 text-muted small">Sản phẩm này hiện đã ngừng bán tại hệ thống FPT Shop Clone.</p>
                     </div>
-                </form>
+
+                <?php elseif ($isOutStock): ?>
+                    <div class="mt-4">
+                        <div class="btn-disabled-state state-out-stock">
+                            <i class="fa fa-box-open"></i> TẠM HẾT HÀNG
+                        </div>
+                        <p class="text-center mt-2 text-muted small">Sản phẩm đang tạm hết. Vui lòng quay lại sau.</p>
+                    </div>
+
+                <?php else: ?>
+                    <form method="POST" action="them-gio-hang">
+                        <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                        <input type="hidden" name="quantity" value="1"> 
+                        
+                        <div class="action-group">
+                            <button type="submit" name="buy_now" value="1" class="btn-buy-now">
+                                <span style="display:block; font-size:18px; font-weight:800;">MUA NGAY</span>
+                                <span style="display:block; font-size:12px; font-weight:normal;">(Giao tận nơi hoặc nhận tại cửa hàng)</span>
+                            </button>
+
+                            <button type="button" class="btn-cart btn-add-cart">
+                                <i class="fa fa-cart-plus" style="font-size:20px;"></i>
+                                <span style="font-size:9px; font-weight:700;">THÊM GIỎ</span>
+                            </button>
+                        </div>
+                    </form>
+                <?php endif; ?>
             </div>
         </div>
 

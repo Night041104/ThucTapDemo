@@ -261,7 +261,7 @@ $fixedColorMap = [
         .prod-brand-tag { font-size: 10px; color: #666; text-transform: uppercase; font-weight: 600; margin-bottom: 5px; letter-spacing: 0.5px; }
         .prod-name { 
             font-size: 14px; font-weight: 600; line-height: 1.4; margin: 0 0 10px 0; 
-            height: 40px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            height: 40px; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical;
             color: #333; transition: color 0.2s;
         }
         .product-card:hover .prod-name { color: #2f80ed; }

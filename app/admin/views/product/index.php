@@ -71,47 +71,48 @@
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3 border-bottom-0">
        <form id="filterForm" class="row g-2 align-items-center" onsubmit="return false;">
-    
-    <div class="col-md-4">
-        <div class="input-group">
-            <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
-            <input type="text" name="q" id="keyword" 
-                   value="<?= htmlspecialchars($keyword ?? '') ?>" 
-                   class="form-control bg-light border-start-0" 
-                   placeholder="Tìm tên SP, SKU...">
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <select name="cate_id" id="cate_id" class="form-select bg-light">
-            <option value="0">-- Tất cả danh mục --</option>
-            <?php foreach($categories as $c): ?>
-                <option value="<?= $c['id'] ?>" <?= (isset($filterCateId) && $filterCateId == $c['id']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($c['name']) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
+            <input type="hidden" name="page" id="pageInput" value="<?= $page ?>">
 
-    <div class="col-md-3">
-        <select name="master_id" id="master_id" class="form-select bg-light">
-            <option value="0">-- Tất cả dòng SP --</option>
-            <?php foreach($masters as $m): ?>
-                <option value="<?= $m['id'] ?>" <?= (isset($filterMasterId) && $filterMasterId == $m['id']) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($m['name']) ?> 
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+                    <input type="text" name="q" id="keyword" 
+                           value="<?= htmlspecialchars($keyword ?? '') ?>" 
+                           class="form-control bg-light border-start-0" 
+                           placeholder="Tìm tên SP, SKU...">
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <select name="cate_id" id="cate_id" class="form-select bg-light">
+                    <option value="0">-- Tất cả danh mục --</option>
+                    <?php foreach($categories as $c): ?>
+                        <option value="<?= $c['id'] ?>" <?= (isset($filterCateId) && $filterCateId == $c['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($c['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-    <div class="col-md-auto d-flex align-items-center gap-2">
-        <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
-        
-        <button type="button" id="btnClearFilter" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
-            <i class="fa fa-times"></i>
-        </button>
-    </div>  
-</form>
+            <div class="col-md-3">
+                <select name="master_id" id="master_id" class="form-select bg-light">
+                    <option value="0">-- Tất cả dòng SP --</option>
+                    <?php foreach($masters as $m): ?>
+                        <option value="<?= $m['id'] ?>" <?= (isset($filterMasterId) && $filterMasterId == $m['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($m['name']) ?> 
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="col-md-auto d-flex align-items-center gap-2">
+                <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary d-none" role="status"></div>
+                
+                <button type="button" id="btnClearFilter" class="btn btn-light text-danger fw-bold" title="Xóa lọc">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>  
+        </form>
     </div>
 
     <div class="card-body p-0">
@@ -228,8 +229,11 @@
     </div>
     
     <div class="card-footer bg-white py-3">
-        <div class="d-flex justify-content-between align-items-center small">
-            <span class="text-muted">Đang hiển thị danh sách sản phẩm</span>
+        <div class="d-flex justify-content-between align-items-center" id="pagination-container">
+            <div class="small text-muted">
+                Hiển thị <strong><?= count($products) ?></strong> / <strong><?= $totalRecords ?></strong> kết quả
+            </div>
+            <?php require __DIR__ . '/../layouts/pagination.php'; ?>
         </div>
     </div>
 </div>
@@ -241,59 +245,100 @@
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const form = document.getElementById('filterForm');
-        const inputs = form.querySelectorAll('input, select');
-        const spinner = document.getElementById('loadingSpinner');
-        const tableBody = document.getElementById('productTableBody');
-        const btnClear = document.getElementById('btnClearFilter'); // [MỚI]
-        let timeout = null;
+    // [CẤU HÌNH] Sử dụng biến $baseUrl từ header.php thay vì $this->baseUrl (vì $this->baseUrl là private)
+    const API_URL = '<?= $baseUrl ?>admin/product';
 
-        function fetchProducts() {
-            spinner.classList.remove('d-none');
-            const formData = new FormData(form);
-            const params = new URLSearchParams(formData);
-            
-            fetch('admin/product?' + params.toString())
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const newTbody = doc.getElementById('productTableBody');
-                    if(newTbody) tableBody.innerHTML = newTbody.innerHTML;
-                })
-                .catch(err => console.error(err))
-                .finally(() => spinner.classList.add('d-none'));
+    // Hàm chuyển trang
+    function changePage(newPage) {
+        event.preventDefault();
+        // Cập nhật giá trị vào input ẩn
+        const pageInput = document.getElementById('pageInput');
+        if(pageInput) {
+            pageInput.value = newPage;
+            fetchData();
+        } else {
+            console.error("Lỗi: Không tìm thấy input id='pageInput'");
         }
+    }
+
+    // Hàm tải dữ liệu (AJAX)
+    function fetchData() {
+        const form = document.getElementById('filterForm');
+        const spinner = document.getElementById('loadingSpinner');
+        
+        const tableBody = document.getElementById('productTableBody'); 
+        const paginationContainer = document.getElementById('pagination-container');
+
+        spinner.classList.remove('d-none');
+        
+        // FormData sẽ tự động lấy giá trị của input name="page"
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        // Cập nhật URL trên trình duyệt
+        const newUrl = API_URL + '?' + params.toString();
+        window.history.pushState({path: newUrl}, '', newUrl);
+
+        fetch(newUrl)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // 1. Cập nhật bảng
+                const newTbody = doc.getElementById('productTableBody');
+                if(newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+
+                // 2. Cập nhật phân trang
+                const newPagination = doc.getElementById('pagination-container');
+                if(newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+            })
+            .catch(err => console.error('Lỗi tải trang:', err))
+            .finally(() => spinner.classList.add('d-none'));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputs = document.querySelectorAll('#filterForm input:not([type="hidden"]), #filterForm select');
+        const btnClear = document.getElementById('btnClearFilter');
+        let timeout = null;
 
         inputs.forEach(input => {
             if (input.type === 'text') {
                 input.addEventListener('input', () => {
+                    const pInput = document.getElementById('pageInput');
+                    if(pInput) pInput.value = 1; // Reset về trang 1 khi tìm kiếm
+                    
                     clearTimeout(timeout);
-                    timeout = setTimeout(fetchProducts, 400); 
+                    timeout = setTimeout(fetchData, 400); 
                 });
-            }
-            if (input.tagName === 'SELECT') {
-                input.addEventListener('change', fetchProducts);
+            } else {
+                input.addEventListener('change', () => {
+                    const pInput = document.getElementById('pageInput');
+                    if(pInput) pInput.value = 1;
+                    fetchData();
+                });
             }
         });
 
-        // [MỚI] Xử lý sự kiện nút Xóa lọc (AJAX)
         if (btnClear) {
             btnClear.addEventListener('click', function() {
-                // 1. Reset giá trị các ô input/select về mặc định
-                const keyword = document.getElementById('keyword');
-                const cateSelect = document.getElementById('cate_id');
-                const masterSelect = document.getElementById('master_id');
-
-                if (keyword) keyword.value = '';
-                if (cateSelect) cateSelect.value = '0';
-                if (masterSelect) masterSelect.value = '0';
-
-                // 2. Gọi hàm fetch để tải lại danh sách
-                fetchProducts();
+                document.getElementById('filterForm').reset();
+                document.querySelectorAll('#filterForm select').forEach(sel => sel.value = sel.options[0].value);
+                
+                const pInput = document.getElementById('pageInput');
+                if(pInput) pInput.value = 1;
+                
+                fetchData();
             });
         }
+        
+        window.addEventListener('popstate', function() {
+            location.reload(); 
+        });
     });
 </script>
 

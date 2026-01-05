@@ -23,7 +23,21 @@ class AttributeController {
 
     // 1. Hiển thị danh sách (Index)
     public function index() {
-        $listAttrs = $this->attrModel->getAll();
+        // 1. Lấy tham số tìm kiếm & phân trang
+        $keyword = isset($_GET['q']) ? $_GET['q'] : '';
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 5; 
+
+        // 2. Gọi Model lấy danh sách (đã phân trang)
+        $listAttrs = $this->attrModel->getAll($keyword, $page, $limit);
+        
+        // 3. Tính toán phân trang
+        $totalRecords = $this->attrModel->countAll($keyword);
+        $totalPages   = ceil($totalRecords / $limit);
+        $variantCount = $this->attrModel->countVariants();
+        $customCount  = $this->attrModel->countCustomizable();
+
         require __DIR__ . '/../views/attribute/index.php';
     }
 

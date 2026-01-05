@@ -161,31 +161,60 @@ class OrderModel extends BaseModel {
     // Lấy tất cả đơn hàng
    // Lấy tất cả đơn hàng (Có hỗ trợ tìm kiếm theo keyword)
    // Hàm lấy danh sách đơn hàng (Có Lọc theo Keyword, Trạng thái, Phương thức thanh toán)
-    public function getAllOrders($keyword = '', $status = '', $paymentMethod = '') {
+    // File: models/OrderModel.php
+
+    // [THAY THẾ] Hàm getAllOrders hỗ trợ Lọc & Phân trang
+    public function getAllOrders($keyword = '', $status = '', $paymentMethod = '', $page = 1, $limit = 10) {
         $where = "1=1";
 
-        // 1. Lọc theo Keyword (Mã đơn, Tên, SĐT)
+        // 1. Lọc theo Keyword
         if ($keyword) {
             $kw = $this->escape($keyword);
             $where .= " AND (order_code LIKE '%$kw%' OR fullname LIKE '%$kw%' OR phone LIKE '%$kw%')";
         }
 
-        // 2. Lọc theo Trạng thái (Nếu có chọn)
+        // 2. Lọc theo Trạng thái
         if ($status !== '') {
             $st = (int)$status;
             $where .= " AND status = '$st'";
         }
 
-        // 3. Lọc theo Phương thức thanh toán (COD/VNPAY)
+        // 3. Lọc theo PTTT
         if ($paymentMethod) {
             $pay = $this->escape($paymentMethod);
             $where .= " AND payment_method = '$pay'";
         }
 
-        $sql = "SELECT * FROM orders WHERE $where ORDER BY created_at DESC";
+        // Tính Offset
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT * FROM orders WHERE $where ORDER BY created_at DESC LIMIT $offset, $limit";
         
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+
+    // [THÊM MỚI] Hàm đếm tổng số đơn hàng (để tính số trang)
+    public function countAll($keyword = '', $status = '', $paymentMethod = '') {
+        $where = "1=1";
+        // Logic lọc y hệt getAllOrders
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (order_code LIKE '%$kw%' OR fullname LIKE '%$kw%' OR phone LIKE '%$kw%')";
+        }
+        if ($status !== '') {
+            $st = (int)$status;
+            $where .= " AND status = '$st'";
+        }
+        if ($paymentMethod) {
+            $pay = $this->escape($paymentMethod);
+            $where .= " AND payment_method = '$pay'";
+        }
+
+        $sql = "SELECT COUNT(*) as total FROM orders WHERE $where";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
 
     // Lấy chi tiết đơn hàng (Dùng chung cho cả Admin và Client)

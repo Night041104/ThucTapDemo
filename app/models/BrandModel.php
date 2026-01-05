@@ -4,9 +4,42 @@ require_once __DIR__ . '/BaseModel.php';
 class BrandModel extends BaseModel {
     
     // 1. Lấy tất cả brand
-    public function getAll() {
-        $result = $this->_query("SELECT * FROM brands ORDER BY id DESC");
+    // File: models/BrandModel.php
+
+    // [THAY THẾ] Hàm getAll hỗ trợ Tìm kiếm & Phân trang
+    public function getAll($keyword = '', $page = 1, $limit = 10) {
+        $where = "1=1";
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND name LIKE '%$kw%'";
+        }
+
+        // Tính Offset
+        $offset = ($page - 1) * $limit;
+
+        $sql = "SELECT * FROM brands WHERE $where ORDER BY id DESC LIMIT $offset, $limit";
+        $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+
+    // [THÊM MỚI] Đếm tổng số bản ghi (cho Phân trang)
+    public function countAll($keyword = '') {
+        $where = "1=1";
+        if ($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND name LIKE '%$kw%'";
+        }
+        $sql = "SELECT COUNT(*) as total FROM brands WHERE $where";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
+    }
+
+    // [THÊM MỚI] Đếm số lượng có Logo (cho Thống kê)
+    public function countHasLogo() {
+        $result = $this->_query("SELECT COUNT(*) as total FROM brands WHERE logo_url IS NOT NULL AND logo_url != ''");
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
 
     // 2. [MỚI] Lấy Brands theo Category ID (Dùng cho Product form)

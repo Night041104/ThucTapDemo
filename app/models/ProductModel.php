@@ -12,37 +12,59 @@ class ProductModel extends BaseModel {
     // File: models/ProductModel.php
     
     // [CẬP NHẬT] Thêm tham số $filterCateId vào hàm getAll
-    public function getAll($filterMasterId = 0, $keyword = '', $filterCateId = 0){
+    public function getAll($filterMasterId = 0, $keyword = '', $filterCateId = 0, $page = 1, $limit = 10){
         $where = "1=1";
         
-        // 1. Lọc theo Master ID (Giữ nguyên)
+        // Logic lọc (Giữ nguyên logic cũ của bạn)
         if($filterMasterId > 0) {
             $fid = $this->escape($filterMasterId);
             $where .= " AND (p.id = '$fid' or p.parent_id = '$fid')"; 
         }
-
-        // 2. [MỚI] Lọc theo Category ID
         if($filterCateId > 0) {
             $cid = $this->escape($filterCateId);
             $where .= " AND p.category_id = '$cid'"; 
         }
-
-        // 3. Lọc theo Keyword (Giữ nguyên)
         if($keyword) {
             $kw = $this->escape($keyword);
             $where .= " AND (p.name LIKE '%$kw%' OR p.sku LIKE '%$kw%')"; 
         }
 
-        // Câu lệnh SQL (Giữ nguyên)
+        // [MỚI] Tính Offset
+        $offset = ($page - 1) * $limit;
+
         $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name
                 FROM products p
                 LEFT JOIN categories c ON p.category_id = c.id
                 LEFT JOIN brands b ON p.brand_id = b.id
                 WHERE $where
-                ORDER BY IF (p.parent_id = 0, p.id, p.parent_id) DESC, p.id ASC";
+                ORDER BY IF (p.parent_id = 0, p.id, p.parent_id) DESC, p.id ASC
+                LIMIT $offset, $limit"; // Thêm LIMIT vào SQL
                 
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : []; 
+    }
+
+    // 2. [THÊM] Hàm đếm tổng số bản ghi (Dùng để tính số trang)
+    public function countAll($filterMasterId = 0, $keyword = '', $filterCateId = 0){
+        $where = "1=1";
+        // Copy y nguyên logic lọc của getAll xuống đây
+        if($filterMasterId > 0) {
+            $fid = $this->escape($filterMasterId);
+            $where .= " AND (p.id = '$fid' or p.parent_id = '$fid')"; 
+        }
+        if($filterCateId > 0) {
+            $cid = $this->escape($filterCateId);
+            $where .= " AND p.category_id = '$cid'"; 
+        }
+        if($keyword) {
+            $kw = $this->escape($keyword);
+            $where .= " AND (p.name LIKE '%$kw%' OR p.sku LIKE '%$kw%')"; 
+        }
+
+        $sql = "SELECT COUNT(*) as total FROM products p WHERE $where";
+        $result = $this->_query($sql);
+        $row = mysqli_fetch_assoc($result);
+        return $row['total'] ?? 0;
     }
 
     public function getMasters(){

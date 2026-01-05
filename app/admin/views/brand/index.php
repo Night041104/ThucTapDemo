@@ -1,19 +1,23 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <?php 
-    $total = count($listBrands);
-    $hasLogo = 0;
-    foreach($listBrands as $b) {
-        if(!empty($b['logo_url'])) $hasLogo++;
-    }
-    $noLogo = $total - $hasLogo;
+    $totalRecords = isset($totalRecords) ? $totalRecords : 0;
+    $totalPages   = isset($totalPages) ? $totalPages : 0;
+    $page         = isset($page) ? $page : 1;
+    $keyword      = isset($keyword) ? $keyword : '';
+    
+    // Biến thống kê
+    $totalStat = isset($totalStat) ? $totalStat : 0;
+    $hasLogo   = isset($hasLogo) ? $hasLogo : 0;
+    $noLogo    = isset($noLogo) ? $noLogo : 0;
 ?>
+
 <div class="row mb-4">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-primary small mb-1">Tổng thương hiệu</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $total ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalStat ?></div>
             </div>
         </div>
     </div>
@@ -60,10 +64,19 @@
 
 <div class="card card-custom border-0 shadow-sm">
     <div class="card-header bg-white py-3 border-bottom-0">
-        <div class="input-group" style="max-width: 400px;">
-            <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
-            <input type="text" id="searchInput" class="form-control bg-light border-start-0" placeholder="Tìm tên thương hiệu...">
-        </div>
+        <form id="filterForm" class="d-flex align-items-center" onsubmit="return false;">
+            <input type="hidden" name="page" id="pageInput" value="<?= $page ?>">
+
+            <div class="input-group" style="max-width: 400px;">
+                <span class="input-group-text bg-light border-end-0"><i class="fa fa-search text-muted"></i></span>
+                <input type="text" name="q" id="keyword" 
+                       value="<?= htmlspecialchars($keyword) ?>"
+                       class="form-control bg-light border-start-0" 
+                       placeholder="Tìm tên thương hiệu...">
+            </div>
+            
+            <div id="loadingSpinner" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></div>
+        </form>
     </div>
 
     <div class="card-body p-0">
@@ -78,6 +91,7 @@
                         <th class="text-end pe-4" width="150">Hành động</th>
                     </tr>
                 </thead>
+                
                 <tbody id="brandTableBody">
                     <?php if(!empty($listBrands)): ?>
                         <?php foreach($listBrands as $row): ?>
@@ -114,21 +128,87 @@
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr><td colspan="5" class="text-center py-5 text-muted">Chưa có thương hiệu nào.</td></tr>
+                        <tr><td colspan="5" class="text-center py-5 text-muted">Không tìm thấy thương hiệu nào.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <div class="card-footer bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center" id="pagination-container">
+            <div class="small text-muted">
+                Hiển thị <strong><?= count($listBrands) ?></strong> / <strong><?= $totalRecords ?></strong> kết quả
+            </div>
+            <?php require __DIR__ . '/../layouts/pagination.php'; ?>
+        </div>
+    </div>
 </div>
 
 <script>
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let value = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#brandTableBody tr');
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.indexOf(value) > -1 ? '' : 'none';
+    // [CẤU HÌNH] URL API cho trang Brand
+    const API_URL = '<?= $this->baseUrl ?>admin/brand'; 
+    const TABLE_BODY_ID = 'brandTableBody';
+
+    function changePage(newPage) {
+        event.preventDefault();
+        const pageInput = document.getElementById('pageInput');
+        if(pageInput) {
+            pageInput.value = newPage;
+            fetchData();
+        }
+    }
+
+    function fetchData() {
+        const form = document.getElementById('filterForm');
+        const spinner = document.getElementById('loadingSpinner');
+        const tableBody = document.getElementById(TABLE_BODY_ID);
+        const paginationContainer = document.getElementById('pagination-container');
+
+        spinner.classList.remove('d-none');
+        
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        
+        const newUrl = API_URL + '?' + params.toString();
+        window.history.pushState({path: newUrl}, '', newUrl);
+
+        fetch(newUrl)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                const newTbody = doc.getElementById(TABLE_BODY_ID);
+                if(newTbody && tableBody) {
+                    tableBody.innerHTML = newTbody.innerHTML;
+                }
+
+                const newPagination = doc.getElementById('pagination-container');
+                if(newPagination && paginationContainer) {
+                    paginationContainer.innerHTML = newPagination.innerHTML;
+                }
+            })
+            .catch(err => console.error(err))
+            .finally(() => spinner.classList.add('d-none'));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const keywordInput = document.getElementById('keyword');
+        let timeout = null;
+
+        if (keywordInput) {
+            keywordInput.addEventListener('input', () => {
+                const pInput = document.getElementById('pageInput');
+                if(pInput) pInput.value = 1; 
+                
+                clearTimeout(timeout);
+                timeout = setTimeout(fetchData, 400); 
+            });
+        }
+        
+        window.addEventListener('popstate', function() {
+            location.reload(); 
         });
     });
 </script>

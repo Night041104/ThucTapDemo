@@ -29,8 +29,28 @@ class BrandController {
         }
     }
 
+    // File: app/admin/controllers/BrandController.php
+
     public function index() {
-        $listBrands = $this->brandModel->getAll();
+        // 1. Lấy tham số
+        $keyword = isset($_GET['q']) ? $_GET['q'] : '';
+        $page    = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 5; 
+
+        // 2. Gọi Model lấy danh sách (đã phân trang)
+        $listBrands = $this->brandModel->getAll($keyword, $page, $limit);
+        
+        // 3. Tính toán phân trang
+        $totalRecords = $this->brandModel->countAll($keyword);
+        $totalPages   = ceil($totalRecords / $limit);
+
+        // 4. Lấy thống kê (để hiển thị 3 ô card trên cùng)
+        // Lưu ý: Đếm lại tổng gốc (không theo keyword) cho ô "Tổng thương hiệu"
+        $totalStat = $this->brandModel->countAll(); 
+        $hasLogo   = $this->brandModel->countHasLogo();
+        $noLogo    = $totalStat - $hasLogo;
+
         require __DIR__ . '/../views/brand/index.php';
     }
 

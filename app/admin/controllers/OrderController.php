@@ -24,20 +24,32 @@ class OrderController {
     }
 
     // 1. Danh sách đơn hàng
+    // File: app/admin/controllers/OrderController.php
+
+    // 1. Danh sách đơn hàng
     public function index() {
+        // Lấy tham số lọc
         $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
         $status  = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : '';
         $payment = isset($_GET['payment']) ? $_GET['payment'] : '';
 
-        // Gọi Model
-        $orders = $this->orderModel->getAllOrders($keyword, $status, $payment);
+        // [MỚI] Lấy tham số phân trang
+        $page  = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        if ($page < 1) $page = 1;
+        $limit = 5; // 10 đơn mỗi trang
+
+        // Gọi Model (Truyền thêm page, limit)
+        $orders = $this->orderModel->getAllOrders($keyword, $status, $payment, $page, $limit);
+        
+        // [MỚI] Tính toán phân trang
+        $totalRecords = $this->orderModel->countAll($keyword, $status, $payment);
+        $totalPages   = ceil($totalRecords / $limit);
 
         // Truyền biến ra View
         require_once __DIR__ . '/../Views/layouts/header.php';
         require_once __DIR__ . '/../Views/order/index.php';
         require_once __DIR__ . '/../Views/layouts/footer.php';
     }
-
     // 2. Xem chi tiết đơn
     public function detail() {
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

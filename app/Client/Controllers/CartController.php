@@ -82,16 +82,23 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
     // 2. THÊM VÀO GIỎ (Xử lý khi bấm nút MUA NGAY)
     // THÊM SẢN PHẨM VÀO GIỎ HÀNG
    // 2. THÊM VÀO GIỎ (Gộp chung logic: Mua ngay & Ajax Thêm giỏ)
+    // 2. THÊM VÀO GIỎ (Gộp chung logic: Mua ngay & Ajax Thêm giỏ)
     public function add() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
             $quantity  = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
+            
             // Kiểm tra cờ AJAX gửi từ Javascript
-            $isAjax    = isset($_POST['is_ajax']) ? true : false; 
+            $isAjax = isset($_POST['is_ajax']) || isset($_POST['add_to_cart']); 
+
+            // Chuẩn bị header JSON nếu là AJAX
+            if ($isAjax) {
+                header('Content-Type: application/json');
+            }
 
             if ($productId > 0 && $quantity > 0) {
                 
-                // 1. Kiểm tra sản phẩm
+                // 1. Lấy thông tin sản phẩm mới nhất từ DB
                 $product = $this->productModel->getById($productId);
 
                 if (!$product) {
@@ -100,35 +107,56 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
                     else { echo "<script>alert('$msg'); window.history.back();</script>"; exit; }
                 }
 
-                if ($product['quantity'] < $quantity) {
-                    $msg = "Sản phẩm này chỉ còn {$product['quantity']} cái!";
+                // 2. Kiểm tra trạng thái Ngừng kinh doanh
+                if ($product['status'] == -1) {
+                    $msg = 'Sản phẩm này đã ngừng kinh doanh, không thể mua!';
                     if ($isAjax) { echo json_encode(['status'=>'error', 'message'=>$msg]); exit; }
                     else { echo "<script>alert('$msg'); window.history.back();</script>"; exit; }
                 }
 
-                // 2. Khởi tạo giỏ hàng
+                // 3. [LOGIC QUAN TRỌNG] Kiểm tra tổng số lượng (Trong giỏ + Mua thêm) vs Tồn kho
+                
+                // Lấy số lượng đang có trong giỏ (nếu chưa có thì là 0)
+                $currentCartQty = isset($_SESSION['cart'][$productId]) ? $_SESSION['cart'][$productId] : 0;
+                
+                // Tổng số lượng khách muốn sở hữu
+                $totalWanted = $currentCartQty + $quantity;
+
+                if ($totalWanted > $product['quantity']) {
+                    // Thông báo chi tiết
+                    $msg = "Kho chỉ còn {$product['quantity']} sản phẩm.";
+                    if ($currentCartQty > 0) {
+                        $msg .= " Bạn đã có $currentCartQty trong giỏ, không thể thêm $quantity nữa.";
+                    }
+                    
+                    if ($isAjax) { 
+                        echo json_encode(['status'=>'error', 'message'=>$msg]); 
+                        exit; 
+                    } else { 
+                        echo "<script>alert('$msg'); window.history.back();</script>"; 
+                        exit; 
+                    }
+                }
+
+                // 4. Khởi tạo giỏ hàng nếu chưa có
                 if (!isset($_SESSION['cart'])) {
                     $_SESSION['cart'] = [];
                 }
 
-                // 3. Cộng dồn số lượng
-                if (isset($_SESSION['cart'][$productId])) {
-                    $_SESSION['cart'][$productId] += $quantity;
-                } else {
-                    $_SESSION['cart'][$productId] = $quantity;
-                }
+                // 5. Cập nhật giỏ hàng (Gán bằng tổng số lượng đã tính)
+                $_SESSION['cart'][$productId] = $totalWanted;
 
-                // 4. [LOGIC QUAN TRỌNG] Phân chia phản hồi
+                // 6. Phản hồi kết quả
                 if ($isAjax) {
-                    // Nếu là AJAX -> Trả về JSON để JS cập nhật header
-                    $totalQty = array_sum($_SESSION['cart']);
+                    // Tính tổng số lượng hiển thị trên Header
+                    $newTotalQty = array_sum($_SESSION['cart']);
                     
                     echo json_encode([
                         'status'      => 'success',
                         'message'     => 'Thêm vào giỏ thành công!',
-                        'total_items' => $totalQty  // Key này phải khớp với JS: response.total_items
+                        'total_items' => $newTotalQty
                     ]);
-                    exit; // Dừng luôn, không chạy code phía dưới
+                    exit; 
                 } else {
                     // Nếu là Form Submit thường (Nút Mua ngay) -> Chuyển hướng
                     if (isset($_POST['buy_now'])) {
@@ -141,11 +169,10 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
             }
         }
         
-        // Nếu truy cập sai cách
+        // Fallback
         header("Location: trang-chu");
         exit;
     }
-
     // 3. CẬP NHẬT SỐ LƯỢNG (Khi sửa ô input trong giỏ hàng)
     public function update() {
         if (isset($_POST['qty']) && is_array($_POST['qty'])) {
