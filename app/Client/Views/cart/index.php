@@ -188,7 +188,15 @@
                     </div>
                     <div class="text-end small text-muted mb-3">(Đã bao gồm VAT nếu có)</div>
 
-                    <a href="<?= $baseUrl ?>thanh-toan" class="btn-confirm">TIẾN HÀNH THANH TOÁN <i class="fa fa-arrow-right ms-2"></i></a>
+                    <?php if (isset($_SESSION['user'])): ?>
+                        <a href="<?= $baseUrl ?>thanh-toan" class="btn-confirm">
+                            TIẾN HÀNH THANH TOÁN <i class="fa fa-arrow-right ms-2"></i>
+                        </a>
+                        <?php else: ?>
+                            <a href="<?= $baseUrl ?>dang-nhap" class="btn-confirm" style="background-color: #333;">
+                                ĐĂNG NHẬP ĐỂ THANH TOÁN <i class="fa fa-sign-in-alt ms-2"></i>
+                            </a>
+                        <?php endif; ?>
                 </div>
             </div>
         </div>
