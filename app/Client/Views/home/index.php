@@ -44,7 +44,7 @@
 
     .product-name {
         font-size: 14px; font-weight: 600; color: #333;
-        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        display: -webkit-box; -webkit-box-orient: vertical;
         overflow: hidden; height: 40px; margin-bottom: 8px;
         text-decoration: none;
     }
@@ -134,12 +134,21 @@
         </div>
     </div>
 </div>
+
 <?php if(!empty($hotProducts)): ?>
 <div class="container mt-3">
-    <div class="flash-sale-bg shadow-sm">
+    <div class="flash-sale-bg shadow-sm" style="background: linear-gradient(90deg, #ff9c00 0%, #ec1f1f 100%);">
+        
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="text-white fw-bold mb-0 text-uppercase">
+                <i class="fa fa-bolt me-2"></i> GIẢM GIÁ SỐC HÔM NAY
+            </h5>
+        </div>
+
         <div class="row row-cols-2 row-cols-md-5 g-2">
             <?php foreach($hotProducts as $p): ?>
                 <?php 
+                    // Tính % giảm giá để hiển thị
                     $discountPercent = 0;
                     if (!empty($p['market_price']) && $p['market_price'] > $p['price']) {
                         $discountPercent = round((($p['market_price'] - $p['price']) / $p['market_price']) * 100);
@@ -147,22 +156,25 @@
                 ?>
             <div class="col">
                 <div class="product-card">
-                    <?php if($discountPercent > 0): ?>
-                        <span class="discount-badge">Giảm <?= $discountPercent ?>%</span>
-                    <?php endif; ?>
+                    <span class="discount-badge" style="background: #ff4500;">
+                        Giảm -<?= $discountPercent ?>%
+                    </span>
                     
                     <a href="san-pham/<?= $p['slug'] ?>.html">
-                        <img src="<?= htmlspecialchars($p['thumbnail']) ?>" class="card-img-top">
+                        <img src="<?= htmlspecialchars($p['thumbnail']) ?>" class="card-img-top" alt="<?= htmlspecialchars($p['name']) ?>">
                     </a>
                     <div class="card-body p-2 text-center d-flex flex-column h-100">
                         <a href="san-pham/<?= $p['slug'] ?>.html" class="product-name">
                             <?= htmlspecialchars($p['name']) ?>
                         </a>
                         <div class="mt-auto">
-                            <div class="price-show"><?= number_format($p['price']) ?>₫</div>
-                            <?php if($discountPercent > 0): ?>
-                                <div class="price-through"><?= number_format($p['market_price']) ?>₫</div>
-                            <?php endif; ?>
+                            <div class="price-show text-danger fs-5"><?= number_format($p['price']) ?>₫</div>
+                            <div class="price-through small"><?= number_format($p['market_price']) ?>₫</div>
+                            
+                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: <?= rand(40, 90) ?>%"></div>
+                            </div>
+                            <div class="small text-muted mt-1" style="font-size:10px;">Đã bán <?= rand(10, 50) ?></div>
                         </div>
                     </div>
                 </div>
@@ -184,6 +196,11 @@
             <div class="row row-cols-2 row-cols-md-4 g-3">
                 <?php foreach($phoneProducts as $p): ?>
                 <?php 
+                    // [LOGIC MỚI] Ẩn sản phẩm Ngừng kinh doanh hoặc Hết hàng
+                    if ($p['status'] != 1 || $p['quantity'] <= 0) {
+                        continue; 
+                    }
+
                     $discountPercent = 0;
                     if (!empty($p['market_price']) && $p['market_price'] > $p['price']) {
                         $discountPercent = round((($p['market_price'] - $p['price']) / $p['market_price']) * 100);
@@ -219,5 +236,3 @@
     </div>
 </div>
 <?php endif; ?>
-
-

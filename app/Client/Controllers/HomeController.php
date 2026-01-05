@@ -11,9 +11,9 @@ class HomeController {
     }
 
     public function index() {
-        // 1. Sản phẩm Hot (Flash Sale)
-        $hotProducts = $this->productModel->getAll(0, ''); 
-        $hotProducts = array_slice($hotProducts, 0, 5); 
+        // 1. [CẬP NHẬT] Sản phẩm Hot (Flash Sale - Top giảm giá)
+        // Gọi hàm getHotDeals để lấy 10 sp giảm sâu nhất, còn hàng, đang kinh doanh
+        $hotProducts = $this->productModel->getHotDeals(10); 
 
         // 2. Điện thoại (ID = 3 trong DB của bạn)
         $phoneProducts = $this->productModel->getProductsByCateForClient(3);
@@ -34,4 +34,3 @@ class HomeController {
         require_once __DIR__ . '/../Views/layouts/footer.php';
     }
 }
-?>

@@ -545,6 +545,19 @@ class ProductModel extends BaseModel {
             'max' => (int)($row['max_price'] ?? 0)
         ];
     }
-    
-}
+    public function getHotDeals($limit = 10) {
+        $sql = "SELECT p.*, 
+                       ((p.market_price - p.price) / p.market_price * 100) as discount_rate
+                FROM products p
+                WHERE p.status = 1 
+                AND p.quantity > 0 
+                AND p.market_price > p.price
+                AND (p.parent_id IS NULL OR p.parent_id = 0) -- [QUAN TRỌNG] Chỉ lấy sản phẩm cha
+                ORDER BY discount_rate DESC, p.id DESC
+                LIMIT $limit";
+                
+        $result = $this->_query($sql);
+        return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
+    }
+}   
 ?>
