@@ -45,5 +45,33 @@ class ReviewController {
             exit();
         }
     }
+    
+    public function delete() {
+        // 1. Lấy ID từ URL
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+        if ($id > 0) {
+            // 2. Khởi tạo Model (Đảm bảo đã require ReviewModel ở đầu file)
+            $reviewModel = new ReviewModel();
+            
+            // 3. Thực hiện xóa
+            $result = $reviewModel->deleteReview($id);
+            
+            if($result) {
+                $_SESSION['success'] = "Xóa đánh giá thành công!";
+            } else {
+                $_SESSION['error'] = "Không thể xóa bài này!";
+            }
+        }
+
+        // 4. Quay lại trang trước đó
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            header("Location: " . $_SERVER['HTTP_REFERER']);
+        } else {
+            // Nếu không có Referer thì về trang danh sách (tùy ní đặt tên)
+            header("Location: index.php?module=admin&controller=review");
+        }
+        exit();
+    }
 }
 ?>

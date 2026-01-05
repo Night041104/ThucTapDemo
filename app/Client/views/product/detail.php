@@ -304,10 +304,21 @@
                             </button>
                         <?php else: ?>
                             <div style="text-align: center;">
-                                <div style="margin-bottom: 5px; color: #28a745; font-size: 12px; font-weight: bold;"><i class="fa fa-check-circle"></i> Bạn đã đánh giá</div>
-                                <button onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($userReview)) ?>)" style="background: white; border: 1px solid var(--primary-red); color: var(--primary-red); padding: 8px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;">
-                                    <i class="fa fa-edit"></i> Sửa đánh giá
-                                </button>
+                                <div style="margin-bottom: 8px; color: #28a745; font-size: 13px; font-weight: bold;">
+                                    <i class="fa fa-check-circle"></i> Bạn đã đánh giá sản phẩm này
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: center;">
+                                    <button onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($userReview)) ?>)" 
+                                            style="background: white; border: 1px solid #28a745; color: var(--primary-red); padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;">
+                                        <i class="fa fa-edit"></i> Sửa
+                                    </button>
+
+                                    <a href="index.php?module=client&controller=review&action=delete&id=<?= $userReview['id'] ?>" 
+                                    onclick="return confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')"
+                                    style="background: white; border: 1px solid #dc3545; color: #dc3545; padding: 8px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; text-decoration: none; display: inline-block; transition: 0.2s;">
+                                        <i class="fa fa-trash"></i> Xóa
+                                    </a>
+                                </div>
                             </div>
                         <?php endif; ?>
                     <?php else: ?>
@@ -420,9 +431,7 @@
                                         <button type="submit" style="margin-top:5px; padding:5px 15px; background: #333; color: #fff; border: none; border-radius: 4px; cursor:pointer;">Gửi phản hồi</button>
                                     </form>
                                 </div>
-                            <?php endif; ?>
-
-                            
+                            <?php endif; ?>  
                         </div>
                     <?php endforeach; ?>
                 </div>
