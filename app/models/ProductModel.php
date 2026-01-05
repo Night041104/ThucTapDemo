@@ -452,7 +452,7 @@ class ProductModel extends BaseModel {
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
                 WHERE p.category_id = '$cateId' 
-                AND p.status = 1 
+                AND p.status IN (1, -1)
                 AND (p.parent_id IS NULL OR p.parent_id = 0) 
                 ORDER BY p.id DESC";
         
@@ -469,7 +469,7 @@ class ProductModel extends BaseModel {
                 FROM products p 
                 LEFT JOIN brands b ON p.brand_id = b.id 
                 WHERE p.category_id = '$cateId' 
-                AND p.status = 1
+                AND p.status IN (1, -1)
                 AND (p.parent_id IS NULL OR p.parent_id = 0)";
 
         // ... (Giữ nguyên các logic lọc Brand, Price, Attribute cũ của bạn ở đây) ...

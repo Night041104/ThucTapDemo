@@ -73,7 +73,7 @@ class AccountController {
                         $_SESSION['user']['avatar'] = $avatarName; 
 
                         // XÓA ẢNH CŨ
-                        if (!empty($oldAvatarPath)) {
+                        if (!empty($oldAvatarPath) && $oldAvatarPath!="uploads/default/default_avt.png") {
                             $pathToDelete = ltrim($oldAvatarPath, '/'); 
                             if (file_exists($pathToDelete) && $pathToDelete != $avatarName) {
                                 unlink($pathToDelete);

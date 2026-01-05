@@ -271,6 +271,34 @@ $fixedColorMap = [
         .prod-old-price { text-decoration: line-through; color: #999; font-size: 13px; font-weight: 400; }
 
         .empty-state { text-align: center; padding: 50px; width: 100%; background: #fff; border-radius: 8px; border: 1px solid #eee; }
+        .status-label {
+        position: absolute;
+        bottom: 10px; /* Nằm gọn phía dưới ảnh */
+        left: 50%;
+        transform: translateX(-50%); /* Căn giữa */
+        width: 90%; /* Chiếm 90% chiều rộng thẻ */
+        padding: 6px 0;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #fff;
+        border-radius: 4px;
+        z-index: 5;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* Màu cho Tạm hết hàng: Màu Xám đậm (Trung tính) hoặc Cam */
+    .label-out-stock {
+        background-color: #6c757d; 
+        border: 1px solid #5a6268;
+    }
+
+    /* Màu cho Ngừng kinh doanh: Màu Đen (Khẳng định dứt khoát) */
+    .label-stopped {
+        background-color: #000000;
+        border: 1px solid #333;
+    }
     </style>
 </head>
 <body>
