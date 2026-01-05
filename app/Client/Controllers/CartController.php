@@ -81,54 +81,67 @@ $listCoupons = $couponModel->getAllActiveCoupons($currentUserId);
 
     // 2. THÊM VÀO GIỎ (Xử lý khi bấm nút MUA NGAY)
     // THÊM SẢN PHẨM VÀO GIỎ HÀNG
+   // 2. THÊM VÀO GIỎ (Gộp chung logic: Mua ngay & Ajax Thêm giỏ)
     public function add() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
             $quantity  = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
+            // Kiểm tra cờ AJAX gửi từ Javascript
+            $isAjax    = isset($_POST['is_ajax']) ? true : false; 
 
             if ($productId > 0 && $quantity > 0) {
                 
-                // 1. Kiểm tra sản phẩm có tồn tại và còn hàng không
-                // (Dùng hàm getById của ProductModel mà bên Product đã cung cấp)
+                // 1. Kiểm tra sản phẩm
                 $product = $this->productModel->getById($productId);
 
                 if (!$product) {
-                    echo "<script>alert('Sản phẩm không tồn tại!'); window.history.back();</script>";
-                    exit;
+                    $msg = 'Sản phẩm không tồn tại!';
+                    if ($isAjax) { echo json_encode(['status'=>'error', 'message'=>$msg]); exit; }
+                    else { echo "<script>alert('$msg'); window.history.back();</script>"; exit; }
                 }
 
                 if ($product['quantity'] < $quantity) {
-                    echo "<script>alert('Sản phẩm này chỉ còn {$product['quantity']} cái!'); window.history.back();</script>";
-                    exit;
+                    $msg = "Sản phẩm này chỉ còn {$product['quantity']} cái!";
+                    if ($isAjax) { echo json_encode(['status'=>'error', 'message'=>$msg]); exit; }
+                    else { echo "<script>alert('$msg'); window.history.back();</script>"; exit; }
                 }
 
-                // 2. Khởi tạo giỏ hàng nếu chưa có
+                // 2. Khởi tạo giỏ hàng
                 if (!isset($_SESSION['cart'])) {
                     $_SESSION['cart'] = [];
                 }
 
-                // 3. Logic thêm vào giỏ
+                // 3. Cộng dồn số lượng
                 if (isset($_SESSION['cart'][$productId])) {
-                    // Nếu đã có -> Cộng dồn số lượng
                     $_SESSION['cart'][$productId] += $quantity;
                 } else {
-                    // Nếu chưa có -> Thêm mới
                     $_SESSION['cart'][$productId] = $quantity;
                 }
 
-                // 4. Kiểm tra xem khách bấm nút nào?
-                if (isset($_POST['buy_now'])) {
-                    // [FIX] Chuyển hướng thanh toán
-                    header("Location: thanh-toan");
+                // 4. [LOGIC QUAN TRỌNG] Phân chia phản hồi
+                if ($isAjax) {
+                    // Nếu là AJAX -> Trả về JSON để JS cập nhật header
+                    $totalQty = array_sum($_SESSION['cart']);
+                    
+                    echo json_encode([
+                        'status'      => 'success',
+                        'message'     => 'Thêm vào giỏ thành công!',
+                        'total_items' => $totalQty  // Key này phải khớp với JS: response.total_items
+                    ]);
+                    exit; // Dừng luôn, không chạy code phía dưới
                 } else {
-                    // [FIX] Chuyển hướng giỏ hàng
-                    header("Location: gio-hang");
+                    // Nếu là Form Submit thường (Nút Mua ngay) -> Chuyển hướng
+                    if (isset($_POST['buy_now'])) {
+                        header("Location: thanh-toan");
+                    } else {
+                        header("Location: gio-hang");
+                    }
+                    exit;
                 }
-                exit;
             }
         }
         
-        // Nếu truy cập trực tiếp link add mà không post gì cả -> Về trang chủ
+        // Nếu truy cập sai cách
         header("Location: trang-chu");
         exit;
     }

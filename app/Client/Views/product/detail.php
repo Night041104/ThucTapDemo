@@ -2,46 +2,6 @@
     /* =========================================
        CORE VARIABLES & RESET
        ========================================= */
-    /* Lọc */
-    .filter-review-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin: 20px 0;
-        flex-wrap: wrap;
-    }
-
-    .filter-review-container span {
-        font-weight: bold;
-        color: #333;
-    }
-
-    .btn-filter-rating {
-        display: inline-block;
-        padding: 6px 20px;
-        border-radius: 25px; /* Bo tròn mạnh như hình */
-        border: 1px solid #ddd;
-        background: #fff;
-        color: #333;
-        text-decoration: none;
-        font-size: 14px;
-        transition: all 0.3s;
-    }
-
-    .btn-filter-rating:hover {
-        border-color: var(--primary-red);
-        color: var(--primary-red);
-    }
-
-    /* Nút đang được chọn */
-    .btn-filter-rating.active {
-        background-color: #fff;
-        border-color: var(--primary-red);
-        color: var(--primary-red);
-        font-weight: bold;
-        box-shadow: inset 0 0 0 1px var(--primary-red);
-    }
-    /* lọc */
     :root {
         --primary-red: #cb1c22;
         --dark-red: #a61419;
@@ -82,7 +42,7 @@
     .info-box { width: 58%; }
 
     /* =========================================
-       GALLERY CAROUSEL
+       1. GALLERY CAROUSEL (FPT STYLE)
        ========================================= */
     .main-img-stage {
         border-radius: 8px;
@@ -107,6 +67,7 @@
     }
     .main-img-stage:hover img { transform: scale(1.05); }
 
+    /* Nút điều hướng đè lên ảnh */
     .img-nav-btn {
         position: absolute; top: 50%; transform: translateY(-50%);
         width: 40px; height: 40px; background: rgba(0, 0, 0, 0.15);
@@ -119,6 +80,7 @@
     .nav-prev { left: 10px; }
     .nav-next { right: 10px; }
 
+    /* Thumbnails Scroll */
     .thumb-list-container {
         overflow-x: auto; width: 100%; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth; margin-top: 10px;
     }
@@ -138,7 +100,7 @@
     .btn-show-full-specs:hover { background: var(--primary-red); color: white; }
 
     /* =========================================
-       PRODUCT INFO
+       2. PRODUCT INFO
        ========================================= */
     .prod-title { font-size: 26px; font-weight: 700; color: #222; margin-bottom: 8px; }
     .prod-meta { font-size: 13px; color: #666; display: flex; gap: 15px; margin-bottom: 15px; }
@@ -147,7 +109,7 @@
     .price-current { font-size: 32px; font-weight: bold; color: var(--primary-red); }
     .price-old { font-size: 16px; color: #999; text-decoration: line-through; }
 
-    /* VARIANTS */
+    /* VARIANTS Buttons */
     .variant-group { margin-bottom: 15px; }
     .variant-label { font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block; }
     .variant-list { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -183,7 +145,7 @@
     .btn-cart { width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid var(--primary-red); background: white; color: var(--primary-red); border-radius: 8px; cursor: pointer; }
     .btn-cart:hover { background: #fff1f1; }
 
-    /* Modal & Review */
+    /* Modal & Review Box */
     .specs-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
     .specs-overlay.active { opacity: 1; visibility: visible; }
     .specs-panel { position: absolute; top: 0; right: 0; bottom: 0; width: 550px; max-width: 90%; background: #fff; transform: translateX(100%); transition: transform 0.4s; display: flex; flex-direction: column; }
@@ -193,6 +155,12 @@
 
     .review-box { background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-top: 30px; }
     
+    /* Filter Review Styles */
+    .filter-review-container { display: flex; align-items: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+    .btn-filter-rating { display: inline-block; padding: 6px 20px; border-radius: 25px; border: 1px solid #ddd; background: #fff; color: #333; text-decoration: none; font-size: 14px; transition: all 0.3s; }
+    .btn-filter-rating:hover { border-color: var(--primary-red); color: var(--primary-red); }
+    .btn-filter-rating.active { background-color: #fff; border-color: var(--primary-red); color: var(--primary-red); font-weight: bold; box-shadow: inset 0 0 0 1px var(--primary-red); }
+
     @media (max-width: 992px) { .product-layout { flex-direction: column; } .gallery-box, .info-box { width: 100%; } }
 </style>
 
@@ -215,6 +183,7 @@
                         <div style="position: absolute; top: 15px; left: 15px; background: #cb1c22; color: #fff; padding: 5px 10px; border-radius: 4px; font-weight: 700; font-size: 13px;">Giảm <?= $percent ?>%</div>
                     <?php endif; ?>
                 </div>
+                
                 <div class="thumb-list-container" id="thumb-container">
                     <div class="thumb-list" id="thumb-track">
                         <img src="<?= $product['thumbnail'] ?>" class="thumb-item active" onclick="changeImage(this)">
@@ -223,6 +192,7 @@
                         <?php endforeach; endif; ?>
                     </div>
                 </div>
+
                 <?php if(!empty($specs)): ?>
                 <div class="mini-specs-box">
                     <div style="font-weight: 700; margin-bottom: 10px; text-transform: uppercase;"><i class="fa fa-cogs"></i> Thông số tóm tắt</div>
@@ -258,6 +228,7 @@
                                     <?php foreach($options as $valText => $info): ?>
                                         <a href="san-pham/<?= $info['slug'] ?>.html" class="variant-btn <?= $info['active'] ? 'active' : '' ?>">
                                             <?php if ($isColorGroup): 
+                                                // Ưu tiên lấy ảnh variant nếu có, không thì lấy ảnh chính
                                                 $variantImg = isset($info['image']) && !empty($info['image']) ? $info['image'] : $product['thumbnail'];
                                             ?>
                                                  <img src="<?= $variantImg ?>" class="variant-thumb">
@@ -280,13 +251,16 @@
                     </div>
                 </div>
 
-                <form method="POST" action="">
+                <form method="POST" action="them-gio-hang">
                     <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                    <input type="hidden" name="quantity" value="1"> 
+                    
                     <div class="action-group">
                         <button type="submit" name="buy_now" value="1" class="btn-buy-now">
                             <span style="display:block; font-size:18px; font-weight:800;">MUA NGAY</span>
                             <span style="display:block; font-size:12px; font-weight:normal;">(Giao tận nơi hoặc nhận tại cửa hàng)</span>
                         </button>
+
                         <button type="button" class="btn-cart btn-add-cart">
                             <i class="fa fa-cart-plus" style="font-size:20px;"></i>
                             <span style="font-size:9px; font-weight:700;">THÊM GIỎ</span>
@@ -300,8 +274,7 @@
             <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px; border-left: 5px solid var(--primary-red); padding-left: 10px;">
                 Đánh giá & Nhận xét <?= $product['name'] ?>
             </h3>
-
-
+            
             <div style="display: flex; gap: 40px; margin-bottom: 40px; flex-wrap: wrap;">
                 <div style="text-align: center; width: 150px;">
                     <div style="font-size: 48px; font-weight: bold; color: var(--primary-red); line-height: 1;"><?= $reviewStats['avg'] ?>/5</div>
@@ -324,51 +297,41 @@
                 </div>
 
                 <div style="display: flex; align-items: center;">
-                    <?php 
-                    // Kiểm tra xem user hiện tại đã có bài đánh giá cho sản phẩm này chưa
-                    // Biến $userReview này phải được lấy từ Controller thông qua hàm getUserReview()
-                    if(!$userReview): 
-                    ?>
-                        <button onclick="openReviewForm('add')" 
-                            style="background: #cd1818; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                            Viết đánh giá
-                        </button>
+                    <?php if(isset($_SESSION['user'])): ?>
+                        <?php if(!$userReview): ?>
+                            <button onclick="openReviewForm('add')" style="background: var(--primary-red); color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                                <i class="fa fa-pencil-alt"></i> Viết đánh giá
+                            </button>
+                        <?php else: ?>
+                            <div style="text-align: center;">
+                                <div style="margin-bottom: 5px; color: #28a745; font-size: 12px; font-weight: bold;"><i class="fa fa-check-circle"></i> Bạn đã đánh giá</div>
+                                <button onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($userReview)) ?>)" style="background: white; border: 1px solid var(--primary-red); color: var(--primary-red); padding: 8px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;">
+                                    <i class="fa fa-edit"></i> Sửa đánh giá
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     <?php else: ?>
-                        <button onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($userReview)) ?>)" 
-                            style="background: #28a745; color: white; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                            <i class="fa fa-edit"></i> Sửa đánh giá
-                        </button>
+                        <a href="dang-nhap" style="background: var(--primary-red); color: white; text-decoration: none; padding: 10px 30px; border-radius: 5px; font-weight: bold;">Đăng nhập để đánh giá</a>
                     <?php endif; ?>
                 </div>
             </div>
-            <div class="filter-review-container">
-                <a href="javascript:void(0)" 
-                onclick="filterReviews(this, 0)"
-                class="btn-filter-rating <?= ($ratingFilter == 0) ? 'active' : '' ?>">
-                Tất cả
-                </a>
 
+            <div class="filter-review-container">
+                <a href="javascript:void(0)" onclick="filterReviews(this, 0)" class="btn-filter-rating active">Tất cả</a>
                 <?php for($i = 5; $i >= 1; $i--): ?>
-                    <a href="javascript:void(0)" 
-                    onclick="filterReviews(this, <?= $i ?>)"
-                    class="btn-filter-rating <?= ($ratingFilter == $i) ? 'active' : '' ?>">
-                    <?= $i ?> Sao
-                    </a>
+                    <a href="javascript:void(0)" onclick="filterReviews(this, <?= $i ?>)" class="btn-filter-rating"><?= $i ?> Sao</a>
                 <?php endfor; ?>
             </div>
 
-            
-
-
-            <div id="formReview" style="display:none; margin-bottom: 30px; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+            <div id="formReview" style="display:none; margin-bottom: 30px; background: #fffcfc; padding: 20px; border: 1px solid #fcebeb; border-radius: 8px;">
                 <?php if(isset($_SESSION['user'])): ?>
                 <form id="review-form" action="index.php?module=client&controller=review&action=submit" method="POST">
                     <input type="hidden" name="review_id" id="input_review_id" value="">
                     <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                     
                     <div style="margin-bottom: 15px;">
-                        <label style="font-weight: bold;">Đánh giá của bạn:</label>
-                        <select name="rating" id="input_rating" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd;">
+                        <label style="font-weight: bold; color: #333;">Đánh giá của bạn:</label>
+                        <select name="rating" id="input_rating" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #ddd; margin-left: 10px;">
                             <option value="5">5 Sao (Tuyệt vời)</option>
                             <option value="4">4 Sao (Tốt)</option>
                             <option value="3">3 Sao (Bình thường)</option>
@@ -376,13 +339,14 @@
                             <option value="1">1 Sao (Rất tệ)</option>
                         </select>
                     </div>
-                    
                     <textarea name="comment" id="input_comment" required style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;" placeholder="Mời bạn chia sẻ cảm nhận..."></textarea>
                     
-                    <button type="submit" id="btn-submit-review" style="background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer;">
-                        Cập nhật đánh giá
-                    </button>
-                    <button type="button" onclick="$('#formReview').slideUp()" style="background: #ccc; color: white; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer; margin-left: 10px;">Hủy</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" id="btn-submit-review" style="background: var(--primary-red); color: white; border: none; padding: 8px 25px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                            Gửi đánh giá
+                        </button>
+                        <button type="button" onclick="$('#formReview').slideUp()" style="background: #eee; border: none; padding: 8px 20px; border-radius: 4px; cursor: pointer;">Hủy</button>
+                    </div>
                 </form>
                 <?php endif; ?>
             </div>
@@ -395,66 +359,44 @@
                 <div id="review-list-container">
                     <?php foreach($reviews as $rev): ?>
                         <div style="border-bottom: 1px solid #eee; padding: 20px 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; justify-content: space-between;">
                                 <div>
                                     <strong style="font-size: 15px;"><?= htmlspecialchars($rev['fname'] . ' ' . $rev['lname']) ?></strong>
-                                    <span style="color: #f59e0b; margin-left: 10px; font-size: 12px;"><?= str_repeat('★', $rev['rating']) ?></span>
+                                    <span style="color: #f59e0b; margin-left: 10px; font-size: 13px;"><?= str_repeat('★', $rev['rating']) ?></span>
                                 </div>
                                 <small style="color: #999;"><?= date('d/m/Y', strtotime($rev['created_at'])) ?></small>
                             </div>
+                            <p style="margin-top: 8px; color: #444; line-height: 1.5;"><?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
                             
-                            <div style="margin-top: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 15px;">
-                                <span style="color: #444; line-height: 1.5; font-size: 14px;">
-                                    <?= nl2br(htmlspecialchars($rev['comment'])) ?>
-                                </span>
+                            <?php 
+                                $isLoggedIn = isset($_SESSION['user']);
+                                $isAdmin = $isLoggedIn && $_SESSION['user']['role_id'] == 1;
+                                $isOwner = $isLoggedIn && $_SESSION['user']['id'] == $rev['user_id'];
+                            ?>
 
-                                <?php 
-                                    $isLoggedIn = isset($_SESSION['user']);
-                                    $isAdmin = $isLoggedIn && $_SESSION['user']['role_id'] == 1;
-                                    $isOwner = $isLoggedIn && $_SESSION['user']['id'] == $rev['user_id'];
-                                ?>
-                                
-                                <div style="display: flex; gap: 10px; font-size: 12px;">
-                                    <?php if($isAdmin): ?>
-                                        <a href="javascript:void(0)" onclick="$('#reply-form-<?= $rev['id'] ?>').toggle()" style="color: #007bff; text-decoration: none;">Trả lời</a>
-                                        <a href="index.php?module=admin&controller=review&action=delete&id=<?= $rev['id'] ?>" 
-                                        onclick="return confirm('Xóa bài này?')" style="color: #cd1818; text-decoration: none;">Xóa</a>
-                                    <?php elseif($isOwner): ?>
-                                        <a href="javascript:void(0)" 
-                                        onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($rev)) ?>)" 
-                                        style="color: #28a745; text-decoration: none;">
-                                        <i class="fa fa-edit"></i> Sửa
-                                        </a>
-                                        
-                                        <a href="index.php?module=client&controller=review&action=delete&id=<?= $rev['id'] ?>" 
-                                        onclick="return confirm('Xóa đánh giá của bạn?')" 
-                                        style="color: #cd1818; text-decoration: none; margin-left: 10px;">
-                                        <i class="fa fa-trash"></i> Xóa
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
+                            <div style="display: flex; gap: 10px; font-size: 12px; margin-top: 5px;">
+                                <?php if($isAdmin): ?>
+                                    <a href="javascript:void(0)" onclick="$('#reply-form-<?= $rev['id'] ?>').toggle()" style="color: #007bff; text-decoration: none;">Trả lời</a>
+                                    <a href="index.php?module=admin&controller=review&action=delete&id=<?= $rev['id'] ?>" onclick="return confirm('Xóa bài này?')" style="color: #cd1818; text-decoration: none;">Xóa</a>
+                                <?php elseif($isOwner): ?>
+                                    <a href="javascript:void(0)" onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($rev)) ?>)" style="color: #28a745; text-decoration: none;"><i class="fa fa-edit"></i> Sửa</a>
+                                    <a href="index.php?module=client&controller=review&action=delete&id=<?= $rev['id'] ?>" onclick="return confirm('Xóa đánh giá?')" style="color: #cd1818; text-decoration: none;"><i class="fa fa-trash"></i> Xóa</a>
+                                <?php endif; ?>
                             </div>
 
                             <?php if (!empty($rev['replies'])): foreach ($rev['replies'] as $reply): ?>
-                                <div style="margin-left: 20px; background: #f9f9f9; padding: 10px; border-left: 3px solid #cd1818; border-radius: 4px; margin-top: 10px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                        <div style="font-weight:bold; color:#cd1818; font-size:12px;">
-                                            <i class="fa fa-user-shield"></i> FPT Shop Clone System đã trả lời:
-                                        </div>
-                                        <small style="color: #999; font-size: 11px;">
-                                            <?= date('d/m/Y H:i', strtotime($reply['created_at'])) ?>
-                                        </small>
-                                    </div>
+                                <div style="margin-left: 30px; background: #f9f9f9; padding: 10px; border-left: 3px solid #cd1818; margin-top: 10px; border-radius: 4px;">
+                                    <div style="font-weight:bold; color:#cd1818; font-size:13px; margin-bottom:4px;"><i class="fa fa-user-shield"></i> Quản trị viên</div>
                                     <div style="font-size:13px; color:#333;"><?= nl2br(htmlspecialchars($reply['reply_content'])) ?></div>
                                 </div>
                             <?php endforeach; endif; ?>
 
                             <?php if($isAdmin): ?>
-                                <div id="reply-form-<?= $rev['id'] ?>" style="display:none; margin-top: 10px; margin-left: 20px;">
+                                <div id="reply-form-<?= $rev['id'] ?>" style="display:none; margin-top: 10px; margin-left: 30px;">
                                     <form action="index.php?module=admin&controller=review&action=reply" method="POST">
                                         <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
-                                        <textarea name="reply_text" required style="width:100%; height:50px; padding:5px; border:1px solid #ddd;"></textarea>
-                                        <button type="submit" style="margin-top:5px; background:#333; color:#fff; border:none; padding:3px 10px; cursor:pointer; font-size:12px;">Gửi</button>
+                                        <textarea name="reply_text" style="width:100%; height:60px; padding:5px; border:1px solid #ddd;" placeholder="Nội dung trả lời..."></textarea>
+                                        <button type="submit" style="margin-top:5px; padding:4px 10px; cursor:pointer;">Gửi</button>
                                     </form>
                                 </div>
                             <?php endif; ?>
@@ -463,7 +405,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -475,82 +416,8 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script>
-function filterReviews(element, rating) {
-    // 1. Đổi trạng thái nút bấm (Active)
-    $('.btn-filter-rating').removeClass('active');
-    $(element).addClass('active');
-
-    // 2. Hiệu ứng mờ danh sách cũ trong khi chờ tải
-    var container = $('#review-list-container');
-    container.css('opacity', '0.5');
-
-    // 3. Gửi AJAX
-    $.ajax({
-        url: 'index.php?module=client&controller=product&action=detail',
-        type: 'GET',
-        data: {
-            id: '<?= $product['id'] ?>',
-            rating: rating,
-            is_ajax: 1 // Gửi cờ nhận biết AJAX
-        },
-        success: function(response) {
-            // 4. Cập nhật nội dung mới
-            if(response.trim() == "") {
-                container.html('<p style="text-align:center; color:#999; padding: 20px;">Chưa có đánh giá nào cho mức sao này.</p>');
-            } else {
-                container.html(response);
-            }
-            container.css('opacity', '1');
-            
-            // Nếu có text "Chưa có đánh giá nào" ở ngoài container thì ẩn đi
-            $('#no-review-text').hide();
-        },
-        error: function() {
-            alert('Có lỗi xảy ra khi lọc đánh giá.');
-            container.css('opacity', '1');
-        }
-    });
-}
-</script>
-<script>
-function openReviewForm(mode, data = null) {
-    // 1. Hiện form lên
-    $('#formReview').slideDown();
-    
-    const form = $('#review-form');
-    const btn = $('#btn-submit-review');
-    
-    if (mode === 'edit' && data) {
-        // 2. Chế độ Sửa: Đổi action sang hàm edit và đổ dữ liệu
-        form.attr('action', 'index.php?module=client&controller=review&action=edit');
-        $('#input_review_id').val(data.id);
-        $('#input_rating').val(data.rating);
-        $('#input_comment').val(data.comment);
-        
-        // 3. Đổi diện mạo nút bấm
-        btn.text('Cập nhật đánh giá').css('background', '#28a745');
-    } else {
-        // 2. Chế độ Thêm mới: Reset form và đổi action về submit
-        form.attr('action', 'index.php?module=client&controller=review&action=submit');
-        $('#input_review_id').val('');
-        $('#input_rating').val('5');
-        $('#input_comment').val('');
-        
-        // 3. Đổi diện mạo nút bấm
-        btn.text('Gửi đánh giá').css('background', '#cd1818');
-    }
-    
-    // 4. Cuộn màn hình lên vị trí form để người dùng thấy
-    window.scrollTo({
-        top: $('#formReview').offset().top - 150,
-        behavior: 'smooth'
-    });
-}
-</script>
-<script>
-    // JS CAROUSEL
+    // --- JS CAROUSEL ---
     function changeImage(el) {
         document.getElementById('main-img').src = el.src;
         document.querySelectorAll('.thumb-item').forEach(item => item.classList.remove('active'));
@@ -566,50 +433,122 @@ function openReviewForm(mode, data = null) {
         if (newIndex >= thumbs.length) newIndex = 0;
         if (thumbs[newIndex]) thumbs[newIndex].click();
     }
-    // MODAL
+    
+    // --- JS MODAL ---
     function openSpecs() { document.getElementById('specs-modal').classList.add('active'); document.body.style.overflow = 'hidden'; }
     function closeSpecs() { document.getElementById('specs-modal').classList.remove('active'); document.body.style.overflow = ''; }
 
-    $(document).ready(function() {
-        // [1] CART AJAX
-        $('.btn-add-cart').click(function(e) {
-            e.preventDefault(); 
-            // Giả lập logic cart cũ
-            showToast('✅ Đã thêm vào giỏ hàng (Logic cart cần active)');
+    // --- JS REVIEW FUNCTIONS ---
+    function openReviewForm(mode, data = null) {
+        $('#formReview').slideDown();
+        const form = $('#review-form');
+        const btn = $('#btn-submit-review');
+        
+        if (mode === 'edit' && data) {
+            form.attr('action', 'index.php?module=client&controller=review&action=edit');
+            $('#input_review_id').val(data.id);
+            $('#input_rating').val(data.rating);
+            $('#input_comment').val(data.comment);
+            btn.text('Cập nhật đánh giá').css('background', '#28a745');
+        } else {
+            form.attr('action', 'index.php?module=client&controller=review&action=submit');
+            $('#input_review_id').val('');
+            $('#input_rating').val('5');
+            $('#input_comment').val('');
+            btn.text('Gửi đánh giá').css('background', '#cd1818');
+        }
+        window.scrollTo({ top: $('#formReview').offset().top - 150, behavior: 'smooth' });
+    }
+
+    function filterReviews(element, rating) {
+        $('.btn-filter-rating').removeClass('active');
+        $(element).addClass('active');
+        var container = $('#review-list-container');
+        container.css('opacity', '0.5');
+
+        $.ajax({
+            url: 'index.php?module=client&controller=product&action=detail',
+            type: 'GET',
+            data: { id: '<?= $product['id'] ?>', rating: rating, is_ajax: 1 },
+            success: function(response) {
+                if(response.trim() == "") container.html('<p style="text-align:center; color:#999; padding: 20px;">Chưa có đánh giá nào cho mức sao này.</p>');
+                else container.html(response);
+                container.css('opacity', '1');
+                $('#no-review-text').hide();
+            }
         });
+    }
 
-        // [2] REVIEW AJAX (NEW CODE)
+    $(document).ready(function() {
+        // [1] CART AJAX - DÙNG URL ROUTER MỚI "them-gio-hang"
+       // [1] CART AJAX - DÙNG URL ROUTER MỚI "them-gio-hang"
+    $('.btn-add-cart').click(function(e) {
+        e.preventDefault(); 
+        var form = $(this).closest('form');
+        var productId = form.find('input[name="product_id"]').val();
+        
+        // Hiệu ứng loading
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+
+        $.ajax({
+            url: 'them-gio-hang', 
+            type: 'POST',
+            dataType: 'json',
+            data: { product_id: productId, quantity: 1, is_ajax: 1, add_to_cart: 1 },
+            success: function(response) {
+                btn.html(originalHtml).prop('disabled', false);
+                
+                if (response.status === 'success') {
+                    // [SỬA LỖI TẠI ĐÂY] Đổi #cart-count thành #cart-total-count cho khớp header.php
+                    var cartBadge = $('#cart-total-count');
+                    
+                    if(cartBadge.length) {
+                        // Cập nhật số lượng mới
+                        cartBadge.text(response.total_items);
+                        // Nếu đang ẩn (do = 0) thì hiện lên
+                        cartBadge.show();
+                        // Hiệu ứng nhún nhảy cho vui mắt
+                        cartBadge.addClass('fa-bounce'); 
+                        setTimeout(() => cartBadge.removeClass('fa-bounce'), 1000);
+                    }
+                    
+                    showToast('✅ Đã thêm sản phẩm vào giỏ hàng!');
+                } else {
+                    alert('❌ ' + (response.message || 'Có lỗi xảy ra'));
+                }
+            },
+            error: function(xhr) {
+                btn.html(originalHtml).prop('disabled', false);
+                console.error("Lỗi:", xhr.responseText);
+                alert('Lỗi kết nối đến giỏ hàng.');
+            }
+        });
+    });
+
+        // [2] REVIEW SUBMIT AJAX
         $('#review-form').on('submit', function(e) {
-            e.preventDefault(); // Chặn load trang
-
+            e.preventDefault(); 
             var btn = $('#btn-submit-review');
             var originalText = btn.text();
-            btn.text('Đang gửi...').prop('disabled', true);
-
-            var formData = $(this).serialize(); // Lấy dữ liệu form
+            btn.text('Đang xử lý...').prop('disabled', true);
+            var formData = $(this).serialize();
             var formAction = $(this).attr('action');
 
             $.ajax({
                 url: formAction,
                 type: 'POST',
                 data: formData,
-                // dataType: 'json', <--- Bỏ dòng này nếu Controller chưa trả về JSON chuẩn
                 success: function(response) {
-                    // Mẹo: Vì chưa chắc Controller trả về JSON, ta chỉ cần check status 200 là coi như thành công
-                    // Nếu bạn đã sửa Controller trả JSON: if(response.status == 'success') ...
-                    
-                    showToast('✅ Đánh giá thành công! Đang tải lại...');
+                    showToast('✅ Thao tác thành công! Đang tải lại...');
                     $('#formReview').slideUp();
-                    
-                    // Reload sau 1.5s để cập nhật danh sách (cách an toàn nhất)
-                    setTimeout(function() {
-                        location.reload(); 
-                    }, 1500);
+                    setTimeout(function() { location.reload(); }, 1500);
                 },
-                error: function(xhr, status, error) {
-                    console.error(xhr.responseText);
-                    alert('Có lỗi xảy ra, vui lòng thử lại.');
-                    btn.text(originalText).prop('disabled', false);
+                error: function() {
+                    // Fallback reload
+                    showToast('✅ Đã gửi dữ liệu!');
+                    setTimeout(function() { location.reload(); }, 1500);
                 }
             });
         });

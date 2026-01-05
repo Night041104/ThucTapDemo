@@ -23,7 +23,7 @@ $staticRoutes = [
     'quen-mat-khau'      => ['auth', 'forgotPassword'],
     // [SỬA/THÊM] Trỏ 'thanh-toan' về CheckoutController -> index
     'thanh-toan'         => ['checkout', 'index'],
-    
+    'them-gio-hang'      => ['cart', 'add'],
     // [THÊM MỚI] Route cho trang thành công
     'dat-hang-thanh-cong'=> ['checkout', 'success'],
 ];
