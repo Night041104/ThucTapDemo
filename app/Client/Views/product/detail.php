@@ -370,23 +370,44 @@
                             
                             <?php 
                                 $isLoggedIn = isset($_SESSION['user']);
-                                $isAdmin = $isLoggedIn && $_SESSION['user']['role_id'] == 1;
-                                $isOwner = $isLoggedIn && $_SESSION['user']['id'] == $rev['user_id'];
+                                $currentUserId = $isLoggedIn ? $_SESSION['user']['id'] : null;
+                                $isAdmin = ($isLoggedIn && $_SESSION['user']['role_id'] == 1);
+                                
+                                // Kiểm tra xem bài review này có phải của người đang xem hay không
+                                $isOwner = ($isLoggedIn && ($currentUserId == $rev['user_id']));
                             ?>
 
-                            <div style="display: flex; gap: 10px; font-size: 12px; margin-top: 5px;">
+                            <div style="display: flex; gap: 15px; font-size: 12px; margin-top: 8px; align-items: center;">
                                 <?php if($isAdmin): ?>
-                                    <a href="javascript:void(0)" onclick="$('#reply-form-<?= $rev['id'] ?>').toggle()" style="color: #007bff; text-decoration: none;">Trả lời</a>
-                                    <a href="index.php?module=admin&controller=review&action=delete&id=<?= $rev['id'] ?>" onclick="return confirm('Xóa bài này?')" style="color: #cd1818; text-decoration: none;">Xóa</a>
+                                    <a href="javascript:void(0)" onclick="$('#reply-form-<?= $rev['id'] ?>').toggle()" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                                        <i class="fa fa-reply"></i> Trả lời
+                                    </a>
+
+                                    <?php if($isOwner): ?>
+                                        <a href="javascript:void(0)" onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($rev)) ?>)" style="color: #28a745; text-decoration: none; font-weight: bold;">
+                                            <i class="fa fa-edit"></i> Sửa
+                                        </a>
+                                    <?php endif; ?>
+
+                                    <a href="index.php?module=admin&controller=review&action=delete&id=<?= $rev['id'] ?>" 
+                                    onclick="return confirm('Xóa bài đánh giá này?')" style="color: #cd1818; text-decoration: none; font-weight: bold;">
+                                        <i class="fa fa-trash"></i> Xóa
+                                    </a>
+
                                 <?php elseif($isOwner): ?>
-                                    <a href="javascript:void(0)" onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($rev)) ?>)" style="color: #28a745; text-decoration: none;"><i class="fa fa-edit"></i> Sửa</a>
-                                    <a href="index.php?module=client&controller=review&action=delete&id=<?= $rev['id'] ?>" onclick="return confirm('Xóa đánh giá?')" style="color: #cd1818; text-decoration: none;"><i class="fa fa-trash"></i> Xóa</a>
+                                    <a href="javascript:void(0)" onclick="openReviewForm('edit', <?= htmlspecialchars(json_encode($rev)) ?>)" style="color: #28a745; text-decoration: none;">
+                                        <i class="fa fa-edit"></i> Sửa
+                                    </a>
+                                    <a href="index.php?module=client&controller=review&action=delete&id=<?= $rev['id'] ?>" 
+                                    onclick="return confirm('Xóa đánh giá của bạn?')" style="color: #cd1818; text-decoration: none; margin-left: 10px;">
+                                        <i class="fa fa-trash"></i> Xóa
+                                    </a>
                                 <?php endif; ?>
                             </div>
 
                             <?php if (!empty($rev['replies'])): foreach ($rev['replies'] as $reply): ?>
                                 <div style="margin-left: 30px; background: #f9f9f9; padding: 10px; border-left: 3px solid #cd1818; margin-top: 10px; border-radius: 4px;">
-                                    <div style="font-weight:bold; color:#cd1818; font-size:13px; margin-bottom:4px;"><i class="fa fa-user-shield"></i> Quản trị viên</div>
+                                    <div style="font-weight:bold; color:#cd1818; font-size:13px; margin-bottom:4px;"><i class="fa fa-user-shield"></i> FPT Shop Clone System đã trả lời:</div>
                                     <div style="font-size:13px; color:#333;"><?= nl2br(htmlspecialchars($reply['reply_content'])) ?></div>
                                 </div>
                             <?php endforeach; endif; ?>
@@ -395,11 +416,13 @@
                                 <div id="reply-form-<?= $rev['id'] ?>" style="display:none; margin-top: 10px; margin-left: 30px;">
                                     <form action="index.php?module=admin&controller=review&action=reply" method="POST">
                                         <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
-                                        <textarea name="reply_text" style="width:100%; height:60px; padding:5px; border:1px solid #ddd;" placeholder="Nội dung trả lời..."></textarea>
-                                        <button type="submit" style="margin-top:5px; padding:4px 10px; cursor:pointer;">Gửi</button>
+                                        <textarea name="reply_text" style="width:100%; height:60px; padding:8px; border:1px solid #ddd; border-radius:4px;" placeholder="Nội dung trả lời với tư cách Admin..."></textarea>
+                                        <button type="submit" style="margin-top:5px; padding:5px 15px; background: #333; color: #fff; border: none; border-radius: 4px; cursor:pointer;">Gửi phản hồi</button>
                                     </form>
                                 </div>
                             <?php endif; ?>
+
+                            
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -416,7 +439,10 @@
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
+
+    
     // --- JS CAROUSEL ---
     function changeImage(el) {
         document.getElementById('main-img').src = el.src;
@@ -439,25 +465,48 @@
     function closeSpecs() { document.getElementById('specs-modal').classList.remove('active'); document.body.style.overflow = ''; }
 
     // --- JS REVIEW FUNCTIONS ---
+    // Tìm đoạn script ở cuối file detail.php
+
     function openReviewForm(mode, data = null) {
-        $('#formReview').slideDown();
+        $('#formReview').slideDown(); // Hiện khung form ra
+        
         const form = $('#review-form');
         const btn = $('#btn-submit-review');
         
+        // Reset form cho sạch sẽ trước khi điền
+        form[0].reset(); 
+
         if (mode === 'edit' && data) {
+            // === CHẾ ĐỘ SỬA ===
+            // 1. Quan trọng nhất: Đổi đường dẫn action sang hàm edit
             form.attr('action', 'index.php?module=client&controller=review&action=edit');
-            $('#input_review_id').val(data.id);
-            $('#input_rating').val(data.rating);
-            $('#input_comment').val(data.comment);
-            btn.text('Cập nhật đánh giá').css('background', '#28a745');
+            
+            // 2. Điền dữ liệu cũ vào các ô input
+            $('#input_review_id').val(data.id);       // ID bài review (để biết sửa bài nào)
+            $('#input_rating').val(data.rating);      // Điền số sao cũ
+            $('#input_comment').val(data.comment);    // Điền nội dung cũ
+            
+            // 3. Đổi màu nút bấm sang màu xanh cho dễ nhận biết
+            btn.html('<i class="fa fa-save"></i> Cập nhật').css('background', '#28a745');
+            
+            // Cuộn màn hình xuống chỗ form
+            $('html, body').animate({
+                scrollTop: $("#formReview").offset().top - 150
+            }, 500);
+
         } else {
+            // === CHẾ ĐỘ THÊM MỚI ===
+            // 1. Đổi đường dẫn action về hàm submit (thêm mới)
             form.attr('action', 'index.php?module=client&controller=review&action=submit');
+            
+            // 2. Xóa trắng các ID ẩn
             $('#input_review_id').val('');
-            $('#input_rating').val('5');
+            $('#input_rating').val('5'); // Mặc định 5 sao
             $('#input_comment').val('');
-            btn.text('Gửi đánh giá').css('background', '#cd1818');
+            
+            // 3. Đổi nút bấm về màu đỏ mặc định
+            btn.html('Gửi đánh giá').css('background', '#cd1818');
         }
-        window.scrollTo({ top: $('#formReview').offset().top - 150, behavior: 'smooth' });
     }
 
     function filterReviews(element, rating) {

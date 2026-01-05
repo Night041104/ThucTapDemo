@@ -86,7 +86,11 @@ class ReviewModel extends BaseModel {
     }
     // Kiểm tra xem user đã đánh giá sản phẩm này chưa, nếu rồi thì trả về thông tin đánh giá đó
     public function getUserReview($userId, $productId) {
-        $sql = "SELECT * FROM product_reviews WHERE user_id = '$userId' AND product_id = '$productId' LIMIT 1";
+        // Luôn lấy ID gốc để kiểm tra, đảm bảo tính nhất quán giữa các biến thể
+        $rootId = $this->getRootProductId($productId);
+        
+        $userId = $this->escape($userId);
+        $sql = "SELECT * FROM product_reviews WHERE user_id = '$userId' AND product_id = '$rootId' LIMIT 1";
         $result = $this->_query($sql);
         return mysqli_fetch_assoc($result);
     }
