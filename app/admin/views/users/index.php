@@ -112,7 +112,7 @@
                                 <td class="ps-4">
                                     <div class="d-flex align-items-center">
                                         <?php 
-                                            $defaultAvt = 'public/uploads/default/default_avt.png';
+                                            $defaultAvt = 'uploads/default/default_avt.png';
                                             $avt = !empty($u['avatar']) ? $u['avatar'] : $defaultAvt;
                                         ?>
                                         <div class="position-relative">
