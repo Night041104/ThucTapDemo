@@ -363,20 +363,34 @@ public function updateAjax() {
 
         if ($qty < 1) $qty = 1; // Đảm bảo số lượng tối thiểu là 1
 
-        // 3. Cập nhật Session giỏ hàng
+        // --- [MỚI] KIỂM TRA TỒN KHO ---
+        require_once __DIR__ . '/../../models/ProductModel.php';
+        $productModel = new ProductModel();
+        $product = $productModel->getById($id);
+
+        $warningMsg = ''; // Biến chứa thông báo lỗi nếu vượt quá kho
+
+        if ($product) {
+            // Nếu khách nhập số lượng lớn hơn kho -> Ép về bằng số kho
+            if ($qty > $product['quantity']) {
+                $qty = $product['quantity'];
+                $warningMsg = "Xin lỗi, sản phẩm '{$product['name']}' chỉ còn lại {$qty} cái!";
+            }
+        }
+        // ------------------------------
+
+        // 3. Cập nhật Session giỏ hàng với số lượng hợp lệ
         if (isset($_SESSION['cart'][$id])) {
             $_SESSION['cart'][$id] = $qty;
         }
-        // --- [THÊM ĐOẠN NÀY] Tính tổng số lượng sản phẩm trong giỏ ---
+
+        // --- Tính tổng số lượng sản phẩm trong giỏ ---
         $newTotalQty = array_sum($_SESSION['cart']);
 
-        // 4. Tính toán lại toàn bộ giỏ hàng
-        require_once __DIR__ . '/../../models/ProductModel.php';
-        $productModel = new ProductModel();
-        
+        // 4. Tính toán lại toàn bộ giỏ hàng (Logic cũ giữ nguyên)
         $cart = $_SESSION['cart'];
         $ids = array_keys($cart);
-        // Nếu giỏ hàng trống thì return nhanh
+        
         if (empty($ids)) {
              echo json_encode(['status' => 'success', 'total_money' => 0, 'final_total' => 0]);
              exit;
@@ -385,7 +399,7 @@ public function updateAjax() {
         $products = $productModel->getProductsByIds($ids);
 
         $totalMoney = 0;
-        $itemSubtotal = 0; // Thành tiền của riêng sản phẩm vừa sửa
+        $itemSubtotal = 0; 
 
         foreach ($products as $p) {
             if (isset($cart[$p['id']])) {
@@ -399,40 +413,30 @@ public function updateAjax() {
             }
         }
 
-        // --- [PHẦN MỚI QUAN TRỌNG] TẠO LẠI HTML DANH SÁCH MÃ GIẢM GIÁ ---
-        // Mục đích: Để Modal cập nhật trạng thái sáng/tối ngay lập tức theo tổng tiền mới
+        // --- TẠO LẠI HTML COUPON (Logic cũ giữ nguyên) ---
         require_once __DIR__ . '/../../models/CouponModel.php';
         $couponModel = new CouponModel();
         $userId = isset($_SESSION['user']) ? $_SESSION['user']['id'] : null;
-
-        // Lấy danh sách coupon mới nhất (kèm số lần user đã dùng)
         $listCoupons = $couponModel->getAllActiveCoupons($userId); 
-        
-        // Dùng Output Buffering để render file view thành chuỗi HTML
         ob_start();
-        // Truyền biến vào view: $listCoupons và $totalMoney (để so sánh điều kiện)
         require __DIR__ . '/../Views/cart/coupon_list.php'; 
         $couponHtml = ob_get_clean(); 
-        // -----------------------------------------------------------------
 
 
-        // 5. Tính toán lại Coupon ĐANG ÁP DỤNG (nếu có)
+        // 5. Tính toán lại Coupon (Logic cũ giữ nguyên)
         $discountAmount = 0;
         $couponMsg = '';
         $couponValid = false;
 
         if (isset($_SESSION['coupon'])) {
             $couponCode = $_SESSION['coupon']['code'];
-
-            // Check lại điều kiện coupon với tổng tiền mới
             $check = $couponModel->checkCoupon($couponCode, $totalMoney, $userId);
 
             if ($check['valid']) {
                 $discountAmount = $check['discount_amount'];
-                $_SESSION['coupon']['discount_amount'] = $discountAmount; // Cập nhật Session
+                $_SESSION['coupon']['discount_amount'] = $discountAmount;
                 $couponValid = true;
             } else {
-                // Coupon không còn hợp lệ (do tổng tiền giảm xuống dưới mức tối thiểu)
                 unset($_SESSION['coupon']);
                 $discountAmount = 0;
                 $couponMsg = 'Mã giảm giá đã bị hủy do đơn hàng không đủ điều kiện!';
@@ -443,18 +447,21 @@ public function updateAjax() {
         $finalTotal = $totalMoney - $discountAmount;
         if ($finalTotal < 0) $finalTotal = 0;
 
-        // 7. Trả về JSON cho Javascript
+        // 7. Trả về JSON (Thêm warning_msg và current_qty)
         echo json_encode([
             'status' => 'success',
             'item_subtotal'   => number_format($itemSubtotal, 0, ',', '.') . '₫',
             'total_money'     => number_format($totalMoney, 0, ',', '.') . '₫',
             'discount_amount' => number_format($discountAmount, 0, ',', '.') . '₫',
             'final_total'     => number_format($finalTotal, 0, ',', '.') . '₫',
-            // --- [THÊM DÒNG NÀY] Gửi tổng số lượng mới về Client ---
             'total_qty'       => $newTotalQty,
             'coupon_valid'    => $couponValid,
             'coupon_msg'      => $couponMsg,
-            'coupon_html'     => $couponHtml // <--- HTML mới của Modal
+            'coupon_html'     => $couponHtml,
+            
+            // [MỚI] Trả về thông tin giới hạn kho
+            'warning_msg'     => $warningMsg, 
+            'current_qty'     => $qty // Trả về số lượng thực tế đã lưu (để JS sửa lại ô input)
         ]);
         exit;
     }

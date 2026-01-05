@@ -235,46 +235,49 @@ function selectCoupon(code) {
 
 $(document).ready(function() {
     // Xử lý AJAX khi thay đổi số lượng
-    $('.qty-input').on('change keyup', function() {
+    $('.qty-input').on('change', function() { // Dùng sự kiện 'change' thay vì 'keyup' để tránh spam request liên tục
         var inputEl = $(this);
         var productId = inputEl.data('id');
         var newQty = inputEl.val();
 
-        // Validate
+        // Validate cơ bản client
         if (newQty < 1 || newQty == '') {
             newQty = 1;
+            inputEl.val(1);
         }
 
         // Gọi AJAX
         $.ajax({
-            // [FIX URL AJAX] Thêm Base URL
             url: '<?= $baseUrl ?>index.php?controller=cart&action=updateAjax', 
             method: 'POST',
             data: { id: productId, qty: newQty },
             dataType: 'json',
             success: function(response) {
                 if (response.status === 'success') {
-                    // 1. Cập nhật tiền (Code cũ)
+                    
+                    // --- [MỚI] XỬ LÝ CẢNH BÁO TỒN KHO ---
+                    if (response.warning_msg && response.warning_msg !== '') {
+                        alert(response.warning_msg); // Hoặc dùng showToast(response.warning_msg) nếu có hàm đó
+                        
+                        // Reset lại ô input về số lượng tối đa mà server trả về
+                        inputEl.val(response.current_qty);
+                    }
+                    // ------------------------------------
+
+                    // Cập nhật giao diện tiền tệ
                     $('#subtotal-' + productId).text(response.item_subtotal);
                     $('#cart-total-money').text(response.total_money);
                     $('#cart-final-total').text(response.final_total);
 
-                    // --- Cập nhật số lượng trên Header ---
+                    // Cập nhật số lượng trên Header
                     var cartBadge = $('#cart-total-count'); 
                     cartBadge.text(response.total_qty);
-                    
-                    if (response.total_qty > 0) {
-                        cartBadge.show(); 
-                    } else {
-                        cartBadge.hide();
-                    }
+                    if (response.total_qty > 0) cartBadge.show(); else cartBadge.hide();
 
-                    // 2. Cập nhật HTML Coupon
+                    // Cập nhật Coupon (nếu có)
                     if (response.coupon_html) {
                          $('#coupon-list-container').html(response.coupon_html);
                     }
-
-                    // 3. Logic Coupon
                     if (response.coupon_valid) {
                         $('#coupon-row').show();
                         $('#cart-discount').text('-' + response.discount_amount);
