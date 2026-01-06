@@ -1,9 +1,10 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <?php 
+ $totalRecords = isset($totalRecords) ? $totalRecords : 0;
     $totalProd = count($products);
     $activeProd = 0; $outOfStock = 0; $hiddenProd = 0;
-    foreach($products as $p) {
+    foreach($p2 as $p) {
         if($p['status'] == 1) $activeProd++;
         if($p['status'] == 0) $hiddenProd++;
         if($p['quantity'] <= 0) $outOfStock++;
@@ -15,7 +16,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-primary small mb-1">Tổng sản phẩm</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalProd ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalRecords ?></div>
             </div>
         </div>
     </div>

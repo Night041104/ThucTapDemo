@@ -17,7 +17,7 @@
         <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #4e73df !important;">
             <div class="card-body">
                 <div class="text-uppercase fw-bold text-primary small mb-1">Tổng thuộc tính</div>
-                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalStat ?></div>
+                <div class="h3 mb-0 fw-bold text-gray-800"><?= $totalRecords ?></div>
             </div>
         </div>
     </div>

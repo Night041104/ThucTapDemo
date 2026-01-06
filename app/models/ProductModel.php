@@ -28,9 +28,16 @@ class ProductModel extends BaseModel {
             $kw = $this->escape($keyword);
             $where .= " AND (p.name LIKE '%$kw%' OR p.sku LIKE '%$kw%')"; 
         }
-
-        // [MỚI] Tính Offset
-        $offset = ($page - 1) * $limit;
+        if($limit<=0){
+            $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name
+                FROM products p
+                LEFT JOIN categories c ON p.category_id = c.id
+                LEFT JOIN brands b ON p.brand_id = b.id
+                WHERE $where
+                ORDER BY IF (p.parent_id = 0, p.id, p.parent_id) DESC, p.id ASC";
+        }
+        else if($limit>0){
+            $offset = ($page - 1) * $limit;
 
         $sql = "SELECT p.*, c.name as cate_name, b.name as brand_name
                 FROM products p
@@ -39,6 +46,9 @@ class ProductModel extends BaseModel {
                 WHERE $where
                 ORDER BY IF (p.parent_id = 0, p.id, p.parent_id) DESC, p.id ASC
                 LIMIT $offset, $limit"; // Thêm LIMIT vào SQL
+        }
+        // [MỚI] Tính Offset
+        
                 
         $result = $this->_query($sql);
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : []; 

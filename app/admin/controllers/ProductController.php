@@ -61,7 +61,7 @@ class ProductController {
         // 3. Lấy dữ liệu cho các bộ lọc
         $masters    = $this->prodModel->getMasters();
         $categories = $this->cateModel->getAll(); // [MỚI] Lấy danh sách danh mục
-        
+        $p2 =  $this->prodModel->getAll($filterMasterId, $keyword, $filterCateId, $page, 0);
         // 4. Các biến phụ khác (Giữ nguyên)
         $variantIds = $this->prodModel->getVariantAttributeIds();
 

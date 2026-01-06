@@ -33,7 +33,7 @@ class DashboardController {
         $stats = [
             'total_revenue' => 0,
             'total_orders'  => count($orders),
-            'total_products'=> count($products),
+            'total_products'=> $this->productModel->countAll(),
             'total_users'   => count($users)
         ];
 
