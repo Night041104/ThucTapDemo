@@ -2,6 +2,10 @@
 require_once __DIR__ . '/BaseModel.php';
 
 class OrderModel extends BaseModel {
+    private $ghnToken  = '9e958cee-c146-11f0-a621-f2a9392e54c8';
+    private $ghnShopId = '198125';   
+    private $ghnUrl    = 'https://dev-online-gateway.ghn.vn/shiip/public-api/v2/switch-status/cancel';
+
 
     // =================================================================
     // 1. DÀNH CHO KHÁCH HÀNG (CLIENT)
@@ -233,29 +237,49 @@ class OrderModel extends BaseModel {
     }
 
     // Cập nhật trạng thái đơn hàng (Xử lý kho 2 chiều thông minh)
-    public function updateStatus($orderId, $newStatus) {
+   public function updateStatus($orderId, $newStatus) {
         $orderId = (int)$orderId;
         $newStatus = (int)$newStatus;
 
-        // B1: Lấy trạng thái CŨ
-        $orderInfo = $this->_query("SELECT status FROM orders WHERE id = '$orderId'")->fetch_assoc();
+        // B1: Lấy thông tin đơn hàng cũ
+        $orderInfo = $this->_query("SELECT status, order_code, tracking_code FROM orders WHERE id = '$orderId'")->fetch_assoc();
+        if (!$orderInfo) return false;
+
         $oldStatus = (int)$orderInfo['status'];
 
         if ($oldStatus == $newStatus) return true;
 
-        // B2: Xử lý kho
-        // Chiều 1: Đang bình thường -> HỦY (5) ==> HOÀN KHO (+)
+        // B2: Xử lý Logic Hủy / Khôi phục
+        
+        // --- TRƯỜNG HỢP 1: ĐANG BÌNH THƯỜNG -> CHUYỂN SANG HỦY (5) ---
         if ($oldStatus != 5 && $newStatus == 5) {
+            // 1. Cộng lại số lượng vào kho
             $this->adjustStock($orderId, '+'); 
+            
+            // 2. TỰ ĐỘNG GỌI API HỦY ĐƠN BÊN GHN SANDBOX
+            $ghnCode = !empty($orderInfo['tracking_code']) ? $orderInfo['tracking_code'] : $orderInfo['order_code'];
+            
+            if ($ghnCode) {
+                $this->cancelGhnOrder($ghnCode); // Gọi hàm hủy GHN
+            }
         }
-        // Chiều 2: Đang HỦY (5) -> Quay lại bình thường ==> TRỪ KHO (-)
+        
+        // --- TRƯỜNG HỢP 2: ĐANG HỦY (5) -> KHÔI PHỤC LẠI (VỀ 1, 2, 3...) ---
         elseif ($oldStatus == 5 && $newStatus != 5) {
+            
+            // 1. Trừ lại số lượng trong kho
             if (!$this->adjustStock($orderId, '-')) {
                 return "Không thể khôi phục đơn hàng! Kho không đủ sản phẩm.";
             }
+
+            // 2. [QUAN TRỌNG] XÓA MÃ VẬN ĐƠN CŨ (RESET VỀ NULL)
+            // Logic: Mã cũ bên GHN đã bị hủy rồi, không dùng được nữa.
+            // Ta xóa đi để hệ thống hiểu đây là đơn chưa có vận đơn.
+            // Sau đó Admin sẽ thao tác "Tạo đơn hàng" lại trên giao diện quản trị.
+            $this->conn->query("UPDATE orders SET tracking_code = NULL WHERE id = '$orderId'");
         }
 
-        // B3: Cập nhật
+        // B3: Cập nhật trạng thái mới vào Database
         $sql = "UPDATE orders SET status = '$newStatus' WHERE id = '$orderId'";
         return $this->conn->query($sql);
     }
@@ -283,5 +307,23 @@ class OrderModel extends BaseModel {
     $sql = "UPDATE orders SET tracking_code = '$code' WHERE id = '$orderId'";
     return $this->conn->query($sql);
 }
+private function cancelGhnOrder($ghnOrderCode) {
+        $data = ["order_codes" => [$ghnOrderCode]];
+
+        $ch = curl_init($this->ghnUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Token: ' . $this->ghnToken,
+            'ShopId: ' . $this->ghnShopId
+        ]);
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        return $response;
+    }
 }
 ?>
