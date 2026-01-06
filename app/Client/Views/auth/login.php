@@ -44,7 +44,7 @@
 
         <form action="index.php?module=client&controller=auth&action=processLogin" method="POST">
             <div class="form-group">
-                <label>Email / Số điện thoại</label>
+                <label>Email </label>
                 <div class="input-group">
                     <i class="fa fa-envelope"></i>
                     <input type="text" name="email" placeholder="Nhập email của bạn" required>
